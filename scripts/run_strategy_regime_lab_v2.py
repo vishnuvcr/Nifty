@@ -191,9 +191,14 @@ def main():
             continue
 
         did = f"{decision.date()}|{expiry.date()}"
+        realized_expiry_spot = price.get(exp_session)
+        if realized_expiry_spot is None or not np.isfinite(realized_expiry_spot):
+            continue
         decision_rows.append({
             "decision_id": did, "decision_date": decision, "actual_expiry": expiry,
-            "expiry_session": exp_session, "spot": float(spot), **feats
+            "expiry_session": exp_session, "spot": float(spot),
+            "expiry_return": float(realized_expiry_spot / float(spot) - 1.0),
+            **feats
         })
 
         for name in STRATEGY_NAMES:
