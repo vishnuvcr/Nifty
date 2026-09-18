@@ -219,12 +219,17 @@ def main():
             pnl_paths, entry = payoff_paths(terminal, priced)
             q05 = float(np.quantile(pnl_paths, 0.05))
             q01 = float(np.quantile(pnl_paths, 0.01))
+            loss_tail_95 = pnl_paths[pnl_paths <= q05]
             risk_p95 = max(0.0, -q05)
             risk_p99 = max(0.0, -q01)
-            # Guard against a pathological zero-loss 95% tail. If only the
-            # most extreme 1% contains losses, use that tail as the
-            # conservative denominator rather than dividing by epsilon.
-            risk_for_ror = risk_p95 if risk_p95 > 0 else risk_p99
+            # Use 95% Expected Shortfall (mean loss in the worst 5%) for
+            # strategy risk normalization. VaR can be arbitrarily close to
+            # zero when losses occur only just beyond the 5% quantile,
+            # creating unstable/meaningless P&L-to-risk ratios.
+            if len(loss_tail_95):
+                risk_for_ror = max(0.0, -float(np.mean(loss_tail_95)))
+            else:
+                risk_for_ror = 0.0
             realized_spot = float(price[exp_session])
             realized = 0.0
             for leg, _ in priced:
@@ -238,6 +243,7 @@ def main():
                 "entry_cashflow": float(entry), "realized_pnl": realized_pnl, "win": int(realized_pnl > 0),
                 "mc_ev": float(pnl_paths.mean()), "mc_pop": float(np.mean(pnl_paths > 0)),
                 "mc_risk_p95": risk_p95, "mc_risk_p99": risk_p99,
+                "mc_risk_es95": float(risk_for_ror),
                 "realized_return_on_mc_risk": (realized_pnl / risk_for_ror) if risk_for_ror > 0 else np.nan,
                 "expiry_return": realized_spot / float(spot) - 1,
                 "settlement": "expiry", **feats
