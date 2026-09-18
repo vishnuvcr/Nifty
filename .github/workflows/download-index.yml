@@ -20,87 +20,31 @@ jobs:
   download:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install downloader dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+      - name: Install dependencies
+        run: python -m pip install pandas
 
-      - name: Resolve date range
-        id: dates
-        shell: bash
+      - name: Download public NIFTY history
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "start=${{ inputs.start }}" >> "$GITHUB_OUTPUT"
-            echo "end=${{ inputs.end }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "start=2015-01-01" >> "$GITHUB_OUTPUT"
-            echo "end=2026-09-18" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Download NIFTY 50 index history
-        shell: bash
-        env:
-          START_DATE: "${{ steps.dates.outputs.start }}"
-          END_DATE: "${{ steps.dates.outputs.end }}"
-        run: |
-          set -euo pipefail
           mkdir -p data/raw
-          if python scripts/download_nse_data.py --start "$START_DATE" --end "$END_DATE" --out-dir data/raw --index-only; then
-            echo "NSE acquisition succeeded."
-          else
-            echo "NSE endpoint unavailable from GitHub runner; using documented public research mirror."
-            rm -f data/raw/nifty50_index.csv
-            curl --fail --location --retry 3               "https://raw.githubusercontent.com/Hareeshkesavan/Stock-Market-Dataset/main/Nifty%2050%20Historical%20Data.csv"               -o data/raw/nifty50_index_mirror.csv
-            START_DATE="$START_DATE" END_DATE="$END_DATE" python -c '
-import os
-import pandas as pd
-src = "data/raw/nifty50_index_mirror.csv"
-out = "data/raw/nifty50_index.csv"
-df = pd.read_csv(src)
-df.columns = [str(c).strip().lower() for c in df.columns]
-df["date"] = pd.to_datetime(df["date"], errors="coerce")
-df["close"] = pd.to_numeric(df["price"].astype(str).str.replace(",", "", regex=False), errors="coerce")
-df = df[["date", "close"]].dropna().drop_duplicates("date").sort_values("date")
-lo = pd.Timestamp(os.environ["START_DATE"])
-hi = pd.Timestamp(os.environ["END_DATE"])
-df = df[(df["date"] >= lo) & (df["date"] <= hi)]
-df.to_csv(out, index=False)
-pd.DataFrame([{
-    "source": "Hareeshkesavan/Stock-Market-Dataset",
-    "file": "Nifty 50 Historical Data.csv",
-    "source_url": "https://github.com/Hareeshkesavan/Stock-Market-Dataset",
-    "status": "secondary_public_mirror"
-}]).to_csv("data/raw/nifty50_index_provenance.csv", index=False)
-print(f"mirror rows: {len(df)}")
-'
-          fi
+          curl --fail --location --retry 3 "https://raw.githubusercontent.com/Hareeshkesavan/Stock-Market-Dataset/main/Nifty%2050%20Historical%20Data.csv" -o data/raw/nifty50_source.csv
+          python -c "import pandas as pd; p='data/raw/nifty50_source.csv'; d=pd.read_csv(p); d.columns=[str(c).strip().lower() for c in d.columns]; d['date']=pd.to_datetime(d['date'],errors='coerce'); d['close']=pd.to_numeric(d['price'].astype(str).str.replace(',','',regex=False),errors='coerce'); d=d[['date','close']].dropna().drop_duplicates('date').sort_values('date'); d.to_csv('data/raw/nifty50_index.csv',index=False); print('rows',len(d),'range',d.date.min(),d.date.max())"
 
-      - name: Validate downloaded data
+      - name: Validate
         run: |
-          python -c '
-import pandas as pd
-p = "data/raw/nifty50_index.csv"
-df = pd.read_csv(p, parse_dates=["date"])
-assert len(df) > 1000, f"Unexpectedly small dataset: {len(df)} rows"
-assert df["date"].is_monotonic_increasing
-assert df["date"].is_unique
-assert (df["close"] > 0).all()
-print(df.head(3).to_string(index=False))
-print(df.tail(3).to_string(index=False))
-print(f"validated {len(df)} sessions")
-'
+          python -c "import pandas as pd; d=pd.read_csv('data/raw/nifty50_index.csv',parse_dates=['date']); assert len(d)>1000; assert d.date.is_unique; assert d.date.is_monotonic_increasing; assert (d.close>0).all(); print(d.head(3)); print(d.tail(3)); print('VALIDATED',len(d),'sessions')"
 
-      - name: Upload research dataset artifact
-        uses: actions/upload-artifact@v4
+      - name: Record provenance
+        run: |
+          printf '%s\n' 'source,source_url,status' 'Hareeshkesavan/Stock-Market-Dataset,https://github.com/Hareeshkesavan/Stock-Market-Dataset,secondary_public_mirror' > data/raw/nifty50_index_provenance.csv
+
+      - uses: actions/upload-artifact@v4
         with:
-          name: nifty50-index-${{ steps.dates.outputs.start }}-${{ steps.dates.outputs.end }}
+          name: nifty50-index-research
           path: data/raw/
           retention-days: 14
