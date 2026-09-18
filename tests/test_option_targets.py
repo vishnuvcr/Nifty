@@ -54,3 +54,16 @@ def test_targets_never_predate_acquisition_window(tmp_path):
 
     assert len(out) > 0
     assert (pd.to_datetime(out["decision_date"]) >= pd.Timestamp("2020-04-13")).all()
+
+
+def test_targets_respect_acquisition_start_for_first_2020_expiry(tmp_path):
+    dates = pd.date_range("2020-04-01", "2020-04-24", freq="B")
+    index = pd.DataFrame({"date": dates, "close": range(len(dates))})
+    path = tmp_path / "index.csv"
+    index.to_csv(path, index=False)
+
+    from scripts.build_option_targets import build_targets
+
+    out = build_targets(str(path), "2020-04-13", "2020-04-24", dte_sessions=(5, 3))
+    assert len(out) > 0
+    assert (pd.to_datetime(out["decision_date"]) >= pd.Timestamp("2020-04-13")).all()
