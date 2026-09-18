@@ -1,6 +1,9 @@
 name: build-historical-nifty-options
 
 on:
+  push:
+    branches: ["research/monte-carlo-wfa-v1"]
+    paths: [".github/workflows/historical-options.yml", "scripts/build_option_targets.py", "scripts/download_fo_batch.py", "src/nifty_mc/nse_ingest.py"]
   workflow_dispatch:
     inputs:
       start_year:
