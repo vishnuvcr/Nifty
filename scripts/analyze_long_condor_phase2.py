@@ -118,7 +118,7 @@ def main():
     lines += ["","## Frozen development-selected rule","",
               f"- Signal: {chosen_signal}",f"- Threshold: {chosen_threshold}",
               "- Selection: highest development total gross P&L among rules with >=30 trades.",
-              "","## Frozen-rule results","",chosen_df.to_markdown(index=False),"",
+              "","## Frozen-rule results","",chosen_df.to_csv(index=False).strip(),"",
               "## Cluster bootstrap","",
               f"- Overall mean gross P&L 95% cluster-bootstrap CI: {ci_lo:.2f} to {ci_hi:.2f} points/trade.",
               "","Validation and final periods are reported only after the rule was frozen on development data."]
