@@ -38,6 +38,19 @@ def fetch_one(dt: pd.Timestamp, timeout=30):
             last=f"{r.status_code} {url}"
         except Exception as e:
             last=f"{type(e).__name__}: {e}"
+    mirror_urls = {
+        "2025-02-03": "https://raw.githubusercontent.com/kiranfor2004/NSE_Downloader/e84ac65e1b727fc8354759bbd13d49c588abb361/fo_udiff_downloads/BhavCopy_NSE_FO_0_0_0_20250203_F_0000.csv.zip",
+        "2026-04-01": "https://raw.githubusercontent.com/developerjava80-afk/strategy-squad/c38b0d169d2056e82894526f9172c9ae3df9603f/data/bhavcopy/historical/derivatives/BhavCopy_NSE_FO_0_0_0_20260401_F_0000.csv",
+    }
+    key = dt.strftime("%Y-%m-%d")
+    if key in mirror_urls:
+        url = mirror_urls[key]
+        r = requests.get(url, timeout=timeout)
+        if r.status_code == 200 and len(r.content) > 100:
+            raw_path = Path("/tmp") / ("mirror_" + key.replace("-", "") + ".csv")
+            raw_path.write_bytes(r.content)
+            return url, raw_path.name, normalize_option_csv(raw_path)
+        last = f"{r.status_code} {url}"
     raise RuntimeError(last or "all candidates failed")
 
 def main():
