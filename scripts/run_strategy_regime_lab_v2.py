@@ -21,6 +21,15 @@ def payoff_paths(terminal, priced):
     entry = -sum(leg.qty * px for leg, px in priced)
     return pnl + entry, float(entry)
 
+def payoff_paths_calendar(front_terminal, next_terminal, priced):
+    pnl = np.zeros(len(front_terminal), dtype=float)
+    for leg, px in priced:
+        terminal = front_terminal if leg.expiry == "front" else next_terminal
+        intrinsic = np.maximum((terminal - leg.strike) if leg.option_type == "CE" else (leg.strike - terminal), 0.0)
+        pnl += leg.qty * intrinsic
+    entry = -sum(leg.qty * px for leg, px in priced)
+    return pnl + entry, float(entry)
+
 def mc_terminal(spot, returns, horizon_days, n, seed):
     r = returns[np.isfinite(returns)]
     if len(r) < 60:
@@ -29,6 +38,18 @@ def mc_terminal(spot, returns, horizon_days, n, seed):
     h = max(1, int(horizon_days))
     sampled = rng.choice(r, size=n * h, replace=True).reshape(n, h)
     return spot * np.exp(sampled.sum(axis=1))
+
+def mc_terminal_pair(spot, returns, front_days, next_days, n, seed):
+    r = returns[np.isfinite(returns)]
+    if len(r) < 60:
+        return None
+    hf = max(1, int(front_days))
+    hn = max(hf + 1, int(next_days))
+    rng = np.random.default_rng(seed)
+    sampled = rng.choice(r, size=n * hn, replace=True).reshape(n, hn)
+    front = spot * np.exp(sampled[:, :hf].sum(axis=1))
+    nxt = spot * np.exp(sampled.sum(axis=1))
+    return front, nxt
 
 def unique_strikes(strikes, targets):
     strikes = np.sort(np.unique(np.asarray(strikes, dtype=float)))
@@ -171,8 +192,15 @@ def main():
         if sessions.empty:
             continue
         exp_session = sessions.iloc[-1].date.normalize()
+        next_expiry = next((e for e in exps if e > expiry), None)
+        next_sessions = idx[(idx.date > decision) & (idx.date <= next_expiry)] if next_expiry is not None else pd.DataFrame()
+        next_exp_session = next_sessions.iloc[-1].date.normalize() if not next_sessions.empty else None
         hist = idx.loc[idx.date <= decision, "logret"].dropna().tail(756).to_numpy()
         terminal = mc_terminal(float(spot), hist, len(sessions), args.paths, 100000 + i)
+        calendar_terminal = (
+            mc_terminal_pair(float(spot), hist, len(sessions), len(next_sessions), args.paths, 200000 + i)
+            if next_expiry is not None and not next_sessions.empty else None
+        )
         if terminal is None:
             continue
         qs = np.percentile(terminal, [10, 20, 25, 35, 45, 55, 65, 75, 80, 90])
@@ -205,10 +233,11 @@ def main():
             legs = build_strategy(name, strikes)
             priced, ok = [], True
             for leg in legs:
-                if leg.expiry != "front":
+                leg_expiry = expiry if leg.expiry == "front" else next_expiry
+                if leg_expiry is None:
                     ok = False
                     break
-                px = option_price(chain, expiry, leg.option_type, leg.strike)
+                px = option_price(chain, leg_expiry, leg.option_type, leg.strike)
                 if px is None:
                     ok = False
                     break
@@ -216,7 +245,12 @@ def main():
             if not ok:
                 continue
 
-            pnl_paths, entry = payoff_paths(terminal, priced)
+            if any(leg.expiry == "next" for leg in legs):
+                if calendar_terminal is None:
+                    continue
+                pnl_paths, entry = payoff_paths_calendar(calendar_terminal[0], calendar_terminal[1], priced)
+            else:
+                pnl_paths, entry = payoff_paths(terminal, priced)
             q05 = float(np.quantile(pnl_paths, 0.05))
             q01 = float(np.quantile(pnl_paths, 0.01))
             loss_tail_95 = pnl_paths[pnl_paths <= q05]
@@ -230,11 +264,21 @@ def main():
                 risk_for_ror = max(0.0, -float(np.mean(loss_tail_95)))
             else:
                 risk_for_ror = 0.0
-            realized_spot = float(price[exp_session])
+            realized_front_spot = float(price[exp_session])
+            realized_next_spot = float(price[next_exp_session]) if next_exp_session is not None else None
             realized = 0.0
             for leg, _ in priced:
-                intrinsic = max(realized_spot - leg.strike, 0.0) if leg.option_type == "CE" else max(leg.strike - realized_spot, 0.0)
+                if leg.expiry == "front":
+                    settled_spot = realized_front_spot
+                else:
+                    if realized_next_spot is None:
+                        ok = False
+                        break
+                    settled_spot = realized_next_spot
+                intrinsic = max(settled_spot - leg.strike, 0.0) if leg.option_type == "CE" else max(leg.strike - settled_spot, 0.0)
                 realized += leg.qty * intrinsic
+            if not ok:
+                continue
             realized_pnl = float(realized + entry)
             rows.append({
                 "decision_id": did, "decision_date": decision.date(), "actual_expiry": expiry.date(),
