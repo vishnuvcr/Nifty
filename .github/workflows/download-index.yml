@@ -1,6 +1,10 @@
 name: download-nifty-index
 
 on:
+  push:
+    branches: ["research/monte-carlo-wfa-v1"]
+    paths:
+      - ".github/workflows/download-index.yml"
   workflow_dispatch:
     inputs:
       start:
@@ -29,11 +33,23 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      - name: Resolve date range
+        id: dates
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "start=${{ inputs.start }}" >> "$GITHUB_OUTPUT"
+            echo "end=${{ inputs.end }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "start=2015-01-01" >> "$GITHUB_OUTPUT"
+            echo "end=2026-09-18" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Download NIFTY 50 index history
         run: |
           python scripts/download_nse_data.py \
-            --start "${{ inputs.start }}" \
-            --end "${{ inputs.end }}" \
+            --start "${{ steps.dates.outputs.start }}" \
+            --end "${{ steps.dates.outputs.end }}" \
             --out-dir data/raw \
             --index-only
 
@@ -55,6 +71,6 @@ jobs:
       - name: Upload research dataset artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nifty50-index-${{ inputs.start }}-${{ inputs.end }}
+          name: nifty50-index-${{ steps.dates.outputs.start }}-${{ steps.dates.outputs.end }}
           path: data/raw/nifty50_index.csv
           retention-days: 14
