@@ -44,14 +44,19 @@ def fetch_one(date_str: str, timeout: int = 30) -> tuple[str, pd.DataFrame | Non
             df = normalize_option_csv(raw_path)
             return date_str, df, {
                 "trade_date": date_str, "status": "ok", "source_url": url,
-                "source_tier": "A? daily_EOD_archive", "rows": len(df)
+                "source_tier": "tier_b_daily_eod_official", "rows": len(df)
             }
         except Exception as e:
             errors.append(f"{type(e).__name__}:{e}")
 
-    # Mirrors are deliberately limited to validation copies already pinned
-    # in the pilot. They are recorded as secondary_public_mirror.
+    # Secondary public mirror: a repository that stores validated original NSE
+    # F&O archives under data/YYYY/MM/. It is used only after both official NSE
+    # hosts fail, and provenance remains explicitly secondary.
+    legacy_name = f"fo{dt.strftime('%d')}{dt.strftime('%b').upper()}{dt.strftime('%Y')}bhav.csv.zip"
+    udiff_name = f"BhavCopy_NSE_FO_0_0_0_{dt.strftime('%Y%m%d')}_F_0000.csv.zip"
+    mirror_name = legacy_name if dt < pd.Timestamp("2024-07-08") else udiff_name
     mirrors = {
+        date_str: f"https://raw.githubusercontent.com/SantoshSrinivas79/NSE-FNO-Data-bank/main/data/{dt.strftime('%Y/%m')}/{mirror_name}",
         "2025-02-03": "https://raw.githubusercontent.com/kiranfor2004/NSE_Downloader/e84ac65e1b727fc8354759bbd13d49c588abb361/fo_udiff_downloads/BhavCopy_NSE_FO_0_0_0_20250203_F_0000.csv.zip",
         "2026-04-01": "https://raw.githubusercontent.com/developerjava80-afk/strategy-squad/c38b0d169d2056e82894526f9172c9ae3df9603f/data/bhavcopy/historical/derivatives/BhavCopy_NSE_FO_0_0_0_20260401_F_0000.csv",
     }
