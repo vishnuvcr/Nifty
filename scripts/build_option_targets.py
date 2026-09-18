@@ -15,12 +15,9 @@ def expiry_candidates(start: pd.Timestamp, end: pd.Timestamp) -> pd.DatetimeInde
     out = []
     for d in dates:
         if d < pd.Timestamp("2025-04-04"):
-            if d.weekday() == 3:  # historical NIFTY weekly expiry: Thursday
+            if d.weekday() == 3:
                 out.append(d)
         elif d < pd.Timestamp("2025-07-01"):
-            # 2025 transition was not a simple weekday switch. The NSE
-            # circular explicitly revised the existing April/May contracts.
-            # Use the documented expiry dates, then Monday cadence after them.
             explicit = {
                 pd.Timestamp("2025-04-11"),
                 pd.Timestamp("2025-04-21"),
@@ -31,11 +28,9 @@ def expiry_candidates(start: pd.Timestamp, end: pd.Timestamp) -> pd.DatetimeInde
             ):
                 out.append(d)
         elif d < pd.Timestamp("2025-08-29"):
-            # Existing contracts through Aug-28-2025 remained on Thursday.
             if d.weekday() == 3:
                 out.append(d)
         else:
-            # From the revised regime, NIFTY weekly expiry is Tuesday.
             if d.weekday() == 1:
                 out.append(d)
     return pd.DatetimeIndex(out)
@@ -61,11 +56,18 @@ def build_targets(index_csv: str, start: str, end: str, dte_sessions=(5, 3)) -> 
             if len(eligible) < n:
                 continue
             decision = eligible[-n]
+            # Never request an option archive before the configured acquisition window.
+            # This is important when the underlying history predates the option archive.
+            if decision < lo:
+                continue
             rows.append({
                 "decision_date": decision.date().isoformat(),
                 "target_expiry": expiry.date().isoformat(),
                 "entry_session_offset": n,
             })
+
+    if not rows:
+        return pd.DataFrame(columns=["decision_date", "target_expiry", "entry_session_offset"])
 
     return pd.DataFrame(rows).drop_duplicates().sort_values(
         ["decision_date", "target_expiry", "entry_session_offset"]
@@ -81,11 +83,11 @@ def main():
     args = ap.parse_args()
     out = build_targets(args.index, args.start, args.end)
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
-    out.to_csv(args.out, index=False)
     print("targets", len(out))
     print("decision dates", out["decision_date"].nunique())
     print("expiry dates", out["target_expiry"].nunique())
     print(out.head(10).to_string(index=False))
+    out.to_csv(args.out, index=False)
 
 
 if __name__ == "__main__":
