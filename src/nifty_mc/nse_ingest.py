@@ -65,7 +65,7 @@ def normalize_option_csv(path: str | Path) -> pd.DataFrame:
     if "instrument_type" in df.columns:
         df["instrument_type"] = df["instrument_type"].astype(str).str.upper().str.strip()
         # Keep NIFTY index options only; exclude futures and stock options.
-        df = df[df["instrument_type"].eq("OPTIDX")]
+        df = df[df["instrument_type"].isin(["OPTIDX", "IDO"])]
     if "symbol" in df.columns:
         df["symbol"] = df["symbol"].astype(str).str.upper().str.strip()
         df = df[df["symbol"].eq("NIFTY")]
