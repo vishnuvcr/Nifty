@@ -14,20 +14,29 @@ def expiry_candidates(start: pd.Timestamp, end: pd.Timestamp) -> pd.DatetimeInde
     dates = pd.date_range(start.normalize(), end.normalize(), freq="D")
     out = []
     for d in dates:
-        # NIFTY weekly expiry regime.  NSE's 2025 circulars changed the
-        # weekday in stages; use explicit transition dates rather than a
-        # single hard-coded weekday across the whole sample.
         if d < pd.Timestamp("2025-04-04"):
-            if d.weekday() == 3:  # Thursday
+            if d.weekday() == 3:  # historical NIFTY weekly expiry: Thursday
                 out.append(d)
         elif d < pd.Timestamp("2025-07-01"):
-            if d.weekday() == 0:  # Monday
+            # 2025 transition was not a simple weekday switch. The NSE
+            # circular explicitly revised the existing April/May contracts.
+            # Use the documented expiry dates, then Monday cadence after them.
+            explicit = {
+                pd.Timestamp("2025-04-11"),
+                pd.Timestamp("2025-04-21"),
+                pd.Timestamp("2025-05-05"),
+            }
+            if d in explicit or (
+                d >= pd.Timestamp("2025-05-12") and d.weekday() == 0
+            ):
                 out.append(d)
         elif d < pd.Timestamp("2025-08-29"):
-            if d.weekday() == 3:  # Thursday; existing contracts unchanged
+            # Existing contracts through Aug-28-2025 remained on Thursday.
+            if d.weekday() == 3:
                 out.append(d)
         else:
-            if d.weekday() == 1:  # Tuesday
+            # From the revised regime, NIFTY weekly expiry is Tuesday.
+            if d.weekday() == 1:
                 out.append(d)
     return pd.DatetimeIndex(out)
 
@@ -47,9 +56,6 @@ def build_targets(index_csv: str, start: str, end: str, dte_sessions=(5, 3)) -> 
         expiry = _previous_session(sessions, candidate)
         if expiry is None or expiry < lo:
             continue
-        # The August 2025 transition had no Thursday weekly expiries after
-        # Aug-28; monthly/long-dated contracts are handled by the actual
-        # option-chain expiry field during ingestion.
         eligible = sessions[sessions < expiry]
         for n in dte_sessions:
             if len(eligible) < n:
@@ -61,10 +67,9 @@ def build_targets(index_csv: str, start: str, end: str, dte_sessions=(5, 3)) -> 
                 "entry_session_offset": n,
             })
 
-    out = pd.DataFrame(rows).drop_duplicates().sort_values(
+    return pd.DataFrame(rows).drop_duplicates().sort_values(
         ["decision_date", "target_expiry", "entry_session_offset"]
-    )
-    return out.reset_index(drop=True)
+    ).reset_index(drop=True)
 
 
 def main():
