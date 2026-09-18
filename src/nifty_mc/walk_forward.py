@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Iterable
+from typing import Iterable
 import numpy as np
 import pandas as pd
 
 from .gbm import simulate_terminal_gbm
 from .volatility import realized_vol
 from .trend import classify_trend
-from .iron_condor import long_iron_condor_profit, metrics
+from .evaluation import interval_metrics, crps_empirical, directional_brier
 
 
 @dataclass(frozen=True)
@@ -18,42 +18,62 @@ class ForecastOrigin:
 
 
 def log_returns(close: pd.Series) -> pd.Series:
-    return np.log(close.astype(float)).diff().dropna()
+    s = pd.Series(close, dtype=float).sort_index().dropna()
+    if (s <= 0).any():
+        raise ValueError("close prices must be positive")
+    return np.log(s).diff().dropna()
 
 
 def make_forecast(
     s0: float,
-    horizon_days: int,
+    horizon_trading_days: int,
     returns_history: pd.Series,
     vol_window: int = 20,
     drift_window: int = 60,
     n_paths: int = 50_000,
     seed: int = 0,
+    history_is_log_returns: bool = False,
 ):
-    lr = log_returns(returns_history) if not isinstance(returns_history.index, pd.RangeIndex) else pd.Series(returns_history)
+    """Forecast from a history of closes or explicitly supplied log returns."""
+    lr = (
+        pd.Series(returns_history, dtype=float).dropna()
+        if history_is_log_returns
+        else log_returns(returns_history)
+    )
+    if len(lr) < 2:
+        raise ValueError("insufficient return history")
     sigma = realized_vol(lr, window=vol_window)
-    mu = float(lr.tail(drift_window).mean() * 252) if len(lr) >= drift_window else float(lr.mean() * 252)
-    t = horizon_days / 252.0
+    if not np.isfinite(sigma) or sigma <= 0:
+        raise ValueError("estimated volatility must be positive")
+    recent = lr.tail(drift_window)
+    mu = float(recent.mean() * 252.0)
+    t = max(1, int(horizon_trading_days)) / 252.0
     samples = simulate_terminal_gbm(s0, t, mu, sigma, n_paths=n_paths, seed=seed)
     trend = classify_trend(samples, s0)
-    q = np.quantile(samples, [0.01,0.05,0.10,0.25,0.50,0.75,0.90,0.95,0.99])
-    out = {"s0":s0, "sigma":sigma, "mu":mu, "horizon_days":horizon_days}
-    out.update({f"p{int(p*100):02d}":float(v) for p,v in zip([.01,.05,.10,.25,.50,.75,.90,.95,.99],q)})
+    q_levels = [.01, .05, .10, .25, .50, .75, .90, .95, .99]
+    q = np.quantile(samples, q_levels)
+    out = {"s0": float(s0), "sigma": float(sigma), "mu": float(mu),
+           "horizon_trading_days": int(horizon_trading_days)}
+    out.update({f"p{int(p*100):02d}": float(v) for p, v in zip(q_levels, q)})
     out.update(trend)
     return out, samples
 
 
 def evaluate_prediction(actual_st: float, samples: np.ndarray, s0: float) -> dict:
-    x = np.asarray(samples)
-    intervals = {}
-    for level in (0.50,0.80,0.90):
-        alpha = 1.0 - level
-        lo, hi = np.quantile(x, [alpha/2, 1-alpha/2])
-        intervals[f"coverage_{int(level*100)}"] = float(lo <= actual_st <= hi)
-        intervals[f"width_{int(level*100)}"] = float(hi-lo)
-    intervals["actual_st"] = float(actual_st)
-    intervals["realized_move"] = float(actual_st/s0 - 1.0)
-    return intervals
+    out = interval_metrics(actual_st, samples)
+    out["actual_st"] = float(actual_st)
+    out["realized_move"] = float(actual_st / s0 - 1.0)
+    out["crps"] = crps_empirical(actual_st, samples)
+    out["brier_up"] = directional_brier(actual_st, samples, s0)
+    return out
+
+
+def trading_days_to_expiry(index: pd.DatetimeIndex, decision: pd.Timestamp,
+                           expiry: pd.Timestamp) -> int:
+    """Count observed market sessions strictly after decision through expiry."""
+    idx = pd.DatetimeIndex(index).normalize()
+    d, e = pd.Timestamp(decision).normalize(), pd.Timestamp(expiry).normalize()
+    return int(((idx > d) & (idx <= e)).sum())
 
 
 def walk_forward(
@@ -66,24 +86,29 @@ def walk_forward(
     n_paths: int = 50_000,
     seed: int = 20260918,
 ):
+    """Chronological OOS evaluation. Each forecast only sees data <= decision."""
     df = prices.copy()
-    df.index = pd.to_datetime(df.index)
+    df.index = pd.to_datetime(df.index).normalize()
     df = df.sort_index()
     rows = []
 
     for i, origin in enumerate(expiry_schedule):
-        decision = pd.Timestamp(origin.decision_date)
-        expiry = pd.Timestamp(origin.expiry_date)
+        decision = pd.Timestamp(origin.decision_date).normalize()
+        expiry = pd.Timestamp(origin.expiry_date).normalize()
+        if expiry <= decision:
+            continue
         hist = df.loc[df.index <= decision, price_col].dropna()
         future = df.loc[(df.index > decision) & (df.index <= expiry), price_col].dropna()
         if len(hist) < min_history or future.empty:
             continue
         s0 = float(hist.iloc[-1])
         actual = float(future.iloc[-1])
-        horizon = max(1, int((expiry - decision).days))
+        horizon = trading_days_to_expiry(df.index, decision, expiry)
+        if horizon < 1:
+            continue
         forecast, samples = make_forecast(
-            s0, horizon, hist, vol_window, drift_window, n_paths=n_paths,
-            seed=seed+i
+            s0, horizon, hist, vol_window, drift_window,
+            n_paths=n_paths, seed=seed + i,
         )
         score = evaluate_prediction(actual, samples, s0)
         rows.append({
@@ -91,7 +116,7 @@ def walk_forward(
             "expiry_date": expiry,
             "s0": s0,
             "actual_st": actual,
-            **{k:v for k,v in forecast.items() if k not in {"s0"}},
+            **{k: v for k, v in forecast.items() if k != "s0"},
             **score,
         })
     return pd.DataFrame(rows)
