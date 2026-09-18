@@ -4,9 +4,11 @@ import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from io import BytesIO
 from pathlib import Path
+import time
 import zipfile
-import requests
+
 import pandas as pd
+import requests
 
 from nifty_mc.nse_ingest import normalize_option_csv
 
@@ -27,20 +29,27 @@ def candidate_urls(dt: pd.Timestamp) -> list[str]:
 def mirror_urls(dt: pd.Timestamp) -> list[str]:
     legacy_name = f"fo{dt.strftime('%d')}{dt.strftime('%b').upper()}{dt.strftime('%Y')}bhav.csv.zip"
     udiff_name = f"BhavCopy_NSE_FO_0_0_0_{dt.strftime('%Y%m%d')}_F_0000.csv.zip"
+    ymd = dt.strftime("%Y%m%d")
+    rel = dt.strftime("%Y/%m")
+
+    # jsDelivr is used before raw.githubusercontent.com because this workflow
+    # makes hundreds of independent archive requests. GitHub has tightened
+    # unauthenticated raw-content rate limits; the CDN avoids making the
+    # research pipeline depend on that limit.
     urls = [
-        f"https://raw.githubusercontent.com/SantoshSrinivas79/NSE-FNO-Data-bank/main/data/{dt.strftime('%Y/%m')}/{legacy_name}",
-        f"https://raw.githubusercontent.com/SantoshSrinivas79/NSE-FNO-Data-bank/main/data/{dt.strftime('%Y/%m')}/{udiff_name}",
+        f"https://cdn.jsdelivr.net/gh/SantoshSrinivas79/NSE-FNO-Data-bank@main/data/{rel}/{legacy_name}",
+        f"https://cdn.jsdelivr.net/gh/SantoshSrinivas79/NSE-FNO-Data-bank@main/data/{rel}/{udiff_name}",
+        f"https://raw.githubusercontent.com/SantoshSrinivas79/NSE-FNO-Data-bank/main/data/{rel}/{legacy_name}",
+        f"https://raw.githubusercontent.com/SantoshSrinivas79/NSE-FNO-Data-bank/main/data/{rel}/{udiff_name}",
     ]
-    if dt.strftime("%Y-%m-%d") == "2025-02-03":
-        urls.insert(
-            0,
-            "https://raw.githubusercontent.com/kiranfor2004/NSE_Downloader/e84ac65e1b727fc8354759bbd13d49c588abb361/fo_udiff_downloads/BhavCopy_NSE_FO_0_0_0_20250203_F_0000.csv.zip",
-        )
-    if dt.strftime("%Y-%m-%d") == "2026-04-01":
-        urls.insert(
-            0,
-            "https://raw.githubusercontent.com/developerjava80-afk/strategy-squad/c38b0d169d2056e82894526f9172c9ae3df9603f/data/bhavcopy/historical/derivatives/BhavCopy_NSE_FO_0_0_0_20260401_F_0000.csv",
-        )
+    if ymd == "20250203":
+        path = "fo_udiff_downloads/BhavCopy_NSE_FO_0_0_0_20250203_F_0000.csv.zip"
+        urls.insert(0, f"https://cdn.jsdelivr.net/gh/kiranfor2004/NSE_Downloader@e84ac65e1b727fc8354759bbd13d49c588abb361/{path}")
+        urls.append(f"https://raw.githubusercontent.com/kiranfor2004/NSE_Downloader/e84ac65e1b727fc8354759bbd13d49c588abb361/{path}")
+    if ymd == "20260401":
+        path = "data/bhavcopy/historical/derivatives/BhavCopy_NSE_FO_0_0_0_20260401_F_0000.csv"
+        urls.insert(0, f"https://cdn.jsdelivr.net/gh/developerjava80-afk/strategy-squad@c38b0d169d2056e82894526f9172c9ae3df9603f/{path}")
+        urls.append(f"https://raw.githubusercontent.com/developerjava80-afk/strategy-squad/c38b0d169d2056e82894526f9172c9ae3df9603f/{path}")
     return urls
 
 
@@ -58,29 +67,39 @@ def _read_response(url: str, content: bytes, dt: pd.Timestamp) -> pd.DataFrame:
     return normalize_option_csv(raw_path)
 
 
-def _try_urls(urls: list[str], dt: pd.Timestamp, timeout: int, headers: dict) -> tuple[pd.DataFrame | None, str | None, list[str]]:
+def _try_urls(
+    urls: list[str], dt: pd.Timestamp, timeout: int, headers: dict
+) -> tuple[pd.DataFrame | None, str | None, list[str]]:
     errors = []
     for url in urls:
-        try:
-            r = requests.get(url, headers=headers, timeout=timeout)
-            if r.status_code != 200 or len(r.content) <= 100:
+        for attempt in range(3):
+            try:
+                r = requests.get(url, headers=headers, timeout=timeout)
+                if r.status_code == 200 and len(r.content) > 100:
+                    return _read_response(url, r.content, dt), url, errors
+                if r.status_code in {429, 500, 502, 503, 504} and attempt < 2:
+                    retry_after = r.headers.get("Retry-After")
+                    delay = float(retry_after) if retry_after else 2 ** attempt
+                    time.sleep(min(delay, 8))
+                    continue
                 errors.append(f"{r.status_code}:{url}")
-                continue
-            return _read_response(url, r.content, dt), url, errors
-        except Exception as e:
-            errors.append(f"{type(e).__name__}:{e}")
+                break
+            except Exception as e:
+                errors.append(f"{type(e).__name__}:{e}")
+                if attempt < 2:
+                    time.sleep(2 ** attempt)
     return None, None, errors
 
 
 def fetch_one(date_str: str, timeout: int = 20) -> tuple[str, pd.DataFrame | None, dict]:
     dt = pd.Timestamp(date_str).normalize()
-    headers = {"User-Agent": "Mozilla/5.0", "Accept": "text/csv,application/zip,*/*"}
+    headers = {
+        "User-Agent": "Nifty-MC-WFA/1.0 (+https://github.com/vishnuvcr/Nifty)",
+        "Accept": "text/csv,application/zip,*/*",
+    }
     errors = []
 
-    # The validated secondary archive is tried first because it contains the
-    # original NSE daily archives and is much more reliable from CI than the
-    # NSE web archive endpoints. Provenance remains explicitly secondary.
-    df, url, errs = _try_urls(mirror_urls(dt), dt, timeout, {})
+    df, url, errs = _try_urls(mirror_urls(dt), dt, timeout, headers)
     errors.extend(errs)
     if df is not None:
         return date_str, df, {
@@ -91,7 +110,6 @@ def fetch_one(date_str: str, timeout: int = 20) -> tuple[str, pd.DataFrame | Non
             "rows": len(df),
         }
 
-    # Fall back to official NSE archives when the secondary mirror lacks a date.
     df, url, errs = _try_urls(candidate_urls(dt), dt, timeout, headers)
     errors.extend(errs)
     if df is not None:
@@ -106,7 +124,7 @@ def fetch_one(date_str: str, timeout: int = 20) -> tuple[str, pd.DataFrame | Non
     return date_str, None, {
         "trade_date": date_str,
         "status": "failed",
-        "error": " | ".join(errors[-8:]),
+        "error": " | ".join(errors[-10:]),
     }
 
 
@@ -131,7 +149,7 @@ def main():
                 x = df.copy()
                 x["source_trade_date"] = pd.Timestamp(date_str)
                 frames.append(x)
-            print(date_str, meta["status"], meta.get("rows", 0), meta.get("source_tier", ""))
+            print(date_str, meta["status"], meta.get("rows", 0), meta.get("source_tier", ""), flush=True)
 
     if not frames:
         raise SystemExit("no option dates acquired")
@@ -143,7 +161,7 @@ def main():
 
     expected = set(dates)
     acquired = {m["trade_date"] for m in manifest if m["status"] == "ok"}
-    print("ACQUIRED", len(acquired), "of", len(expected))
+    print("ACQUIRED", len(acquired), "of", len(expected), flush=True)
     if acquired != expected:
         missing = sorted(expected - acquired)
         raise SystemExit(f"incomplete acquisition; missing {len(missing)} dates: {missing[:20]}")
