@@ -24,78 +24,89 @@ def candidate_urls(dt: pd.Timestamp) -> list[str]:
     ]
 
 
-def fetch_one(date_str: str, timeout: int = 60) -> tuple[str, pd.DataFrame | None, dict]:
-    dt = pd.Timestamp(date_str).normalize()
-    headers = {"User-Agent": "Mozilla/5.0", "Accept": "text/csv,application/zip,*/*"}
-    errors = []
-    for url in candidate_urls(dt):
-        try:
-            r = requests.get(url, headers=headers, timeout=timeout)
-            if r.status_code != 200:
-                errors.append(f"{r.status_code}:{url}")
-                continue
-            if r.status_code != 200 or len(r.content) <= 100:
-                errors.append(f"{r.status_code}:{url}")
-                continue
-            z = zipfile.ZipFile(BytesIO(r.content))
-            names = [n for n in z.namelist() if not n.endswith("/")]
-            if not names:
-                errors.append(f"empty_zip:{url}")
-                continue
-            raw_path = Path("/tmp") / names[0]
-            raw_path.write_bytes(z.read(names[0]))
-            df = normalize_option_csv(raw_path)
-            return date_str, df, {
-                "trade_date": date_str, "status": "ok", "source_url": url,
-                "source_tier": "tier_b_daily_eod_official", "rows": len(df)
-            }
-        except Exception as e:
-            errors.append(f"{type(e).__name__}:{e}")
-
-    # Secondary public mirror: a repository that stores validated original NSE
-    # F&O archives under data/YYYY/MM/. It is used only after both official NSE
-    # hosts fail, and provenance remains explicitly secondary.
+def mirror_urls(dt: pd.Timestamp) -> list[str]:
     legacy_name = f"fo{dt.strftime('%d')}{dt.strftime('%b').upper()}{dt.strftime('%Y')}bhav.csv.zip"
     udiff_name = f"BhavCopy_NSE_FO_0_0_0_{dt.strftime('%Y%m%d')}_F_0000.csv.zip"
-    # Try the validated public archive mirror using both official filename
-    # conventions. This protects against format-transition edge cases.
-    mirror_urls = [
+    urls = [
         f"https://raw.githubusercontent.com/SantoshSrinivas79/NSE-FNO-Data-bank/main/data/{dt.strftime('%Y/%m')}/{legacy_name}",
         f"https://raw.githubusercontent.com/SantoshSrinivas79/NSE-FNO-Data-bank/main/data/{dt.strftime('%Y/%m')}/{udiff_name}",
     ]
-    if date_str == "2025-02-03":
-        mirror_urls.insert(0, "https://raw.githubusercontent.com/kiranfor2004/NSE_Downloader/e84ac65e1b727fc8354759bbd13d49c588abb361/fo_udiff_downloads/BhavCopy_NSE_FO_0_0_0_20250203_F_0000.csv.zip")
-    if date_str == "2026-04-01":
-        mirror_urls.insert(0, "https://raw.githubusercontent.com/developerjava80-afk/strategy-squad/c38b0d169d2056e82894526f9172c9ae3df9603f/data/bhavcopy/historical/derivatives/BhavCopy_NSE_FO_0_0_0_20260401_F_0000.csv")
+    if dt.strftime("%Y-%m-%d") == "2025-02-03":
+        urls.insert(
+            0,
+            "https://raw.githubusercontent.com/kiranfor2004/NSE_Downloader/e84ac65e1b727fc8354759bbd13d49c588abb361/fo_udiff_downloads/BhavCopy_NSE_FO_0_0_0_20250203_F_0000.csv.zip",
+        )
+    if dt.strftime("%Y-%m-%d") == "2026-04-01":
+        urls.insert(
+            0,
+            "https://raw.githubusercontent.com/developerjava80-afk/strategy-squad/c38b0d169d2056e82894526f9172c9ae3df9603f/data/bhavcopy/historical/derivatives/BhavCopy_NSE_FO_0_0_0_20260401_F_0000.csv",
+        )
+    return urls
 
-    for url in mirror_urls:
+
+def _read_response(url: str, content: bytes, dt: pd.Timestamp) -> pd.DataFrame:
+    if url.endswith(".zip"):
+        z = zipfile.ZipFile(BytesIO(content))
+        names = [n for n in z.namelist() if not n.endswith("/")]
+        if not names:
+            raise ValueError("empty zip")
+        raw_path = Path("/tmp") / names[0]
+        raw_path.write_bytes(z.read(names[0]))
+    else:
+        raw_path = Path("/tmp") / f"mirror_{dt.strftime('%Y%m%d')}.csv"
+        raw_path.write_bytes(content)
+    return normalize_option_csv(raw_path)
+
+
+def _try_urls(urls: list[str], dt: pd.Timestamp, timeout: int, headers: dict) -> tuple[pd.DataFrame | None, str | None, list[str]]:
+    errors = []
+    for url in urls:
         try:
-            r = requests.get(url, timeout=timeout)
+            r = requests.get(url, headers=headers, timeout=timeout)
             if r.status_code != 200 or len(r.content) <= 100:
                 errors.append(f"{r.status_code}:{url}")
                 continue
-            if url.endswith(".zip"):
-                z = zipfile.ZipFile(BytesIO(r.content))
-                names = [n for n in z.namelist() if not n.endswith("/")]
-                if not names:
-                    errors.append(f"empty_zip:{url}")
-                    continue
-                raw_path = Path("/tmp") / names[0]
-                raw_path.write_bytes(z.read(names[0]))
-            else:
-                raw_path = Path("/tmp") / f"mirror_{dt.strftime('%Y%m%d')}.csv"
-                raw_path.write_bytes(r.content)
-            df = normalize_option_csv(raw_path)
-            return date_str, df, {
-                "trade_date": date_str, "status": "ok", "source_url": url,
-                "source_tier": "secondary_public_mirror", "rows": len(df)
-            }
+            return _read_response(url, r.content, dt), url, errors
         except Exception as e:
-            errors.append(f"mirror:{type(e).__name__}:{e}")
+            errors.append(f"{type(e).__name__}:{e}")
+    return None, None, errors
+
+
+def fetch_one(date_str: str, timeout: int = 20) -> tuple[str, pd.DataFrame | None, dict]:
+    dt = pd.Timestamp(date_str).normalize()
+    headers = {"User-Agent": "Mozilla/5.0", "Accept": "text/csv,application/zip,*/*"}
+    errors = []
+
+    # The validated secondary archive is tried first because it contains the
+    # original NSE daily archives and is much more reliable from CI than the
+    # NSE web archive endpoints. Provenance remains explicitly secondary.
+    df, url, errs = _try_urls(mirror_urls(dt), dt, timeout, {})
+    errors.extend(errs)
+    if df is not None:
+        return date_str, df, {
+            "trade_date": date_str,
+            "status": "ok",
+            "source_url": url,
+            "source_tier": "secondary_public_mirror",
+            "rows": len(df),
+        }
+
+    # Fall back to official NSE archives when the secondary mirror lacks a date.
+    df, url, errs = _try_urls(candidate_urls(dt), dt, timeout, headers)
+    errors.extend(errs)
+    if df is not None:
+        return date_str, df, {
+            "trade_date": date_str,
+            "status": "ok",
+            "source_url": url,
+            "source_tier": "tier_b_daily_eod_official",
+            "rows": len(df),
+        }
 
     return date_str, None, {
-        "trade_date": date_str, "status": "failed",
-        "error": " | ".join(errors[-6:])
+        "trade_date": date_str,
+        "status": "failed",
+        "error": " | ".join(errors[-8:]),
     }
 
 
