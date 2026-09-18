@@ -22,7 +22,7 @@ jobs:
           pip install -e .
       - name: Download representative NSE F&O archives
         run: |
-          python scripts/download_fo_pilot.py             --dates               2020-01-22               2022-06-16               2023-11-09               2024-06-20               2025-06-19               2026-03-26             --out data/options_pilot.csv
+          python scripts/download_fo_pilot.py             --dates               2020-01-22               2022-06-16               2023-11-09               2024-06-20               2025-01-02               2026-08-31             --out data/options_pilot.csv
       - name: Validate NIFTY options
         run: |
           python -c "import pandas as pd; d=pd.read_csv('data/options_pilot.csv',parse_dates=['timestamp','expiry']); assert len(d)>0; assert set(d['option_type'].dropna().unique())<=set(['CE','PE']); assert d['symbol'].eq('NIFTY').all(); print('rows',len(d)); print(d.groupby('source_trade_date').size()); print(d[['timestamp','expiry','strike','option_type','close','open_interest','volume']].head())"
