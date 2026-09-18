@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nifty-mc-research"
+version = "0.1.0"
+description = "Reproducible NIFTY 50 Monte Carlo and walk-forward research framework"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy",
+  "pandas",
+  "pyyaml",
+  "scikit-learn",
+  "scipy",
+  "matplotlib",
+  "pyarrow",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
