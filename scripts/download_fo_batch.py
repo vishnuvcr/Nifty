@@ -134,6 +134,8 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--manifest", required=True)
     ap.add_argument("--workers", type=int, default=6)
+    ap.add_argument("--allow-missing", action="store_true")
+    ap.add_argument("--max-missing", type=int, default=0)
     args = ap.parse_args()
 
     targets = pd.read_csv(args.targets)
@@ -149,7 +151,7 @@ def main():
                 x = df.copy()
                 x["source_trade_date"] = pd.Timestamp(date_str)
                 frames.append(x)
-            print(date_str, meta["status"], meta.get("rows", 0), meta.get("source_tier", ""), flush=True)
+            print(date_str, meta["status"], meta.get("rows", 0), meta.get("source_tier", ""), meta.get("error", ""), flush=True)
 
     if not frames:
         raise SystemExit("no option dates acquired")
@@ -164,7 +166,10 @@ def main():
     print("ACQUIRED", len(acquired), "of", len(expected), flush=True)
     if acquired != expected:
         missing = sorted(expected - acquired)
-        raise SystemExit(f"incomplete acquisition; missing {len(missing)} dates: {missing[:20]}")
+        print("MISSING_DATES", len(missing), missing, flush=True)
+        if not args.allow_missing or len(missing) > args.max_missing:
+            raise SystemExit(f"incomplete acquisition; missing {len(missing)} dates: {missing[:20]}")
+        print(f"ALLOWING {len(missing)} missing dates (max {args.max_missing}); they will be excluded from downstream EOD option-chain analysis.", flush=True)
 
 
 if __name__ == "__main__":
