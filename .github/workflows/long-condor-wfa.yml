@@ -1,15 +1,29 @@
 name: long-condor-walk-forward
 
 on:
+  push:
+    branches: ["research/monte-carlo-wfa-v1"]
+    paths:
+      - scripts/run_long_condor_wfa.py
+      - scripts/build_option_targets.py
+      - .github/workflows/long-condor-wfa.yml
   workflow_run:
     workflows: ["build-historical-nifty-options"]
     types: [completed]
     branches: ["research/monte-carlo-wfa-v1"]
   workflow_dispatch:
+    inputs:
+      acquisition_run_id:
+        description: "Successful historical-options acquisition run ID (optional)"
+        required: false
+        type: string
 
 jobs:
   backtest:
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    if: >-
+      ${{ github.event_name == 'push' ||
+          github.event_name == 'workflow_dispatch' ||
+          github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -27,17 +41,30 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -e .
+      - name: Resolve acquisition run
+        id: acquisition
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_RUN_ID: ${{ github.event.workflow_run.id }}
+          INPUT_RUN_ID: ${{ inputs.acquisition_run_id }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_run" ]; then
+            run_id="$EVENT_RUN_ID"
+          elif [ -n "$INPUT_RUN_ID" ]; then
+            run_id="$INPUT_RUN_ID"
+          else
+            run_id="$(gh run list               --repo "$GITHUB_REPOSITORY"               --workflow "build-historical-nifty-options"               --branch research/monte-carlo-wfa-v1               --status success               --limit 1               --json databaseId               --jq '.[0].databaseId')"
+          fi
+          test -n "$run_id"
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "Using acquisition run: $run_id"
       - name: Download historical option artifacts
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p data/options
-          if [ "${{ github.event_name }}" = "workflow_run" ]; then
-            gh run download "${{ github.event.workflow_run.id }}" --repo "${{ github.repository }}" --pattern "nifty-options-*" --dir data/options
-          else
-            echo "Manual dispatch requires an existing successful acquisition run ID; use the workflow_run trigger after acquisition."
-            exit 1
-          fi
+          gh run download "${{ steps.acquisition.outputs.run_id }}"             --repo "${{ github.repository }}"             --pattern "nifty-options-*"             --dir data/options
       - name: Build NIFTY index session file
         run: |
           mkdir -p data/raw results
