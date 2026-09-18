@@ -90,3 +90,74 @@ jobs:
             data/options/nifty_options_${{ matrix.year }}.csv.gz
             data/options/manifest_${{ matrix.year }}.csv
           retention-days: 30
+
+  long-condor-walk-forward:
+    name: Long Iron Condor Walk-Forward
+    needs: acquire
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+      - name: Download option artifacts from this run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p data/options
+          gh run download "${{ github.run_id }}" --repo "${{ github.repository }}" --pattern "nifty-options-*" --dir data/options
+          find data/options -maxdepth 3 -type f | sort
+      - name: Build NIFTY index session file
+        run: |
+          mkdir -p data/raw results
+          curl --fail --location --retry 3 "https://raw.githubusercontent.com/Hareeshkesavan/Stock-Market-Dataset/main/Nifty%2050%20Historical%20Data.csv" -o data/raw/nifty50_source.csv
+          python - <<'PY'
+          import pandas as pd
+          d=pd.read_csv("data/raw/nifty50_source.csv")
+          d.columns=[str(c).strip().lower() for c in d.columns]
+          d["date"]=pd.to_datetime(d["date"],errors="coerce")
+          d["close"]=pd.to_numeric(d["price"].astype(str).str.replace(",","",regex=False),errors="coerce")
+          d=d[["date","close"]].dropna().drop_duplicates("date").sort_values("date")
+          d.to_csv("data/raw/nifty50_index.csv",index=False)
+          print("index",len(d),d.date.min(),d.date.max())
+          PY
+      - name: Run Long Iron Condor WFA
+        run: |
+          python scripts/run_long_condor_wfa.py \
+            --index data/raw/nifty50_index.csv \
+            --options-dir data/options \
+            --out results/long_condor_wfa.csv \
+            --paths 20000
+      - name: Summarize WFA
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          d=pd.read_csv("results/long_condor_wfa.csv",parse_dates=["decision_date","actual_expiry","expiry_session"])
+          d["cum_pnl"]=d["realized_pnl"].cumsum()
+          d["peak"]=d["cum_pnl"].cummax()
+          d["drawdown"]=d["cum_pnl"]-d["peak"]
+          print("TRADES",len(d))
+          print("WIN_RATE",d["win"].mean())
+          print("MEAN_PNL_POINTS",d["realized_pnl"].mean())
+          print("MEDIAN_PNL_POINTS",d["realized_pnl"].median())
+          print("TOTAL_PNL_POINTS",d["realized_pnl"].sum())
+          print("MAX_DRAWDOWN_POINTS",d["drawdown"].min())
+          print("MEAN_MC_POP",d["mc_pop"].mean())
+          print("MEAN_MC_EV",d["mc_ev"].mean())
+          print("\nYEAR")
+          print(d.assign(year=d.decision_date.dt.year).groupby("year").agg(trades=("win","size"),win_rate=("win","mean"),mean_pnl=("realized_pnl","mean"),total_pnl=("realized_pnl","sum"),mean_mc_pop=("mc_pop","mean")).to_string())
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: long-condor-wfa-results
+          path: results/long_condor_wfa.csv
+          retention-days: 30
