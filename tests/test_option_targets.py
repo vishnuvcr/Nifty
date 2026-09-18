@@ -40,5 +40,5 @@ def test_2025_july_august_remain_thursday_and_september_turns_tuesday():
 
 def test_historical_regime_is_thursday():
     out = expiry_candidates(pd.Timestamp("2024-01-01"), pd.Timestamp("2024-01-31"))
-    assert len(out) == 5
+    assert len(out) == 4  # Jan 2024 has four Thursdays before Feb
     assert all(x.weekday() == 3 for x in out)
