@@ -42,6 +42,37 @@ def mc_terminal(spot, returns, horizon_days, n=20000, seed=0):
     sampled=rng.choice(r,size=n*h,replace=True).reshape(n,h)
     return spot*np.exp(sampled.sum(axis=1))
 
+def load_targets(paths):
+    targets=[]
+    for p in paths:
+        d=pd.read_csv(p)
+        required={"decision_date"}
+        if not required.issubset(d.columns):
+            raise ValueError(f"{p}: missing required columns {sorted(required-set(d.columns))}")
+        # build_option_targets.py names this field target_expiry. Accept expiry too
+        # for backward compatibility, but never silently invent an expiry.
+        if "target_expiry" in d.columns:
+            expiry_col="target_expiry"
+        elif "expiry" in d.columns:
+            expiry_col="expiry"
+        else:
+            raise ValueError(
+                f"{p}: missing expiry column; expected 'target_expiry' or 'expiry'"
+            )
+        d["decision_date"]=pd.to_datetime(d["decision_date"],errors="coerce")
+        d["target_expiry"]=pd.to_datetime(d[expiry_col],errors="coerce")
+        if d[["decision_date","target_expiry"]].isna().any().any():
+            raise ValueError(f"{p}: invalid decision_date/expiry values")
+        targets.append(d[["decision_date","target_expiry"]])
+    if not targets:
+        return pd.DataFrame(columns=["decision_date","target_expiry"])
+    return (
+        pd.concat(targets,ignore_index=True)
+        .drop_duplicates(["decision_date","target_expiry"])
+        .sort_values("decision_date")
+        .reset_index(drop=True)
+    )
+
 def main():
     ap=argparse.ArgumentParser()
     ap.add_argument("--index",required=True)
@@ -69,17 +100,16 @@ def main():
             d["option_type"].isin(["CE","PE"]) & d["strike"].notna() & d["close"].notna()]
         chains.append(d)
         matches=list(Path(args.options_dir).rglob(f"targets_{y}.csv"))
-        if matches:
-            targets.append(pd.read_csv(matches[0],parse_dates=["decision_date","expiry"]))
+        targets.extend(matches)
     if not chains: raise SystemExit("no option artifacts")
     opt=pd.concat(chains,ignore_index=True)
-    targ=pd.concat(targets,ignore_index=True).drop_duplicates(["decision_date","expiry"]).sort_values("decision_date")
+    targ=load_targets(sorted(set(targets)))
     by_ts={k:g for k,g in opt.groupby("timestamp",sort=False)}
 
     rows=[]
     for i,t in enumerate(targ.itertuples(index=False)):
         decision=pd.Timestamp(t.decision_date).normalize()
-        target_exp=pd.Timestamp(t.expiry).normalize()
+        target_exp=pd.Timestamp(t.target_expiry).normalize()
         spot=price_by_date.get(decision)
         day=by_ts.get(decision)
         if spot is None or day is None: continue
