@@ -11,7 +11,7 @@ PRICE_ALIASES = {
 
 OPTION_ALIASES = {
     "TradDt": "timestamp", "TIMESTAMP": "timestamp", "Date": "timestamp",
-    "FinInstrmNm": "symbol", "Symbol": "symbol",
+    "FinInstrmNm": "symbol", "TckrSymb": "symbol", "Symbol": "symbol",
     "XpryDt": "expiry", "Expiry": "expiry",
     "StrkPric": "strike", "Strike Price": "strike", "Strike": "strike",
     "OptnTp": "option_type", "Option Type": "option_type",
@@ -22,6 +22,7 @@ OPTION_ALIASES = {
     "LastPric": "last", "Last": "last",
     "BidPric": "bid", "Bid": "bid",
     "AskPric": "ask", "Ask": "ask",
+    "FinInstrmTp": "instrument_type", "INSTRUMENT": "instrument_type",
     "OpnIntrst": "open_interest", "Open Interest": "open_interest",
     "TtlTradgVol": "volume", "Volume": "volume",
 }
@@ -61,8 +62,13 @@ def normalize_option_csv(path: str | Path) -> pd.DataFrame:
     df["option_type"] = df["option_type"].astype(str).str.upper().replace(
         {"CALL":"CE", "PUT":"PE"}
     )
+    if "instrument_type" in df.columns:
+        df["instrument_type"] = df["instrument_type"].astype(str).str.upper()
+        # Keep NIFTY index options only; exclude futures and other products.
+        df = df[df["instrument_type"].eq("OPTIDX") | df["instrument_type"].eq("OPTIDX ")]
     if "symbol" in df.columns:
-        df = df[df["symbol"].astype(str).str.upper().str.contains("NIFTY", na=False)]
+        df["symbol"] = df["symbol"].astype(str).str.upper().str.strip()
+        df = df[df["symbol"].eq("NIFTY")]
 
     return df.dropna(subset=["timestamp","expiry","strike"]).sort_values(
         ["timestamp","expiry","strike","option_type"]
