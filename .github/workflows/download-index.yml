@@ -1,0 +1,60 @@
+name: download-nifty-index
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "Start date (YYYY-MM-DD)"
+        required: true
+        default: "2015-01-01"
+      end:
+        description: "End date (YYYY-MM-DD)"
+        required: true
+        default: "2026-09-18"
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install downloader dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Download NIFTY 50 index history
+        run: |
+          python scripts/download_nse_data.py \
+            --start "${{ inputs.start }}" \
+            --end "${{ inputs.end }}" \
+            --out-dir data/raw \
+            --index-only
+
+      - name: Validate downloaded data
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          p = "data/raw/nifty50_index.csv"
+          df = pd.read_csv(p, parse_dates=["date"])
+          assert len(df) > 1000, f"Unexpectedly small dataset: {len(df)} rows"
+          assert df["date"].is_monotonic_increasing
+          assert df["date"].is_unique
+          assert (df["close"] > 0).all()
+          print(df.head(3).to_string(index=False))
+          print(df.tail(3).to_string(index=False))
+          print(f"validated {len(df)} sessions")
+          PY
+
+      - name: Upload research dataset artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nifty50-index-${{ inputs.start }}-${{ inputs.end }}
+          path: data/raw/nifty50_index.csv
+          retention-days: 14
