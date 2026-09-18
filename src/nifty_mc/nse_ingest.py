@@ -11,20 +11,20 @@ PRICE_ALIASES = {
 
 OPTION_ALIASES = {
     "TradDt": "timestamp", "TIMESTAMP": "timestamp", "Date": "timestamp",
-    "FinInstrmNm": "symbol", "TckrSymb": "symbol", "Symbol": "symbol",
-    "XpryDt": "expiry", "Expiry": "expiry",
-    "StrkPric": "strike", "Strike Price": "strike", "Strike": "strike",
-    "OptnTp": "option_type", "Option Type": "option_type",
-    "OpnPric": "open", "Open": "open",
-    "HghPric": "high", "High": "high",
-    "LwPric": "low", "Low": "low",
-    "ClsPric": "close", "Close": "close",
+    "FinInstrmNm": "symbol", "TckrSymb": "symbol", "SYMBOL": "symbol", "Symbol": "symbol",
+    "XpryDt": "expiry", "EXPIRY_DT": "expiry", "Expiry": "expiry",
+    "StrkPric": "strike", "STRIKE_PR": "strike", "Strike Price": "strike", "Strike": "strike",
+    "OptnTp": "option_type", "OPTION_TYP": "option_type", "Option Type": "option_type",
+    "OpnPric": "open", "OPEN": "open", "Open": "open",
+    "HghPric": "high", "HIGH": "high",
+    "LwPric": "low", "LOW": "low",
+    "ClsPric": "close", "CLOSE": "close", "Close": "close",
     "LastPric": "last", "Last": "last",
     "BidPric": "bid", "Bid": "bid",
     "AskPric": "ask", "Ask": "ask",
     "FinInstrmTp": "instrument_type", "INSTRUMENT": "instrument_type",
-    "OpnIntrst": "open_interest", "Open Interest": "open_interest",
-    "TtlTradgVol": "volume", "Volume": "volume",
+    "OpnIntrst": "open_interest", "OPEN_INT": "open_interest", "Open Interest": "open_interest",
+    "TtlTradgVol": "volume", "CONTRACTS": "volume", "Volume": "volume",
 }
 
 
@@ -63,9 +63,9 @@ def normalize_option_csv(path: str | Path) -> pd.DataFrame:
         {"CALL":"CE", "PUT":"PE"}
     )
     if "instrument_type" in df.columns:
-        df["instrument_type"] = df["instrument_type"].astype(str).str.upper()
-        # Keep NIFTY index options only; exclude futures and other products.
-        df = df[df["instrument_type"].eq("OPTIDX") | df["instrument_type"].eq("OPTIDX ")]
+        df["instrument_type"] = df["instrument_type"].astype(str).str.upper().str.strip()
+        # Keep NIFTY index options only; exclude futures and stock options.
+        df = df[df["instrument_type"].eq("OPTIDX")]
     if "symbol" in df.columns:
         df["symbol"] = df["symbol"].astype(str).str.upper().str.strip()
         df = df[df["symbol"].eq("NIFTY")]
