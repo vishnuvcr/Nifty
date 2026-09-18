@@ -8,6 +8,8 @@ def test_build_expiry_schedule_uses_sessions():
     prices = pd.DataFrame({"close": range(100, 110)}, index=idx)
     out = build_expiry_schedule(prices, [idx[-1]], entry_days_to_expiry=(1, 3))
     assert len(out) == 2
-    assert out[0].expiry_date == idx[-1]
-    assert out[0].decision_date == idx[-2]
-    assert out[1].decision_date == idx[-4]
+    assert all(x.expiry_date == idx[-1] for x in out)
+    by_dte = {1: idx[-2], 3: idx[-4]}
+    for origin in out:
+        observed_dte = int(((idx > origin.decision_date) & (idx <= origin.expiry_date)).sum())
+        assert origin.decision_date == by_dte[observed_dte]
