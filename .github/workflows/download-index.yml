@@ -47,61 +47,56 @@ jobs:
 
       - name: Download NIFTY 50 index history
         shell: bash
+        env:
+          START_DATE: "${{ steps.dates.outputs.start }}"
+          END_DATE: "${{ steps.dates.outputs.end }}"
         run: |
           set -euo pipefail
           mkdir -p data/raw
-          python scripts/download_nse_data.py \
-            --start "${{ steps.dates.outputs.start }}" \
-            --end "${{ steps.dates.outputs.end }}" \
-            --out-dir data/raw \
-            --index-only || true
-
-          if [ ! -s data/raw/nifty50_index.csv ]; then
-            echo "NSE endpoint unavailable from GitHub runner; using a documented public research mirror."
-            curl --fail --location --retry 3 \
-              "https://raw.githubusercontent.com/Hareeshkesavan/Stock-Market-Dataset/main/Nifty%2050%20Historical%20Data.csv" \
-              -o data/raw/nifty50_index_mirror.csv
-
-            python - <<'PY'
-            import pandas as pd
-            src = "data/raw/nifty50_index_mirror.csv"
-            out = "data/raw/nifty50_index.csv"
-            df = pd.read_csv(src)
-            df.columns = [str(c).strip().lower() for c in df.columns]
-            df["date"] = pd.to_datetime(df["date"], errors="coerce")
-            df["close"] = (
-                df["price"].astype(str).str.replace(",", "", regex=False)
-                .pipe(pd.to_numeric, errors="coerce")
-            )
-            df = df[["date", "close"]].dropna().drop_duplicates("date")
-            df = df.sort_values("date")
-            lo = pd.Timestamp("${{ steps.dates.outputs.start }}")
-            hi = pd.Timestamp("${{ steps.dates.outputs.end }}")
-            df = df[(df["date"] >= lo) & (df["date"] <= hi)]
-            df.to_csv(out, index=False)
-            pd.DataFrame([{
-                "source": "Hareeshkesavan/Stock-Market-Dataset",
-                "file": "Nifty 50 Historical Data.csv",
-                "source_url": "https://github.com/Hareeshkesavan/Stock-Market-Dataset",
-                "status": "secondary_public_mirror"
-            }]).to_csv("data/raw/nifty50_index_provenance.csv", index=False)
-            PY
+          if python scripts/download_nse_data.py --start "$START_DATE" --end "$END_DATE" --out-dir data/raw --index-only; then
+            echo "NSE acquisition succeeded."
+          else
+            echo "NSE endpoint unavailable from GitHub runner; using documented public research mirror."
+            rm -f data/raw/nifty50_index.csv
+            curl --fail --location --retry 3               "https://raw.githubusercontent.com/Hareeshkesavan/Stock-Market-Dataset/main/Nifty%2050%20Historical%20Data.csv"               -o data/raw/nifty50_index_mirror.csv
+            START_DATE="$START_DATE" END_DATE="$END_DATE" python -c '
+import os
+import pandas as pd
+src = "data/raw/nifty50_index_mirror.csv"
+out = "data/raw/nifty50_index.csv"
+df = pd.read_csv(src)
+df.columns = [str(c).strip().lower() for c in df.columns]
+df["date"] = pd.to_datetime(df["date"], errors="coerce")
+df["close"] = pd.to_numeric(df["price"].astype(str).str.replace(",", "", regex=False), errors="coerce")
+df = df[["date", "close"]].dropna().drop_duplicates("date").sort_values("date")
+lo = pd.Timestamp(os.environ["START_DATE"])
+hi = pd.Timestamp(os.environ["END_DATE"])
+df = df[(df["date"] >= lo) & (df["date"] <= hi)]
+df.to_csv(out, index=False)
+pd.DataFrame([{
+    "source": "Hareeshkesavan/Stock-Market-Dataset",
+    "file": "Nifty 50 Historical Data.csv",
+    "source_url": "https://github.com/Hareeshkesavan/Stock-Market-Dataset",
+    "status": "secondary_public_mirror"
+}]).to_csv("data/raw/nifty50_index_provenance.csv", index=False)
+print(f"mirror rows: {len(df)}")
+'
           fi
 
       - name: Validate downloaded data
         run: |
-          python - <<'PY'
-          import pandas as pd
-          p = "data/raw/nifty50_index.csv"
-          df = pd.read_csv(p, parse_dates=["date"])
-          assert len(df) > 1000, f"Unexpectedly small dataset: {len(df)} rows"
-          assert df["date"].is_monotonic_increasing
-          assert df["date"].is_unique
-          assert (df["close"] > 0).all()
-          print(df.head(3).to_string(index=False))
-          print(df.tail(3).to_string(index=False))
-          print(f"validated {len(df)} sessions")
-          PY
+          python -c '
+import pandas as pd
+p = "data/raw/nifty50_index.csv"
+df = pd.read_csv(p, parse_dates=["date"])
+assert len(df) > 1000, f"Unexpectedly small dataset: {len(df)} rows"
+assert df["date"].is_monotonic_increasing
+assert df["date"].is_unique
+assert (df["close"] > 0).all()
+print(df.head(3).to_string(index=False))
+print(df.tail(3).to_string(index=False))
+print(f"validated {len(df)} sessions")
+'
 
       - name: Upload research dataset artifact
         uses: actions/upload-artifact@v4
