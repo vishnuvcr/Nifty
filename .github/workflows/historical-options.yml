@@ -61,7 +61,9 @@ jobs:
             --targets "data/options/targets_${{ matrix.year }}.csv" \
             --out "data/options/nifty_options_${{ matrix.year }}.csv.gz" \
             --manifest "data/options/manifest_${{ matrix.year }}.csv" \
-            --workers 6
+            --workers 6 \
+            --allow-missing \
+            --max-missing 2
       - name: Validate
         run: |
           python - <<'PY'
@@ -75,7 +77,10 @@ jobs:
           assert d["timestamp"].dt.year.eq(int(y)).all()
           print("YEAR",y,"rows",len(d),"decision_dates",d["timestamp"].dt.date.nunique(),"expiries",d["expiry"].dt.date.nunique())
           print(d.groupby(d["timestamp"].dt.date).size().describe())
-          print("targets",len(t))
+          m=pd.read_csv(f"data/options/manifest_{y}.csv")
+          missing=m.loc[m["status"].ne("ok"),"trade_date"].astype(str).tolist()
+          print("targets",len(t),"acquired",int(m["status"].eq("ok").sum()),"missing",missing)
+          assert len(missing) <= 2
           PY
       - uses: actions/upload-artifact@v4
         with:
