@@ -245,12 +245,13 @@ def main():
     trades["year"] = pd.to_datetime(trades.decision_date).dt.year
     decisions["year"] = pd.to_datetime(decisions.decision_date).dt.year
     dev_dec = decisions[decisions.year <= 2022].copy()
-    dev_trades = trades[trades.year <= 2022].copy()
 
     decisions = classify_with_frozen_development(decisions, dev_dec)
     trades = trades.merge(decisions[["decision_id", "direction_prediction", "vol_regime", "regime", "trend_score"]],
                           on="decision_id", how="left")
     trades["period"] = np.select([trades.year <= 2022, trades.year <= 2024], ["development", "validation"], default="final")
+    # Refresh the development trade frame after regime labels are merged.
+    dev_trades = trades[trades.year <= 2022].copy()
 
     # Actual direction/expansion labels are for evaluation only.
     exp_q = dev_trades.expiry_return.abs().quantile(2/3)
