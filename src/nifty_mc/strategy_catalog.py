@@ -74,7 +74,7 @@ def build_strategy(name: str, k: Dict[str, float]) -> List[Leg]:
     if name == "Strip": return [_L("CE", a["atm"], 1), _L("PE", a["atm"], 2)]
     if name == "Strap": return [_L("CE", a["atm"], 2), _L("PE", a["atm"], 1)]
     if name == "Short Straddle": return [_L("CE", a["atm"], -1), _L("PE", a["atm"], -1)]
-    if name == "Iron Butterfly": return [_L("PE", a["p35"], 1), _L("PE", a["atm"], -1), _L("CE", a["atm"], -1), _L("CE", a["c65"], 1)]
+    if name == "Iron Butterfly": return [_L("PE", a["p35"], -1), _L("PE", a["atm"], 1), _L("CE", a["atm"], 1), _L("CE", a["c65"], -1)]
     if name == "Short Strangle": return [_L("PE", a["p35"], -1), _L("CE", a["c65"], -1)]
     if name == "Short Iron Condor": return [_L("PE", a["p10"], 1), _L("PE", a["p35"], -1), _L("CE", a["c65"], -1), _L("CE", a["c90"], 1)]
     if name == "Batman": return [_L("PE", a["p35"], 1), _L("PE", a["p20"], -2), _L("CE", a["c65"], 1), _L("CE", a["c80"], -2)]
