@@ -57,7 +57,7 @@ def main():
     price_by_date=dict(zip(idx["date"].dt.normalize(),idx["close"]))
 
     targets=[]; chains=[]
-    for p in sorted(Path(args.options_dir).glob("nifty_options_*.csv.gz")):
+    for p in sorted(Path(args.options_dir).rglob("nifty_options_*.csv.gz")):
         y=p.name.split("_")[-1].split(".")[0]
         d=pd.read_csv(p,parse_dates=["timestamp","expiry"])
         d["timestamp"]=pd.to_datetime(d["timestamp"]).dt.normalize()
