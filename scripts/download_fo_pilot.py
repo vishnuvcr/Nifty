@@ -16,6 +16,7 @@ def candidate_urls(dt: pd.Timestamp) -> list[str]:
     return [
         f"https://nsearchives.nseindia.com/content/fo/{udiff}",
         f"https://archives.nseindia.com/content/fo/{udiff}",
+        f"https://archives.nseindia.com/content/fo/{udiff}",
         f"https://archives.nseindia.com/content/historical/DERIVATIVES/{y}/{m}/{legacy}",
         f"https://nsearchives.nseindia.com/content/historical/DERIVATIVES/{y}/{m}/{legacy}",
     ]
