@@ -46,12 +46,47 @@ jobs:
           fi
 
       - name: Download NIFTY 50 index history
+        shell: bash
         run: |
+          set -euo pipefail
+          mkdir -p data/raw
           python scripts/download_nse_data.py \
             --start "${{ steps.dates.outputs.start }}" \
             --end "${{ steps.dates.outputs.end }}" \
             --out-dir data/raw \
-            --index-only
+            --index-only || true
+
+          if [ ! -s data/raw/nifty50_index.csv ]; then
+            echo "NSE endpoint unavailable from GitHub runner; using a documented public research mirror."
+            curl --fail --location --retry 3 \
+              "https://raw.githubusercontent.com/Hareeshkesavan/Stock-Market-Dataset/main/Nifty%2050%20Historical%20Data.csv" \
+              -o data/raw/nifty50_index_mirror.csv
+
+            python - <<'PY'
+            import pandas as pd
+            src = "data/raw/nifty50_index_mirror.csv"
+            out = "data/raw/nifty50_index.csv"
+            df = pd.read_csv(src)
+            df.columns = [str(c).strip().lower() for c in df.columns]
+            df["date"] = pd.to_datetime(df["date"], errors="coerce")
+            df["close"] = (
+                df["price"].astype(str).str.replace(",", "", regex=False)
+                .pipe(pd.to_numeric, errors="coerce")
+            )
+            df = df[["date", "close"]].dropna().drop_duplicates("date")
+            df = df.sort_values("date")
+            lo = pd.Timestamp("${{ steps.dates.outputs.start }}")
+            hi = pd.Timestamp("${{ steps.dates.outputs.end }}")
+            df = df[(df["date"] >= lo) & (df["date"] <= hi)]
+            df.to_csv(out, index=False)
+            pd.DataFrame([{
+                "source": "Hareeshkesavan/Stock-Market-Dataset",
+                "file": "Nifty 50 Historical Data.csv",
+                "source_url": "https://github.com/Hareeshkesavan/Stock-Market-Dataset",
+                "status": "secondary_public_mirror"
+            }]).to_csv("data/raw/nifty50_index_provenance.csv", index=False)
+            PY
+          fi
 
       - name: Validate downloaded data
         run: |
@@ -72,5 +107,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nifty50-index-${{ steps.dates.outputs.start }}-${{ steps.dates.outputs.end }}
-          path: data/raw/nifty50_index.csv
+          path: data/raw/
           retention-days: 14
