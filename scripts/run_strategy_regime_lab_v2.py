@@ -217,8 +217,14 @@ def main():
                 continue
 
             pnl_paths, entry = payoff_paths(terminal, priced)
-            risk_p95 = max(1e-6, -float(np.quantile(pnl_paths, 0.05)))
-            risk_p99 = max(1e-6, -float(np.quantile(pnl_paths, 0.01)))
+            q05 = float(np.quantile(pnl_paths, 0.05))
+            q01 = float(np.quantile(pnl_paths, 0.01))
+            risk_p95 = max(0.0, -q05)
+            risk_p99 = max(0.0, -q01)
+            # Guard against a pathological zero-loss 95% tail. If only the
+            # most extreme 1% contains losses, use that tail as the
+            # conservative denominator rather than dividing by epsilon.
+            risk_for_ror = risk_p95 if risk_p95 > 0 else risk_p99
             realized_spot = float(price[exp_session])
             realized = 0.0
             for leg, _ in priced:
@@ -232,7 +238,7 @@ def main():
                 "entry_cashflow": float(entry), "realized_pnl": realized_pnl, "win": int(realized_pnl > 0),
                 "mc_ev": float(pnl_paths.mean()), "mc_pop": float(np.mean(pnl_paths > 0)),
                 "mc_risk_p95": risk_p95, "mc_risk_p99": risk_p99,
-                "realized_return_on_mc_risk": realized_pnl / risk_p95,
+                "realized_return_on_mc_risk": (realized_pnl / risk_for_ror) if risk_for_ror > 0 else np.nan,
                 "expiry_return": realized_spot / float(spot) - 1,
                 "settlement": "expiry", **feats
             })
