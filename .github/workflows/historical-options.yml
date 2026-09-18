@@ -22,7 +22,7 @@ jobs:
       matrix:
         year: [2020, 2021, 2022, 2023, 2024, 2025, 2026]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
