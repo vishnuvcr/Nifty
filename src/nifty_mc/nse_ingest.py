@@ -9,9 +9,12 @@ PRICE_ALIASES = {
     "Close": "close", "CLOSE": "close", "Closing Price": "close",
 }
 
+# NSE UDiFF uses TckrSymb for the underlying symbol and FinInstrmNm
+# for the full contract/instrument name. Do not map both to "symbol".
 OPTION_ALIASES = {
     "TradDt": "timestamp", "TIMESTAMP": "timestamp", "Date": "timestamp",
-    "FinInstrmNm": "symbol", "TckrSymb": "symbol", "SYMBOL": "symbol", "Symbol": "symbol",
+    "TckrSymb": "symbol", "SYMBOL": "symbol", "Symbol": "symbol",
+    "FinInstrmNm": "contract_name",
     "XpryDt": "expiry", "EXPIRY_DT": "expiry", "Expiry": "expiry",
     "StrkPric": "strike", "STRIKE_PR": "strike", "Strike Price": "strike", "Strike": "strike",
     "OptnTp": "option_type", "OPTION_TYP": "option_type", "Option Type": "option_type",
@@ -55,12 +58,12 @@ def normalize_option_csv(path: str | Path) -> pd.DataFrame:
         df[c] = pd.to_datetime(df[c], errors="coerce")
     df["strike"] = pd.to_numeric(df["strike"], errors="coerce")
 
-    for c in ("open","high","low","close","last","bid","ask","open_interest","volume"):
+    for c in ("open", "high", "low", "close", "last", "bid", "ask", "open_interest", "volume"):
         if c in df.columns:
             df[c] = pd.to_numeric(df[c], errors="coerce")
 
     df["option_type"] = df["option_type"].astype(str).str.upper().replace(
-        {"CALL":"CE", "PUT":"PE"}
+        {"CALL": "CE", "PUT": "PE"}
     )
     if "instrument_type" in df.columns:
         df["instrument_type"] = df["instrument_type"].astype(str).str.upper().str.strip()
@@ -70,8 +73,8 @@ def normalize_option_csv(path: str | Path) -> pd.DataFrame:
         df["symbol"] = df["symbol"].astype(str).str.upper().str.strip()
         df = df[df["symbol"].eq("NIFTY")]
 
-    return df.dropna(subset=["timestamp","expiry","strike"]).sort_values(
-        ["timestamp","expiry","strike","option_type"]
+    return df.dropna(subset=["timestamp", "expiry", "strike"]).sort_values(
+        ["timestamp", "expiry", "strike", "option_type"]
     ).reset_index(drop=True)
 
 
