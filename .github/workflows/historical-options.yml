@@ -52,7 +52,7 @@ jobs:
         run: |
           python scripts/build_option_targets.py \
             --index data/raw/nifty50_index.csv \
-            --start "${{ matrix.year }}-01-01" \
+            --start "$(if [ "${{ matrix.year }}" = "2020" ]; then echo "2020-04-13"; else echo "${{ matrix.year }}-01-01"; fi)" \
             --end "${{ matrix.year }}-12-31" \
             --out "data/options/targets_${{ matrix.year }}.csv"
       - name: Download NIFTY option archives
