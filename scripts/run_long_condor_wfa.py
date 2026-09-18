@@ -68,8 +68,9 @@ def main():
         d=d[(d["symbol"].astype(str).str.upper()=="NIFTY") &
             d["option_type"].isin(["CE","PE"]) & d["strike"].notna() & d["close"].notna()]
         chains.append(d)
-        tp=Path(args.options_dir)/f"targets_{y}.csv"
-        if tp.exists(): targets.append(pd.read_csv(tp,parse_dates=["decision_date","expiry"]))
+        matches=list(Path(args.options_dir).rglob(f"targets_{y}.csv"))
+        if matches:
+            targets.append(pd.read_csv(matches[0],parse_dates=["decision_date","expiry"]))
     if not chains: raise SystemExit("no option artifacts")
     opt=pd.concat(chains,ignore_index=True)
     targ=pd.concat(targets,ignore_index=True).drop_duplicates(["decision_date","expiry"]).sort_values("decision_date")
