@@ -93,3 +93,16 @@ Type: Python path integration
 Observation: changing the import to `src.nifty_mc` still failed because `src` is a source-layout directory, not an import package.
 Resolution: prepend repository `src/` to `sys.path` and import `nifty_mc.strategy_catalog` directly.
 Prevention: validate source-layout imports using the exact non-editable CI environment.
+
+
+### E011 — Result extraction filtered standalone Batman incorrectly
+Type: backtest reporting bug
+Observation: standalone Batman rows were recorded as STANDALONE_EVALUATED, while the realized-trade extractor accepted only EVALUATED, producing zero standalone Batman trades in the headline result even though the underlying candidate evaluation completed.
+Resolution: extractor now accepts both EVALUATED and STANDALONE_EVALUATED statuses; the workflow prints candidate/status counts before publication.
+Prevention: add regression coverage for standalone strategy extraction and require consistency between evaluated candidate rows and realized summaries.
+
+### E012 — S5 publication branch race
+Type: CI publication
+Observation: the backtest job successfully produced all three split outputs, but the final git push was rejected because the run-start checkpoint had advanced the remote branch.
+Resolution: publication now fetches and rebases onto the current remote phase branch before pushing results.
+Prevention: all workflow jobs that self-commit state must rebase against the remote branch before publication.
