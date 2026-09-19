@@ -411,11 +411,13 @@ def main() -> None:
             base["notes"] = "Frozen rule requires exactly three future trading sessions through the selected expiry."
         else:
             chain, underlying, endpoint, _ = client.fetch_option_chain(chosen_expiry)
-            spot = (
-                float(underlying)
-                if underlying is not None
-                else float(index_df.loc[index_df["date"].eq(decision_ts), "close"].iloc[-1])
-            )
+            if underlying is not None:
+                spot = float(underlying)
+            else:
+                eligible_spot = index_df.loc[index_df["date"] <= decision_ts, "close"]
+                if eligible_spot.empty:
+                    raise RuntimeError("No usable NIFTY spot was returned by NSE and no index close fallback is available.")
+                spot = float(eligible_spot.iloc[-1])
 
             prev = index_df[index_df["date"] < decision_ts]
             if prev.empty:
