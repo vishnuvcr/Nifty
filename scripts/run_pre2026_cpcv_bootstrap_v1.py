@@ -7,12 +7,12 @@ from nifty_mc.strategy_catalog import STRATEGY_NAMES
 MIN_N=30
 CONTRACTS={
 "Buy Call":1,"Sell Put":1,"Bull Call Spread":2,"Bull Put Spread":2,"Call Ratio Back Spread":3,
-"Long Calendar with Calls":2,"Bull Condor":4,"Bull Butterfly":3,"Range Forward":2,"Long Synthetic Future":2,
+"Long Calendar with Calls":2,"Bull Condor":4,"Bull Butterfly":4,"Range Forward":2,"Long Synthetic Future":2,
 "Call Ratio Spread":3,"Put Ratio Spread":3,"Long Straddle":2,"Long Iron Butterfly":4,"Long Strangle":2,
 "Long Iron Condor":4,"Strip":3,"Strap":3,"Short Straddle":2,"Iron Butterfly":4,"Short Strangle":2,
 "Short Iron Condor":4,"Batman":6,"Double Plateau":6,"Jade Lizard":3,"Reverse Jade Lizard":3,
 "Buy Put":1,"Sell Call":1,"Bear Put Spread":2,"Bear Call Spread":2,"Put Ratio Back Spread":3,
-"Long Calendar with Puts":2,"Bear Condor":4,"Bear Butterfly":3,"Risk Reversal":2,"Short Synthetic Future":2}
+"Long Calendar with Puts":2,"Bear Condor":4,"Bear Butterfly":4,"Risk Reversal":2,"Short Synthetic Future":2}
 
 def pf(x):
  x=np.asarray(x,float); x=x[np.isfinite(x)]; loss=-x[x<0].sum(); gain=x[x>0].sum()
