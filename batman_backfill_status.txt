@@ -1,0 +1,8 @@
+run_id=35424305912
+backfill_rc=1
+timestamp=2026-09-19T05:34:50Z
+----- LOG -----
+Traceback (most recent call last):
+  File "/home/runner/work/Nifty/Nifty/scripts/backfill_batman_first_trade.py", line 14, in <module>
+    from scripts.batman_signal_producer import (
+ModuleNotFoundError: No module named 'scripts'
