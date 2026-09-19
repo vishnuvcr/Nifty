@@ -113,3 +113,10 @@ Type: transferability / risk sizing
 Observation: with ₹100,000 paper capital and a 2% risk budget, every evaluated SENSEX candidate required more than ₹2,000 estimated ES risk per lot, so the original operational affordability gate yielded zero trades despite positive MC-EV observations.
 Resolution: run a separate pre-registered one-lot transfer-edge analysis using the unchanged MC-EV gate, while retaining the original affordability result as a separate operational diagnostic. One-lot P&L is capital-independent and therefore avoids arbitrary account-size selection.
 Prevention: never conflate instrument-transfer edge evidence with a particular account-capital sizing constraint.
+
+
+### E015 — S6 workflow adds explicit one-lot edge sensitivity
+Type: methodology extension
+Observation: the ₹1 lakh account-level gate produced zero actual trades because estimated ES risk per SENSEX lot often exceeded the ₹2,000 risk budget. That is a capital-sizing result, not evidence that the strategy has zero per-lot edge.
+Resolution: S6 evaluates the frozen strategy rules on exactly one lot when net MC EV > 0, across 0.25/0.50/1.00/2.00 slippage. These results are reported separately from account-sized trading and are not used to alter the frozen strategy selection rules.
+Prevention: distinguish strategy edge from account-affordability in all SENSEX conclusions.
