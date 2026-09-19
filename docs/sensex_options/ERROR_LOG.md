@@ -46,3 +46,9 @@ Type: data availability
 Observation: BSE's live derivatives chain exposes bid/ask fields, but public EOD BhavCopy documentation does not contain a historical quote-book snapshot at the decision timestamp.
 Resolution: require a point-in-time historical quote dataset for executable backtesting, and keep EOD-only analysis clearly separated as a proxy.
 Prevention: block S5 execution-style inference until quote provenance passes S1 validation.
+
+### E008 — Historical executable quote limitation retained as a proxy boundary
+Type: execution-data limitation
+Observation: the open SENSEX 1-minute dataset provides OHLCV/OI but not historical bid/ask.
+Resolution: freeze 09:30-bar-open execution plus explicit adverse slippage as the backtest proxy. Do not label results as bid/ask-executable performance.
+Prevention: every reported result must carry the quote-proxy label and slippage sensitivity.
