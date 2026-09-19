@@ -1,6 +1,9 @@
-name: Adaptive Paper Signal Producer v1 (Manual)
+name: Adaptive Paper Signal Producer v1
 
 on:
+  # 09:30 IST = 04:00 UTC. This is the only job that creates a NEW entry signal.
+  schedule:
+    - cron: "0 4 * * 1-5"
   workflow_dispatch:
     inputs:
       capital:
