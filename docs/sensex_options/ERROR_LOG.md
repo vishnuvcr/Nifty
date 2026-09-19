@@ -40,3 +40,9 @@ Type: data-source limitation
 Observation: BSE's published equity-derivatives Bhav Copy format contains open/high/low/close/WAP, volume and OI fields but not historical best bid/ask snapshots. That is insufficient by itself to reproduce a 09:30 executable entry.
 Resolution: S1 will distinguish an executable intraday dataset from an EOD-only proxy dataset. The primary trading inference requires point-in-time executable quotes; an EOD-only run, if used, must be labelled a proxy analysis and cannot be presented as an executable backtest.
 Prevention: quote_source and quote_quality are mandatory fields in the SENSEX research dataset.
+
+### E007 — Current exchange web pages do not establish an archived 09:30 quote history
+Type: data availability
+Observation: BSE's live derivatives chain exposes bid/ask fields, but public EOD BhavCopy documentation does not contain a historical quote-book snapshot at the decision timestamp.
+Resolution: require a point-in-time historical quote dataset for executable backtesting, and keep EOD-only analysis clearly separated as a proxy.
+Prevention: block S5 execution-style inference until quote provenance passes S1 validation.
