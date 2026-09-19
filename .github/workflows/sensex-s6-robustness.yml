@@ -1,0 +1,82 @@
+name: SENSEX S6 Per-Lot Edge + Slippage Robustness
+
+on:
+  push:
+    branches:
+      - research/sensex-s6-robustness-v1
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  robustness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/sensex-s6-robustness-v1
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: python -m pip install --upgrade pip pandas numpy pyarrow huggingface_hub
+      - name: Fetch dataset
+        run: |
+          rm -rf data/raw_sensex
+          python - <<'PY'
+          from huggingface_hub import snapshot_download
+          snapshot_download(
+              repo_id="thetrademarkk/india-index-options-1m",
+              repo_type="dataset",
+              local_dir="data/raw_sensex",
+              allow_patterns=["index/SENSEX.parquet", "options/SENSEX/*.parquet"],
+          )
+          PY
+          test -f data/raw_sensex/index/SENSEX.parquet
+      - name: Run frozen per-lot edge sensitivity
+        run: |
+          set -e
+          for slip in 0.25 0.50 1.00 2.00; do
+            mkdir -p reports/sensex_s6/slippage_${slip}
+            for split in development validation holdout; do
+              python scripts/sensex_backtest_v1.py                 --options-dir data/raw_sensex/options/SENSEX                 --index-path data/raw_sensex/index/SENSEX.parquet                 --split "${split}"                 --slippage "${slip}"                 --one-lot-edge                 --out-dir "reports/sensex_s6/slippage_${slip}"
+            done
+          done
+      - name: Build S6 summary
+        run: |
+          python - <<'PY'
+          import json, glob
+          from pathlib import Path
+          rows=[]
+          for p in glob.glob("reports/sensex_s6/slippage_*/summary_*.json"):
+              d=json.loads(Path(p).read_text())
+              rows.append({
+                "file":p,
+                "split":d["split"],
+                "slippage_points_per_leg":d["slippage_points_per_leg"],
+                "adaptive_trades":d["adaptive"]["trades"],
+                "adaptive_total_pnl":d["adaptive"]["total_pnl"],
+                "adaptive_win_rate":d["adaptive"]["win_rate"],
+                "batman_trades":d["batman"]["trades"],
+                "batman_total_pnl":d["batman"]["total_pnl"],
+                "batman_win_rate":d["batman"]["win_rate"],
+              })
+          Path("reports/sensex_s6/S6_SUMMARY.json").write_text(json.dumps(rows,indent=2))
+          PY
+      - name: Publish results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/sensex_s6
+          git commit -m "research: publish SENSEX S6 robustness results [skip ci]" || true
+          git pull --rebase origin research/sensex-s6-robustness-v1
+          git push origin HEAD:research/sensex-s6-robustness-v1
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sensex-s6-robustness
+          path: reports/sensex_s6
