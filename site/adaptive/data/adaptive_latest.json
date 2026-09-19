@@ -1,0 +1,9 @@
+{
+  "producer":"Adaptive Paper Signal Producer v1",
+  "status":"PENDING_FIRST_RUN",
+  "signal":"NO_TRADE",
+  "notes":"This placeholder will be replaced by the first prospective production run on research/adaptive-paper-signals-v1. No historical 2026 holdout is reopened.",
+  "research_basis":"Pre-2026 CPCV + block bootstrap",
+  "candidate_selection_rule":"highest_net_mc_ev_among_eligible_candidates",
+  "candidate_selection_validated":false
+}
