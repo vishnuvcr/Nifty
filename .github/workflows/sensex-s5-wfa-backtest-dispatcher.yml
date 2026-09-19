@@ -28,6 +28,15 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Record run start
+        run: |
+          mkdir -p reports/sensex_options
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > reports/sensex_options/RUN_STARTED_UTC.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/sensex_options/RUN_STARTED_UTC.txt
+          git commit -m "ci: mark SENSEX S5 backtest started [skip ci]"
+          git push origin HEAD:research/sensex-s5-wfa-backtest-v1
       - name: Install dependencies
         run: python -m pip install --upgrade pip pandas numpy pyarrow
       - name: Fetch SENSEX 1-minute dataset
