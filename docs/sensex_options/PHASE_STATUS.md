@@ -1,27 +1,31 @@
 # SENSEX Options Research Phase Status
 
-Last updated: 2026-09-20 (Asia/Kolkata) — execution gate update — S1 step update
+Last updated: 2026-09-20 (Asia/Kolkata) — S6 robustness execution gate
 
 | Phase | Status | Evidence / next gate |
 |---|---|---|
-| S0 Transfer specification freeze | COMPLETE | Frozen parent branch tip and producer/config blob SHAs recorded in FROZEN_PROVENANCE.md. |
-| S1 Data-source and contract audit | IN PROGRESS | Source register completed; BSE exchange files/market-data fields and Paytm Money cost sources are documented. Historical executable 09:30 bid/ask availability and date-effective contract metadata still require acquisition/validation before S1 can close. |
-| S2 Execution-cost model | NOT STARTED | Source Paytm Money, BSE and statutory cost rules with effective dates. |
-| S3 SENSEX Batman implementation | IN PROGRESS | Engine specification and SENSEX execution adapter are being implemented without changing Batman rules. |
-| S4 SENSEX Adaptive implementation | IN PROGRESS | Same engine will implement the frozen candidate router without SENSEX-driven re-selection. |
-| S5 Historical walk-forward transfer test | RUNNING — RETRY AFTER E010 | CI reached execution; run 35472613682 failed only because Yahoo daily-history fetch returned HTTP 429. Runtime Yahoo dependency has now been removed; rerun is required. |
-| S6 Robustness/statistical inference | NOT STARTED | Dependence-aware bootstrap + cost/quote/seed sensitivity. |
-| S7 Prospective paper trading | NOT STARTED | Allowed only after S1-S6 integrity gates. |
-| S8 Separate SENSEX report | NOT STARTED | Standalone manuscript/report; NIFTY manuscript remains untouched. |
+| S0 Transfer specification freeze | COMPLETE | Frozen parent specification and provenance recorded. |
+| S1 Data-source and contract audit | COMPLETE | Source register and data-contract audit documented; dataset limitations explicitly recorded. |
+| S2 Execution-cost model | COMPLETE | SENSEX-specific transaction-cost and slippage model implemented and deducted from net P&L. |
+| S3 SENSEX Batman implementation | COMPLETE | Frozen Batman engine implemented and deterministic candidate/expiry evaluation is reproducible. |
+| S4 SENSEX Adaptive implementation | COMPLETE | Frozen regime-conditioned candidate router implemented without SENSEX outcome retuning. |
+| S5 Historical walk-forward transfer test | COMPLETE | Development 2024, validation 2025, and available 2026 holdout through 2026-05-21 were completed in one-lot transfer-edge mode; account-affordability results are separately reported. |
+| S6 Robustness/statistical inference | RUNNING | Slippage grid, Monte Carlo seed sensitivity, and dependence-aware block bootstrap are being executed on the frozen rules. |
+| S7 Prospective paper trading | NOT STARTED | Allowed only after S6 integrity and interpretation gates pass. |
+| S8 Separate SENSEX report | NOT STARTED | Will summarize the completed transfer study without modifying the NIFTY manuscript. |
+
+## Scientific boundary
+
+The SENSEX study remains strictly separate from the NIFTY MC-WFO manuscript. One-lot results are transfer-edge evidence, not an assertion of deployable capital efficiency at any particular account size. The 2026 holdout is limited by the available SENSEX option dataset to 2026-01-01 through 2026-05-21.
+
+## Current S6 controls
+
+- Slippage sensitivity: 0.25, 0.50, 1.00, and 2.00 option points per executed option leg.
+- Monte Carlo seed sensitivity: 101, 202, 303, 404, 505 on validation and holdout at 0.50-point slippage.
+- Dependence-aware inference: circular moving-block bootstrap, block length 3 trades, 10,000 replications on validation + holdout closed trades at base slippage.
+- No quote-source substitution: the underlying archive provides OHLCV/OI, not historical point-in-time bid/ask snapshots.
+- No re-optimization after seeing SENSEX holdout outcomes.
 
 ## Branch
-research/sensex-batman-adaptive-v1
 
-Parent research branch: research/adaptive-paper-signals-v1
-
-## Current scientific position
-No SENSEX performance conclusion has been made. This branch currently contains the transfer-study specification and audit scaffolding only.
-
-S5 run checkpoint instrumentation was added on the default branch so the phase records job start even when Actions run details are not exposed by the connector.
-
-S5 trigger revision: default-branch dispatcher is active; this commit exists solely to trigger the reproducible base backtest after workflow instrumentation.
+research/sensex-s6-robustness-v1
