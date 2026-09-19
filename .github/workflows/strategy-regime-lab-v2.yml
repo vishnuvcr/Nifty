@@ -1,4 +1,5 @@
 name: strategy-regime-lab-v2
+# Full 36-strategy regime evaluation; push trigger kept for research reproducibility.
 
 on:
   push:
