@@ -86,3 +86,10 @@ Type: Python package integration
 Observation: CI successfully downloaded all 149 SENSEX files, then development failed with `ModuleNotFoundError: nifty_mc` because the strategy catalog is under `src/nifty_mc` and the workflow intentionally did not install the project editable.
 Resolution: changed the engine import to `src.nifty_mc.strategy_catalog`, matching the repository layout.
 Prevention: run the exact CI command in the repository environment before workflow execution and validate package imports.
+
+
+### E014 — `src` is not a Python package namespace in CI
+Type: Python path integration
+Observation: changing the import to `src.nifty_mc` still failed because `src` is a source-layout directory, not an import package.
+Resolution: prepend repository `src/` to `sys.path` and import `nifty_mc.strategy_catalog` directly.
+Prevention: validate source-layout imports using the exact non-editable CI environment.
