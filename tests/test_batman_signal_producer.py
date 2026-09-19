@@ -96,11 +96,13 @@ def test_frozen_entry_protocol_metadata():
     assert ENTRY_TIME_IST.hour == 9
     assert ENTRY_TIME_IST.minute == 30
 
-def test_batman_workflow_is_configured_for_manual_schedule_pages_and_telegram():
+def test_batman_workflow_is_isolated_from_adaptive_pages_and_has_manual_controls():
     workflow = Path(".github/workflows/batman-signal-producer.yml").read_text(encoding="utf-8")
+    scheduler = Path(".github/workflows/publish-paper-pages.yml").read_text(encoding="utf-8")
     assert "workflow_dispatch:" in workflow
-    assert 'cron: "0 4 * * 1-5"' in workflow
+    assert "--site-dir site/batman" in workflow
     assert "actions/upload-pages-artifact@v3" in workflow
     assert "actions/deploy-pages@v4" in workflow
     assert "TELEGRAM_BOT_TOKEN" in workflow
     assert "TELEGRAM_CHAT_ID" in workflow
+    assert 'cron: "0 4 * * 1-5"' in scheduler
