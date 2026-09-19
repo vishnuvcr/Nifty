@@ -6,7 +6,9 @@ on:
     paths:
       - scripts/run_regime_strategy_router_v3.py
       - scripts/run_regime_robustness_v1.py
+      - scripts/run_regime_risk_filtered_router_v1.py
       - tests/test_regime_robustness_v1.py
+      - tests/test_regime_risk_filtered_router_v1.py
       - .github/workflows/adaptive-regime-strategy-run9-snapshot.yml
   workflow_dispatch:
 
@@ -50,17 +52,24 @@ jobs:
             --dev-min-n 30 \
             --validation-min-n 10
       - name: Run robustness tests
-        run: pytest -q tests/test_regime_robustness_v1.py
+        run: |
+          pytest -q tests/test_regime_robustness_v1.py tests/test_regime_risk_filtered_router_v1.py
 
       - name: Run rolling regime robustness
         run: |
           python scripts/run_regime_robustness_v1.py             --trades input/strategy_trades.csv             --out-dir robustness_results             --costs 1 2 3 4             --lookbacks 63 126 252             --quantile-pairs 0.25,0.75 0.3333333333,0.6666666667 0.20,0.80             --test-years 2023 2024 2025 2026
+
+      - name: Run risk-filtered regime router
+        run: |
+          python scripts/run_regime_risk_filtered_router_v1.py             --trades input/strategy_trades.csv             --out-dir risk_filtered_results             --selection-years 2024 2025             --holdout-year 2026             --costs 1 2 3 4             --lookbacks 63 126 252             --p-expand-max 0.40 0.50 0.60 0.67 0.75 0.90 1.00             --trend60-min 0.00 0.20 0.25 0.33 0.50
 
       - name: Publish reports
         run: |
           cat results/adaptive_regime_strategy_report.md
           echo "---- robustness ----"
           cat robustness_results/regime_robustness_report.md
+          echo "---- risk-filtered router ----"
+          cat risk_filtered_results/risk_filtered_regime_router_report.md
 
       - uses: actions/upload-artifact@v4
         with:
@@ -68,4 +77,5 @@ jobs:
           path: |
             results/
             robustness_results/
+            risk_filtered_results/
           retention-days: 30
