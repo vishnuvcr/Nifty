@@ -9,7 +9,7 @@ Last updated: 2026-09-20 (Asia/Kolkata) — execution gate update — S1 step up
 | S2 Execution-cost model | NOT STARTED | Source Paytm Money, BSE and statutory cost rules with effective dates. |
 | S3 SENSEX Batman implementation | IN PROGRESS | Engine specification and SENSEX execution adapter are being implemented without changing Batman rules. |
 | S4 SENSEX Adaptive implementation | IN PROGRESS | Same engine will implement the frozen candidate router without SENSEX-driven re-selection. |
-| S5 Historical walk-forward transfer test | BLOCKED — EXECUTION INFRASTRUCTURE | Frozen SENSEX engine and workflows are complete, but this connected session does not expose a successful GitHub Actions run; no numerical result is claimed. |
+| S5 Historical walk-forward transfer test | RUNNING — RETRY AFTER E010 | CI reached execution; run 35472613682 failed only because Yahoo daily-history fetch returned HTTP 429. Runtime Yahoo dependency has now been removed; rerun is required. |
 | S6 Robustness/statistical inference | NOT STARTED | Dependence-aware bootstrap + cost/quote/seed sensitivity. |
 | S7 Prospective paper trading | NOT STARTED | Allowed only after S1-S6 integrity gates. |
 | S8 Separate SENSEX report | NOT STARTED | Standalone manuscript/report; NIFTY manuscript remains untouched. |
