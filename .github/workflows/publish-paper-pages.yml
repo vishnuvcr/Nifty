@@ -1,4 +1,4 @@
-name: Publish NIFTY Paper Trading Dashboards
+name: Refresh NIFTY Paper Trading Dashboards
 # v1: centrally publishes isolated Batman and Adaptive dashboards from the research branch.
 
 on:
@@ -37,7 +37,7 @@ on:
         default: ""
 
 concurrency:
-  group: nifty-paper-pages
+  group: nifty-paper-refresh
   cancel-in-progress: false
 
 permissions:
@@ -79,29 +79,19 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install -e .
 
-      - name: Produce Batman page and signal state
+      - name: Refresh ledgers and dashboards only
         run: |
-          CMD=(python scripts/batman_signal_producer.py --capital "$CAPITAL" --risk-pct "$RISK_PCT" --lot-size "$LOT_SIZE" --paths "$PATHS" --cost-per-contract "$COST_PER_CONTRACT" --decision-date auto --site-dir site/batman)
-          if [ -n "$EXPIRY" ]; then CMD+=(--expiry "$EXPIRY"); fi
-          if [ -n "$SEED" ]; then CMD+=(--seed "$SEED"); fi
-          "${CMD[@]}"
+          python scripts/refresh_paper_pages_v1.py --capital "$CAPITAL" --refresh-cutoff auto
 
-      - name: Produce Adaptive page and signal state
-        run: |
-          CMD=(python scripts/adaptive_paper_signal_producer_v1.py --capital "$CAPITAL" --risk-pct "$RISK_PCT" --lot-size "$LOT_SIZE" --paths "$PATHS" --cost-per-contract "$COST_PER_CONTRACT" --decision-date auto --site-dir site/adaptive)
-          if [ -n "$EXPIRY" ]; then CMD+=(--expiry "$EXPIRY"); fi
-          if [ -n "$SEED" ]; then CMD+=(--seed "$SEED"); fi
-          "${CMD[@]}"
-
-      - name: Persist paper-trading state to adaptive branch
+      - name: Persist refresh state
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add paper_trading/batman_ledger.csv paper_trading/batman_signals.csv paper_trading/adaptive_ledger.csv paper_trading/adaptive_signals.csv paper_trading/adaptive_candidate_screen.csv paper_trading/adaptive_feature_history.csv site
+          git add paper_trading/batman_ledger.csv                   paper_trading/adaptive_ledger.csv                   site
           if git diff --cached --quiet; then
-            echo "No state changes."
+            echo "No refresh state changes."
           else
-            git commit -m "chore: publish paper trading state [skip ci]"
+            git commit -m "chore: refresh paper trading dashboards [skip ci]"
             git push origin HEAD:research/adaptive-paper-signals-v1
           fi
 
@@ -116,13 +106,13 @@ jobs:
       - name: Publish summary
         run: |
           {
-            echo "## NIFTY Paper Trading Dashboards"
+            echo "## NIFTY paper-trading dashboard refresh"
             echo
-            echo "- Schedule: weekdays at 16:00 IST (10:30 UTC)"
+            echo "- Refresh schedule: weekdays at 16:00 IST (10:30 UTC)"
             echo "- Branch: research/adaptive-paper-signals-v1"
             echo "- Pages: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
             echo "- Batman dashboard: /batman/"
             echo "- Adaptive dashboard: /adaptive/"
             echo
-            echo "Both systems are paper-only. No broker orders are placed."
+            echo "Refresh-only: no new entry signal is generated at 16:00 IST. Both systems are paper-only; no broker orders are placed."
           } >> "$GITHUB_STEP_SUMMARY"
