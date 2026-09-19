@@ -54,3 +54,22 @@ def test_one_strategy_is_selected_per_regime():
     assert set(out["regime"]) == {"low", "medium", "high"}
     assert len(out) == 3
     assert set(out["strategy"]) == {"A"}
+
+
+def test_regime_rank_is_decision_level_not_strategy_row_level():
+    rows = []
+    for i in range(40):
+        for strategy in ["A", "B"]:
+            rows.append({
+                "decision_id": str(i),
+                "decision_date": pd.Timestamp("2024-01-01") + pd.Timedelta(days=i),
+                "strategy": strategy,
+                "trend20": float(i),
+                "trend60": float(i),
+                "rv20": float(i),
+                "p_expand": float(i),
+            })
+    d = pd.DataFrame(rows)
+    out = add_adaptive_regime(d, lookback=30, qlo=1/3, qhi=2/3)
+    per_date = out.groupby("decision_id")[["trend20_rank","trend60_rank","rv20_rank","p_expand_rank","vol_regime"]].nunique(dropna=False)
+    assert (per_date == 1).all().all()
