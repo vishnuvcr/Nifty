@@ -7,6 +7,12 @@ on:
       - scripts/adaptive_regime_signal_producer.py
       - tests/test_adaptive_regime_signal_producer.py
       - .github/workflows/adaptive-regime-signal-producer.yml
+  pull_request:
+    branches: ["main"]
+    paths:
+      - scripts/adaptive_regime_signal_producer.py
+      - tests/test_adaptive_regime_signal_producer.py
+      - .github/workflows/adaptive-regime-signal-producer.yml
   workflow_dispatch:
     inputs:
       capital:
