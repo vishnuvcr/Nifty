@@ -24,3 +24,4 @@ Research action:
 - Added dependence-aware circular moving-block bootstrap (block length 3 trades, 10,000 replications) over validation + holdout base-slippage closed trades.
 - Kept one-lot transfer-edge mode separate from the original ₹100k/2% account-affordability gate.
 - No SENSEX outcome is used to change the frozen strategy rules.
+\n\n### S6 provenance correction — 2026-09-20\nA reproducibility audit found that the initial S6 workflow did not reproduce the validated S5 Monte Carlo/regime-history input. The S6 workflow was corrected to rebuild the exact composite daily SENSEX history used by the completed S5 transfer run and to use --mc-index-path for all scenarios.
