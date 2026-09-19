@@ -52,3 +52,9 @@ Type: execution environment
 Observation: the S5 dispatcher and workflow definitions are present, but neither push-triggered nor pull_request-triggered runs are exposed through the connected GitHub Actions endpoints in this session; no RUN_STARTED checkpoint or report artifacts appeared on the S5 branch.
 Resolution: do not report numerical backtest results. Preserve the frozen engine, workflow, split definitions and cost model so the run can be executed from GitHub Actions without methodological changes.
 Prevention: treat a missing CI run as an infrastructure failure, never as a zero-trade or zero-performance backtest result.
+
+
+### E010 — ₹100k risk gate produced zero deployable lots despite valid strategy observations
+Type: methodology interpretation / reporting
+Observation: with a ₹100,000 account and 2% risk budget, the frozen risk-sizing gate returned zero lots for the evaluated SENSEX structures because one-lot ES95/ES99 risk often exceeded ₹2,000.
+Resolution: retain the frozen gate for Adaptive execution results, but separately report forced one-lot realized expiry P&L for every successfully priced candidate. This prevents conflating “not deployable at the chosen account size” with “strategy has no historical outcome.” The realized column is strictly post-entry evaluation and cannot affect selection.
