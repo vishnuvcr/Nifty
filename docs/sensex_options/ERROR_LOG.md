@@ -79,3 +79,10 @@ Type: external dataset acquisition
 Observation: after E010/E011, the branch workflow failed during the Git/LFS sparse acquisition of the public SENSEX dataset before the backtest began (exit 128).
 Resolution: replaced Git/LFS acquisition with the Hugging Face Hub `snapshot_download` client and explicit file existence validation.
 Prevention: prefer the dataset provider's supported download API over an unauthenticated Git/LFS clone in CI.
+
+
+### E013 — SENSEX engine imported package from wrong module path
+Type: Python package integration
+Observation: CI successfully downloaded all 149 SENSEX files, then development failed with `ModuleNotFoundError: nifty_mc` because the strategy catalog is under `src/nifty_mc` and the workflow intentionally did not install the project editable.
+Resolution: changed the engine import to `src.nifty_mc.strategy_catalog`, matching the repository layout.
+Prevention: run the exact CI command in the repository environment before workflow execution and validate package imports.
