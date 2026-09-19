@@ -1,9 +1,6 @@
 name: Generate NIFTY Paper Trading Signals
 
 on:
-  push:
-    paths:
-      - ".github/workflows/generate-paper-signals.yml"
   schedule:
     # 09:30 IST = 04:00 UTC
     - cron: "0 4 * * 1-5"
