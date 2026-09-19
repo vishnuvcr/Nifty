@@ -1,6 +1,9 @@
 name: Publish NIFTY Paper Trading Dashboards
 
 on:
+  push:
+    paths:
+      - ".github/workflows/publish-paper-pages.yml"
   schedule:
     - cron: "0 4 * * 1-5"
   workflow_dispatch:
