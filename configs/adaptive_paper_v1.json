@@ -1,0 +1,58 @@
+{
+  "version": "adaptive-paper-v1",
+  "research_basis": {
+    "source": "Pre-2026 CPCV + block-bootstrap robustness phase",
+    "cpcv_paths": 15,
+    "pooled_selected_mean_points": 33.49,
+    "pooled_profit_factor": 1.47,
+    "bootstrap_95_ci_mean_points": [20.00, 46.86],
+    "bootstrap_probability_mean_le_zero": 0.0,
+    "interpretation": "Regime-conditioned return effect was more stable than exact strategy identity; therefore use a regime candidate set rather than one frozen strategy mapping."
+  },
+  "regimes": {
+    "low": {
+      "candidates": [
+        {"strategy": "Risk Reversal", "selection_frequency": 9},
+        {"strategy": "Long Synthetic Future", "selection_frequency": 4},
+        {"strategy": "Buy Call", "selection_frequency": 2}
+      ]
+    },
+    "medium": {
+      "candidates": [
+        {"strategy": "Short Straddle", "selection_frequency": 4},
+        {"strategy": "Put Ratio Spread", "selection_frequency": 4},
+        {"strategy": "Short Strangle", "selection_frequency": 3},
+        {"strategy": "Strip", "selection_frequency": 3},
+        {"strategy": "Buy Put", "selection_frequency": 1}
+      ]
+    },
+    "high": {
+      "candidates": [
+        {"strategy": "Sell Put", "selection_frequency": 5},
+        {"strategy": "Risk Reversal", "selection_frequency": 5},
+        {"strategy": "Long Synthetic Future", "selection_frequency": 3},
+        {"strategy": "Batman", "selection_frequency": 2}
+      ]
+    }
+  },
+  "execution": {
+    "entry_time_ist": "09:30",
+    "entry_sessions_before_expiry": 3,
+    "mc_paths": 5000,
+    "lookback_sessions": 756,
+    "rank_lookback_sessions": 252,
+    "stress_cost_points_per_contract": 2.0,
+    "risk_pct": 0.02,
+    "lot_size": 65,
+    "mc_gate": "net_ev_gt_zero",
+    "minimum_trade": "at_least_one_risk_sized_lot",
+    "paper_only": true,
+    "early_exit": false
+  },
+  "primary_selection": {
+    "method": "highest_net_mc_ev_among_eligible_candidates",
+    "tie_break": "higher_cpcv_selection_frequency_then_strategy_name",
+    "validated": false,
+    "note": "Primary-candidate selection is a prospective research rule; the CPCV phase validated the regime effect and candidate universe, not this exact ranking rule."
+  }
+}
