@@ -70,24 +70,40 @@ def mc_paths(spot: float, returns: np.ndarray, horizon_sessions: int, paths: int
     sampled = rng.choice(returns, size=paths * horizon_sessions, replace=True).reshape(paths, horizon_sessions)
     return spot * np.exp(sampled.sum(axis=1))
 
-def fetch_prev_close(option_type: str, strike: float) -> tuple[float, str]:
-    strike_int = int(round(strike))
-    url = f"https://www.indiainfoline.com/markets/derivatives/option-chain/nifty/22-09-2026-{option_type.lower()}-{strike_int}"
+def fetch_nse_settlements(strikes: dict[str, float]) -> dict[str, float]:
+    url = "https://nsearchives.nseindia.com/content/fo/BhavCopy_NSE_FO_0_0_0_20260917_F_0000.csv.zip"
     s = requests.Session(impersonate="chrome")
-    s.headers.update(HEADERS)
-    r = s.get(url, timeout=45)
+    s.headers.update({
+        "User-Agent": HEADERS["User-Agent"],
+        "Accept-Language": HEADERS["Accept-Language"],
+        "Referer": "https://www.nseindia.com/",
+    })
+    r = s.get(url, timeout=60)
     r.raise_for_status()
-    text = re.sub(r"\\s+", " ", r.text)
-    m = re.search(r"Prev\\. Close.*?₹\\s*([0-9,]+(?:\\.[0-9]+)?)", text, flags=re.I)
-    if not m:
-        # Fallback: search HTML text around the label after stripping tags.
-        stripped = re.sub(r"<[^>]+>", " ", r.text)
-        stripped = re.sub(r"\\s+", " ", stripped)
-        m = re.search(r"Prev\\. Close\\s+₹\\s*([0-9,]+(?:\\.[0-9]+)?)", stripped, flags=re.I)
-    if not m:
-        raise RuntimeError(f"Unable to parse previous close from {url}")
-    px = float(m.group(1).replace(",", ""))
-    return px, url
+    import io, zipfile
+    with zipfile.ZipFile(io.BytesIO(r.content)) as zf:
+        csv_name = next((n for n in zf.namelist() if n.lower().endswith(".csv")), None)
+        if not csv_name:
+            raise RuntimeError(f"No CSV found in NSE archive: {zf.namelist()}")
+        with zf.open(csv_name) as fh:
+            df = pd.read_csv(fh, dtype=str)
+    x = df[
+        df["TckrSymb"].eq("NIFTY")
+        & pd.to_datetime(df["XpryDt"], errors="coerce").dt.normalize().eq(EXPIRY)
+        & df["OptnTp"].isin(["CE", "PE"])
+    ].copy()
+    x["strike_num"] = pd.to_numeric(x["StrkPric"], errors="coerce")
+    x["entry_px"] = pd.to_numeric(x["ClsPric"], errors="coerce")
+    if "SttlmPric" in x.columns:
+        x["entry_px"] = x["entry_px"].where(x["entry_px"].notna(), pd.to_numeric(x["SttlmPric"], errors="coerce"))
+    out={}
+    for label, typ in [("p20","PE"),("p35","PE"),("c65","CE"),("c80","CE")]:
+        strike=float(strikes[label])
+        rows=x[x["OptnTp"].eq(typ) & np.isclose(x["strike_num"].to_numpy(float),strike,rtol=0.0,atol=1e-8)]
+        if rows.empty or pd.isna(rows.iloc[0]["entry_px"]):
+            raise RuntimeError(f"Missing NSE EOD price for {typ} {strike} expiring {EXPIRY.date()}")
+        out[label]=float(rows.iloc[0]["entry_px"])
+    return out
 
 def main():
     history = fetch_nifty_history()
@@ -122,6 +138,157 @@ def main():
             "open_interest": np.nan,
             "volume": np.nan,
             "source_url": url,
+        })
+    chain = pd.DataFrame(rows)
+
+    metrics = build_batman_signal(
+        cutoff_spot,
+        terminal,
+        chain[["expiry","strike","option_type","last_price","bid","ask","open_interest","volume"]],
+        EXPIRY,
+        LOT_SIZE,
+        CAPITAL,
+        RISK_PCT,
+        COST_PER_CONTRACT,
+    )
+
+    ledger_path = Path("paper_trading/batman_ledger.csv")
+    signals_path = Path("paper_trading/batman_signals.csv")
+    ledger = read_csv_or_empty(ledger_path, LEDGER_COLUMNS)
+    signals = read_csv_or_empty(signals_path, SIGNAL_COLUMNS)
+
+    signal_id = f"{ENTRY.date().isoformat()}|{EXPIRY.date().isoformat()}|Batman"
+    signal_row = {
+        "run_timestamp_ist": pd.Timestamp.now(tz=IST).isoformat(),
+        "decision_date": ENTRY.date().isoformat(),
+        "target_expiry": EXPIRY.date().isoformat(),
+        "status": "BACKFILL_ENTRY_DAY",
+        "signal": metrics["signal"],
+        "spot": cutoff_spot,
+        "spot_source": "Yahoo Finance ^NSEI; data cutoff 2026-09-16",
+        "mc_paths": PATHS,
+        "lookback_sessions": LOOKBACK,
+        "horizon_sessions": 3,
+        "p20_terminal": metrics["p20_terminal"],
+        "p35_terminal": metrics["p35_terminal"],
+        "p65_terminal": metrics["p65_terminal"],
+        "p80_terminal": metrics["p80_terminal"],
+        "p20_strike": strikes["p20"],
+        "p35_strike": strikes["p35"],
+        "c65_strike": strikes["c65"],
+        "c80_strike": strikes["c80"],
+        "mc_ev_points_gross": metrics["mc_expected_pnl_points_gross"],
+        "entry_cost_points": metrics["entry_cost_points"],
+        "mc_ev_points_net": metrics["mc_expected_pnl_points_net"],
+        "mc_pop": metrics["mc_probability_profit"],
+        "mc_es95_points": metrics["mc_es95_points"],
+        "mc_es99_points": metrics["mc_es99_points"],
+        "lot_size": LOT_SIZE,
+        "contracts_per_strategy_lot": metrics["contracts_per_strategy_lot"],
+        "risk_points_per_lot": metrics["risk_points_per_lot"],
+        "risk_budget_inr": metrics["risk_budget_inr"],
+        "estimated_risk_inr_per_lot": metrics["estimated_risk_inr_per_lot"],
+        "minimum_capital_for_one_lot_inr": metrics["minimum_capital_for_one_lot_inr"],
+        "recommended_lots": metrics["recommended_lots"],
+        "entry_cashflow_points_per_unit": metrics["entry_cashflow_points_per_unit"],
+        "entry_price_source": "NSE UDiFF bhavcopy ClsPric (2026-09-17 close proxy)",
+        "signal_id": signal_id,
+        "notes": "RETROACTIVE PAPER-TRADE BACKFILL: MC data cutoff 2026-09-16; expiry 2026-09-22; 3 future trading sessions from 2026-09-17. Entry option prices use NSE UDiFF 2026-09-17 ClsPric; bid/ask are unavailable in EOD bhavcopy, so this is a reconstructed paper entry, not an executable historical quote.",
+    }
+
+    if signal_id not in set(signals.get("signal_id", pd.Series(dtype=str)).astype(str)):
+        signals = pd.concat([signals, pd.DataFrame([signal_row])], ignore_index=True)
+        signals.to_csv(signals_path, index=False)
+
+    if signal_id not in set(ledger.get("signal_id", pd.Series(dtype=str)).astype(str)):
+        ledger_row = {
+            "signal_id": signal_id,
+            "decision_date": ENTRY.date().isoformat(),
+            "expiry": EXPIRY.date().isoformat(),
+            "strategy": "Batman",
+            "signal": metrics["signal"],
+            "spot": cutoff_spot,
+            "lot_size": LOT_SIZE,
+            "lots": metrics["recommended_lots"],
+            "risk_budget_inr": metrics["risk_budget_inr"],
+            "mc_ev_points_net": metrics["mc_expected_pnl_points_net"],
+            "mc_pop": metrics["mc_probability_profit"],
+            "es95_points": metrics["mc_es95_points"],
+            "es99_points": metrics["mc_es99_points"],
+            "entry_cost_points": metrics["entry_cost_points"],
+            "entry_cashflow_points_per_unit": metrics["entry_cashflow_points_per_unit"],
+            "legs_json": json.dumps(metrics["legs"], separators=(",", ":")),
+            "status": "OPEN" if metrics["signal"] == "ENTER" and metrics["recommended_lots"] >= 1 else "NO_TRADE",
+            "exit_date": "",
+            "exit_spot": "",
+            "exit_intrinsic_points_per_unit": "",
+            "realized_pnl_points_per_unit": "",
+            "realized_pnl_inr": "",
+            "notes": signal_row["notes"],
+        }
+        ledger = pd.concat([ledger, pd.DataFrame([ledger_row])], ignore_index=True)
+        ledger.to_csv(ledger_path, index=False)
+
+    latest = {
+        "producer": "Batman Signal Producer — retrospective first-trade backfill",
+        "strategy": "Batman",
+        "run_timestamp_ist": signal_row["run_timestamp_ist"],
+        "decision_date": ENTRY.date().isoformat(),
+        "target_expiry": EXPIRY.date().isoformat(),
+        "status": signal_row["status"],
+        **metrics,
+        "spot": cutoff_spot,
+        "spot_source": signal_row["spot_source"],
+        "mc_paths": PATHS,
+        "lookback_sessions": LOOKBACK,
+        "horizon_sessions": 3,
+        "data_cutoff": CUTOFF.date().isoformat(),
+        "entry_price_source": signal_row["entry_price_source"],
+        "notes": signal_row["notes"],
+    }
+    build_site(Path("site"), latest, signals, ledger)
+    Path("site/data/producer_metadata.json").write_text(
+        json.dumps({
+            "mode": "retrospective-first-trade-backfill",
+            "model_data_cutoff": CUTOFF.date().isoformat(),
+            "paper_entry_date": ENTRY.date().isoformat(),
+            "expiry": EXPIRY.date().isoformat(),
+            "paths": PATHS,
+            "lookback": LOOKBACK,
+            "seed": SEED,
+            "option_price_source": "NSE UDiFF 2026-09-17 ClsPric; bid/ask unavailable",
+        }, indent=2),
+        encoding="utf-8",
+    )
+    print(json.dumps({
+        "signal": metrics["signal"],
+        "recommended_lots": metrics["recommended_lots"],
+        "spot_cutoff": cutoff_spot,
+        "terminal_quantiles": qs.tolist(),
+        "strikes": strikes,
+        "legs": metrics["legs"],
+        "mc_ev_net": metrics["mc_expected_pnl_points_net"],
+        "mc_pop": metrics["mc_probability_profit"],
+        "es95": metrics["mc_es95_points"],
+        "es99": metrics["mc_es99_points"],
+    }, indent=2, default=str))
+
+if __name__ == "__main__":
+    main()    settlements = fetch_nse_settlements(strikes)
+    print(json.dumps({"nse_prices": settlements}, indent=2))
+    rows = []
+    for label, typ in [("p20","PE"),("p35","PE"),("c65","CE"),("c80","CE")]:
+        px=settlements[label]
+        rows.append({
+            "expiry": EXPIRY,
+            "strike": strikes[label],
+            "option_type": typ,
+            "last_price": px,
+            "bid": np.nan,
+            "ask": np.nan,
+            "open_interest": np.nan,
+            "volume": np.nan,
+            "source_url": "https://nsearchives.nseindia.com/content/fo/BhavCopy_NSE_FO_0_0_0_20260917_F_0000.csv.zip",
         })
     chain = pd.DataFrame(rows)
 
