@@ -1,0 +1,1 @@
+signal_id,decision_date,expiry,strategy,signal,spot,lot_size,lots,risk_budget_inr,mc_ev_points_net,mc_pop,es95_points,es99_points,entry_cost_points,entry_cashflow_points_per_unit,entry_timestamp_ist,model_data_cutoff,quote_retrieved_at_ist,legs_json,status,exit_date,exit_spot,exit_intrinsic_points_per_unit,realized_pnl_points_per_unit,realized_pnl_inr,notes
