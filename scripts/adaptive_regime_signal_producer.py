@@ -14,7 +14,7 @@ import pandas as pd
 from curl_cffi import requests
 
 from nifty_mc.strategy_catalog import build_strategy
-from scripts.batman_signal_producer import (
+from batman_signal_producer import (
     NSEClient,
     apply_closures,
     calculate_realized_for_open_trades,
