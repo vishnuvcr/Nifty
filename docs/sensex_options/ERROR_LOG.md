@@ -46,3 +46,9 @@ Type: data availability
 Observation: BSE's live derivatives chain exposes bid/ask fields, but public EOD BhavCopy documentation does not contain a historical quote-book snapshot at the decision timestamp.
 Resolution: require a point-in-time historical quote dataset for executable backtesting, and keep EOD-only analysis clearly separated as a proxy.
 Prevention: block S5 execution-style inference until quote provenance passes S1 validation.
+
+### E009 — GitHub Actions execution not exposed through connected runtime
+Type: execution environment
+Observation: the S5 dispatcher and workflow definitions are present, but neither push-triggered nor pull_request-triggered runs are exposed through the connected GitHub Actions endpoints in this session; no RUN_STARTED checkpoint or report artifacts appeared on the S5 branch.
+Resolution: do not report numerical backtest results. Preserve the frozen engine, workflow, split definitions and cost model so the run can be executed from GitHub Actions without methodological changes.
+Prevention: treat a missing CI run as an infrastructure failure, never as a zero-trade or zero-performance backtest result.
