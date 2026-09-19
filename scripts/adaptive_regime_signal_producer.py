@@ -545,6 +545,14 @@ def main() -> None:
             feature_path.parent.mkdir(parents=True, exist_ok=True)
             live.drop_duplicates("decision_date").sort_values("decision_date").to_csv(feature_path, index=False)
 
+    # Always materialize the feature-history file so NO_TRADE/non-session runs
+    # still produce a complete paper-trading state artifact.
+    feature_path.parent.mkdir(parents=True, exist_ok=True)
+    if not feature_path.exists():
+        pd.DataFrame(columns=["decision_date", "trend20", "trend60", "rv20", "p_expand"]).to_csv(
+            feature_path, index=False
+        )
+
     signal_row = {k: base.get(k) for k in SIGNAL_COLUMNS}
     if signal_row["signal_id"] not in set(signals.get("signal_id", pd.Series(dtype=str)).astype(str)):
         signals = pd.concat([signals, pd.DataFrame([signal_row])], ignore_index=True)
