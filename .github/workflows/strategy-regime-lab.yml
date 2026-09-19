@@ -1,0 +1,96 @@
+name: strategy-regime-lab
+
+on:
+  push:
+    branches: ["research/monte-carlo-wfa-v1"]
+    paths:
+      - src/nifty_mc/strategy_catalog.py
+      - scripts/run_strategy_regime_lab.py
+      - .github/workflows/strategy-regime-lab.yml
+  workflow_dispatch:
+    inputs:
+      acquisition_run_id:
+        description: "Historical options acquisition run ID (optional; defaults to latest successful run)"
+        required: false
+        type: string
+      paths:
+        description: "Monte Carlo paths per decision"
+        required: false
+        default: "5000"
+        type: string
+
+jobs:
+  lab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+      - name: Resolve acquisition run
+        id: acquisition
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_RUN_ID: ${{ inputs.acquisition_run_id }}
+        run: |
+          if [ -n "$INPUT_RUN_ID" ]; then
+            run_id="$INPUT_RUN_ID"
+          else
+            run_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "build-historical-nifty-options" --branch research/monte-carlo-wfa-v1 --status success --limit 1 --json databaseId --jq '.[0].databaseId')"
+          fi
+          test -n "$run_id"
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "Using acquisition run: $run_id"
+      - name: Download option artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p data/options
+          gh run download "${{ steps.acquisition.outputs.run_id }}" --repo "${{ github.repository }}" --pattern "nifty-options-*" --dir data/options
+      - name: Build NIFTY index session file
+        run: |
+          mkdir -p data/raw results
+          curl --fail --location --retry 3 "https://raw.githubusercontent.com/Hareeshkesavan/Stock-Market-Dataset/main/Nifty%2050%20Historical%20Data.csv" -o data/raw/nifty50_source.csv
+          python - <<'PY'
+          import pandas as pd
+          d=pd.read_csv("data/raw/nifty50_source.csv")
+          d.columns=[str(c).strip().lower() for c in d.columns]
+          d["date"]=pd.to_datetime(d["date"],errors="coerce")
+          d["close"]=pd.to_numeric(d["price"].astype(str).str.replace(",","",regex=False),errors="coerce")
+          d=d[["date","close"]].dropna().drop_duplicates("date").sort_values("date")
+          d.to_csv("data/raw/nifty50_index.csv",index=False)
+          print("index",len(d),d.date.min(),d.date.max())
+          PY
+      - name: Run multi-strategy regime lab
+        env:
+          PATHS: ${{ inputs.paths || '5000' }}
+        run: |
+          python scripts/run_strategy_regime_lab.py \
+            --index data/raw/nifty50_index.csv \
+            --options-dir data/options \
+            --out-dir results \
+            --paths "$PATHS"
+      - name: Print headline outputs
+        run: |
+          echo "=== REGIME ROUTER ==="
+          cat results/regime_router_summary.csv
+          echo
+          echo "=== FROZEN ROUTER ==="
+          cat results/frozen_regime_router.csv
+          echo
+          echo "=== STRATEGY SUMMARY SAMPLE ==="
+          head -40 results/strategy_summary.csv
+      - uses: actions/upload-artifact@v4
+        with:
+          name: strategy-regime-lab-results
+          path: results/
+          retention-days: 30

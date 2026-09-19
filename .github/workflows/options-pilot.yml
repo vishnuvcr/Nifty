@@ -1,0 +1,33 @@
+name: test-nifty-options-data-access
+
+on:
+  push:
+    branches: ["research/monte-carlo-wfa-v1"]
+    paths: ["scripts/download_fo_pilot.py","src/nifty_mc/nse_ingest.py",".github/workflows/options-pilot.yml"]
+  workflow_dispatch:
+
+jobs:
+  pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+      - name: Download representative NSE F&O archives
+        run: |
+          python scripts/download_fo_pilot.py             --dates               2020-01-22               2022-06-16               2023-11-09               2024-06-20               2025-02-03               2026-04-01             --out data/options_pilot.csv
+      - name: Validate NIFTY options
+        run: |
+          python -c "import pandas as pd; d=pd.read_csv('data/options_pilot.csv',parse_dates=['timestamp','expiry']); assert len(d)>0; assert set(d['option_type'].dropna().unique())<=set(['CE','PE']); assert d['symbol'].eq('NIFTY').all(); print('rows',len(d)); print(d.groupby('source_trade_date').size()); print(d[['timestamp','expiry','strike','option_type','close','open_interest','volume']].head())"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nifty-options-pilot
+          path: data/options_pilot*
+          retention-days: 30

@@ -1,0 +1,66 @@
+name: candidate-strategy-screen
+
+on:
+  workflow_run:
+    workflows: ["strategy-regime-lab-v2"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  screen:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+      - name: Resolve V2 run
+        id: v2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            run_id="${{ github.event.workflow_run.id }}"
+          else
+            run_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "strategy-regime-lab-v2" --status success --limit 1 --json databaseId --jq '.[0].databaseId')"
+          fi
+          test -n "$run_id"
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "Using V2 run: $run_id"
+      - name: Download V2 artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p input
+          gh run download "${{ steps.v2.outputs.run_id }}" --repo "${{ github.repository }}" --name strategy-regime-lab-v2-results --dir input
+          test -f input/strategy_trades.csv
+      - name: Run candidate screen
+        run: |
+          mkdir -p candidate_results
+          python scripts/run_candidate_screen.py             --trades input/strategy_trades.csv             --out-dir candidate_results             --cost-per-leg 2             --bootstrap 20000
+      - name: Publish headline
+        run: |
+          echo "=== CANDIDATE ==="
+          cat candidate_results/candidate_strategy.md
+          echo
+          echo "=== TOP SCREEN ==="
+          python - <<'PY'
+          import pandas as pd
+          d=pd.read_csv("candidate_results/candidate_screen.csv")
+          print(d.head(15).to_string(index=False))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-strategy-screen
+          path: candidate_results/
+          retention-days: 30

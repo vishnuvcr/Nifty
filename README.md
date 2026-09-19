@@ -2,20 +2,26 @@
 
 Research framework for Nifty 50 expiry-range forecasting, bull/bear/neutral classification, and Long Iron Condor evaluation.
 
-## Research principles
-- Strict walk-forward / out-of-sample validation
-- No look-ahead leakage
-- Separate physical-measure forecasting from option-implied risk-neutral quantities
-- Transaction costs, slippage and bid/ask assumptions
-- GBM as a baseline, with bootstrap/GARCH/regime-aware extensions
-- Reproducible experiments and fixed random seeds
+## Branch
+Primary research branch: `research/monte-carlo-wfa-v1`
 
-Initial structure:
-- `src/` model and simulation code
-- `configs/` experiment settings
-- `tests/` unit/integration tests
-- `notebooks/` research notebooks
-- `reports/` generated research outputs
-- `data/` local-only datasets (not committed)
+## Current modules
+- `src/nifty_mc/gbm.py`: physical-measure GBM terminal simulations
+- `src/nifty_mc/volatility.py`: realized/EWMA volatility estimators
+- `src/nifty_mc/trend.py`: bull/bear/neutral classifier
+- `src/nifty_mc/iron_condor.py`: expiration payoff and Monte Carlo metrics
+- `src/nifty_mc/walk_forward.py`: chronological out-of-sample forecast engine
+- `src/nifty_mc/run_experiment.py`: CSV-driven research runner
+- `docs/RESEARCH_SPEC.md`: research protocol
+- `configs/default.yaml`: baseline experiment parameters
 
-See `docs/RESEARCH_SPEC.md` for the experiment protocol.
+## Data contract
+Price CSV must contain a date/datetime field and a close/price field.
+
+Origin CSV:
+`decision_date,expiry_date`
+
+Historical option-chain data will be added as a separate layer. It must contain timestamp/expiry/strike/type plus executable bid/ask or a documented reconstruction method.
+
+## Important
+This repository currently contains the research scaffold; no live-trading claim is made. The next stage is historical data ingestion and a full option-chain walk-forward experiment.

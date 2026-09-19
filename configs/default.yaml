@@ -1,0 +1,17 @@
+seed: 20260918
+simulation:
+  n_paths: 50000
+  trading_days_per_year: 252
+volatility:
+  windows: [20, 60, 120]
+  ewma_lambda: 0.94
+walk_forward:
+  train_years: [1, 2, 3]
+  mode: expanding
+trend:
+  neutral_band: 0.005
+  bull_probability: 0.60
+  bear_probability: 0.60
+iron_condor:
+  wing_width_points: [100, 150, 200]
+  entry_days_to_expiry: [3, 5]

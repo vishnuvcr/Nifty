@@ -1,0 +1,163 @@
+name: build-historical-nifty-options
+
+on:
+  push:
+    branches: ["research/monte-carlo-wfa-v1"]
+    paths: [".github/workflows/historical-options.yml", "scripts/build_option_targets.py", "scripts/download_fo_batch.py", "src/nifty_mc/nse_ingest.py", "scripts/run_long_condor_wfa.py", ".github/workflows/long-condor-wfa.yml"]
+  workflow_dispatch:
+    inputs:
+      start_year:
+        description: "First year"
+        required: true
+        default: "2020"
+      end_year:
+        description: "Last year"
+        required: true
+        default: "2026"
+
+jobs:
+  acquire:
+    strategy:
+      fail-fast: false
+      matrix:
+        year: [2020, 2021, 2022, 2023, 2024, 2025, 2026]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+      - name: Build NIFTY index session file
+        run: |
+          mkdir -p data/raw data/options
+          curl --fail --location --retry 3 "https://raw.githubusercontent.com/Hareeshkesavan/Stock-Market-Dataset/main/Nifty%2050%20Historical%20Data.csv" -o data/raw/nifty50_source.csv
+          python - <<'PY'
+          import pandas as pd
+          p="data/raw/nifty50_source.csv"
+          d=pd.read_csv(p)
+          d.columns=[str(c).strip().lower() for c in d.columns]
+          d["date"]=pd.to_datetime(d["date"],errors="coerce")
+          d["close"]=pd.to_numeric(d["price"].astype(str).str.replace(",","",regex=False),errors="coerce")
+          d=d[["date","close"]].dropna().drop_duplicates("date").sort_values("date")
+          d.to_csv("data/raw/nifty50_index.csv",index=False)
+          print("index",len(d),d.date.min(),d.date.max())
+          PY
+      - name: Build decision targets
+        run: |
+          python scripts/build_option_targets.py \
+            --index data/raw/nifty50_index.csv \
+            --start "$(if [ "${{ matrix.year }}" = "2020" ]; then echo "2020-04-13"; else echo "${{ matrix.year }}-01-01"; fi)" \
+            --end "${{ matrix.year }}-12-31" \
+            --out "data/options/targets_${{ matrix.year }}.csv"
+      - name: Download NIFTY option archives
+        run: |
+          python scripts/download_fo_batch.py \
+            --targets "data/options/targets_${{ matrix.year }}.csv" \
+            --out "data/options/nifty_options_${{ matrix.year }}.csv.gz" \
+            --manifest "data/options/manifest_${{ matrix.year }}.csv" \
+            --workers 6 \
+            --allow-missing \
+            --max-missing 2
+      - name: Validate
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          y="${{ matrix.year }}"
+          d=pd.read_csv(f"data/options/nifty_options_{y}.csv.gz",parse_dates=["timestamp","expiry"])
+          t=pd.read_csv(f"data/options/targets_{y}.csv")
+          assert len(d)>0
+          assert d["symbol"].eq("NIFTY").all()
+          assert set(d["option_type"].dropna().unique()) <= {"CE","PE"}
+          assert d["timestamp"].dt.year.eq(int(y)).all()
+          print("YEAR",y,"rows",len(d),"decision_dates",d["timestamp"].dt.date.nunique(),"expiries",d["expiry"].dt.date.nunique())
+          print(d.groupby(d["timestamp"].dt.date).size().describe())
+          m=pd.read_csv(f"data/options/manifest_{y}.csv")
+          missing=m.loc[m["status"].ne("ok"),"trade_date"].astype(str).tolist()
+          print("targets",len(t),"acquired",int(m["status"].eq("ok").sum()),"missing",missing)
+          assert len(missing) <= 2
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nifty-options-${{ matrix.year }}
+          path: |
+            data/options/targets_${{ matrix.year }}.csv
+            data/options/nifty_options_${{ matrix.year }}.csv.gz
+            data/options/manifest_${{ matrix.year }}.csv
+          retention-days: 30
+
+  long-condor-walk-forward:
+    name: Long Iron Condor Walk-Forward
+    needs: acquire
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+      - name: Download option artifacts from this run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p data/options
+          gh run download "${{ github.run_id }}" --repo "${{ github.repository }}" --pattern "nifty-options-*" --dir data/options
+          find data/options -maxdepth 3 -type f | sort
+      - name: Build NIFTY index session file
+        run: |
+          mkdir -p data/raw results
+          curl --fail --location --retry 3 "https://raw.githubusercontent.com/Hareeshkesavan/Stock-Market-Dataset/main/Nifty%2050%20Historical%20Data.csv" -o data/raw/nifty50_source.csv
+          python - <<'PY'
+          import pandas as pd
+          d=pd.read_csv("data/raw/nifty50_source.csv")
+          d.columns=[str(c).strip().lower() for c in d.columns]
+          d["date"]=pd.to_datetime(d["date"],errors="coerce")
+          d["close"]=pd.to_numeric(d["price"].astype(str).str.replace(",","",regex=False),errors="coerce")
+          d=d[["date","close"]].dropna().drop_duplicates("date").sort_values("date")
+          d.to_csv("data/raw/nifty50_index.csv",index=False)
+          print("index",len(d),d.date.min(),d.date.max())
+          PY
+      - name: Run Long Iron Condor WFA
+        run: |
+          python scripts/run_long_condor_wfa.py \
+            --index data/raw/nifty50_index.csv \
+            --options-dir data/options \
+            --out results/long_condor_wfa.csv \
+            --paths 20000
+      - name: Summarize WFA
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          d=pd.read_csv("results/long_condor_wfa.csv",parse_dates=["decision_date","actual_expiry","expiry_session"])
+          d["cum_pnl"]=d["realized_pnl"].cumsum()
+          d["peak"]=d["cum_pnl"].cummax()
+          d["drawdown"]=d["cum_pnl"]-d["peak"]
+          print("TRADES",len(d))
+          print("WIN_RATE",d["win"].mean())
+          print("MEAN_PNL_POINTS",d["realized_pnl"].mean())
+          print("MEDIAN_PNL_POINTS",d["realized_pnl"].median())
+          print("TOTAL_PNL_POINTS",d["realized_pnl"].sum())
+          print("MAX_DRAWDOWN_POINTS",d["drawdown"].min())
+          print("MEAN_MC_POP",d["mc_pop"].mean())
+          print("MEAN_MC_EV",d["mc_ev"].mean())
+          print("\nYEAR")
+          print(d.assign(year=d.decision_date.dt.year).groupby("year").agg(trades=("win","size"),win_rate=("win","mean"),mean_pnl=("realized_pnl","mean"),total_pnl=("realized_pnl","sum"),mean_mc_pop=("mc_pop","mean")).to_string())
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: long-condor-wfa-results
+          path: results/long_condor_wfa.csv
+          retention-days: 30

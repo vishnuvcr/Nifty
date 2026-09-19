@@ -1,0 +1,88 @@
+from __future__ import annotations
+
+from pathlib import Path
+import pandas as pd
+
+
+PRICE_ALIASES = {
+    "Date": "date", "DATE": "date", "TIMESTAMP": "date",
+    "Close": "close", "CLOSE": "close", "Closing Price": "close",
+}
+
+# NSE UDiFF uses TckrSymb for the underlying symbol and FinInstrmNm
+# for the full contract/instrument name. Do not map both to "symbol".
+OPTION_ALIASES = {
+    "TradDt": "timestamp", "TIMESTAMP": "timestamp", "Date": "timestamp",
+    "TckrSymb": "symbol", "SYMBOL": "symbol", "Symbol": "symbol",
+    "FinInstrmNm": "contract_name",
+    "XpryDt": "expiry", "EXPIRY_DT": "expiry", "Expiry": "expiry",
+    "StrkPric": "strike", "STRIKE_PR": "strike", "Strike Price": "strike", "Strike": "strike",
+    "OptnTp": "option_type", "OPTION_TYP": "option_type", "Option Type": "option_type",
+    "OpnPric": "open", "OPEN": "open", "Open": "open",
+    "HghPric": "high", "HIGH": "high",
+    "LwPric": "low", "LOW": "low",
+    "ClsPric": "close", "CLOSE": "close", "Close": "close",
+    "LastPric": "last", "Last": "last",
+    "BidPric": "bid", "Bid": "bid",
+    "AskPric": "ask", "Ask": "ask",
+    "FinInstrmTp": "instrument_type", "INSTRUMENT": "instrument_type",
+    "OpnIntrst": "open_interest", "OPEN_INT": "open_interest", "Open Interest": "open_interest",
+    "TtlTradgVol": "volume", "CONTRACTS": "volume", "Volume": "volume",
+}
+
+
+def _read(path: str | Path) -> pd.DataFrame:
+    path = Path(path)
+    if path.suffix.lower() in {".gz", ".zip"}:
+        return pd.read_csv(path, compression="infer")
+    return pd.read_csv(path)
+
+
+def normalize_price_csv(path: str | Path) -> pd.DataFrame:
+    df = _read(path).rename(columns=PRICE_ALIASES)
+    if "date" not in df.columns or "close" not in df.columns:
+        raise ValueError("price data requires date and close columns")
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+    df["close"] = pd.to_numeric(df["close"], errors="coerce")
+    return df.dropna(subset=["date", "close"]).sort_values("date").reset_index(drop=True)
+
+
+def normalize_option_csv(path: str | Path) -> pd.DataFrame:
+    df = _read(path).rename(columns=OPTION_ALIASES)
+    required = {"timestamp", "expiry", "strike", "option_type"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"option data missing columns: {sorted(missing)}")
+
+    for c in ("timestamp", "expiry"):
+        df[c] = pd.to_datetime(df[c], errors="coerce")
+    df["strike"] = pd.to_numeric(df["strike"], errors="coerce")
+
+    for c in ("open", "high", "low", "close", "last", "bid", "ask", "open_interest", "volume"):
+        if c in df.columns:
+            df[c] = pd.to_numeric(df[c], errors="coerce")
+
+    df["option_type"] = df["option_type"].astype(str).str.upper().replace(
+        {"CALL": "CE", "PUT": "PE"}
+    )
+    if "instrument_type" in df.columns:
+        df["instrument_type"] = df["instrument_type"].astype(str).str.upper().str.strip()
+        # Keep NIFTY index options only; exclude futures and stock options.
+        df = df[df["instrument_type"].isin(["OPTIDX", "IDO"])]
+    if "symbol" in df.columns:
+        df["symbol"] = df["symbol"].astype(str).str.upper().str.strip()
+        df = df[df["symbol"].eq("NIFTY")]
+
+    return df.dropna(subset=["timestamp", "expiry", "strike"]).sort_values(
+        ["timestamp", "expiry", "strike", "option_type"]
+    ).reset_index(drop=True)
+
+
+def snapshot_at_or_before(chain: pd.DataFrame, timestamp, expiry) -> pd.DataFrame:
+    t = pd.Timestamp(timestamp)
+    e = pd.Timestamp(expiry)
+    x = chain[(chain["expiry"] == e) & (chain["timestamp"] <= t)]
+    if x.empty:
+        raise ValueError("no option-chain observations available before decision time")
+    latest = x["timestamp"].max()
+    return x[x["timestamp"] == latest].copy()

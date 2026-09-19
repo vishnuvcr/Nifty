@@ -1,0 +1,38 @@
+name: run-monte-carlo-wfa
+
+on:
+  push:
+    branches: ["research/monte-carlo-wfa-v1"]
+    paths:
+      - "scripts/run_price_wfa.py"
+      - "src/nifty_mc/**"
+      - ".github/workflows/run-wfa.yml"
+  workflow_dispatch:
+
+jobs:
+  wfa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+      - name: Acquire research index
+        run: |
+          mkdir -p data/raw
+          curl --fail --location --retry 3 "https://raw.githubusercontent.com/Hareeshkesavan/Stock-Market-Dataset/main/Nifty%2050%20Historical%20Data.csv" -o /tmp/nifty.csv
+          python -c "import pandas as pd; d=pd.read_csv('/tmp/nifty.csv'); d.columns=[str(c).strip().lower() for c in d.columns]; d['date']=pd.to_datetime(d['date'],errors='coerce'); d['close']=pd.to_numeric(d['price'].astype(str).str.replace(',','',regex=False),errors='coerce'); d[['date','close']].dropna().drop_duplicates('date').sort_values('date').to_csv('data/raw/nifty50_index.csv',index=False)"
+      - name: Run walk-forward Monte Carlo
+        run: python scripts/run_price_wfa.py --prices data/raw/nifty50_index.csv --paths 20000
+      - name: Upload WFA results
+        uses: actions/upload-artifact@v4
+        with:
+          name: nifty-monte-carlo-wfa-20000
+          path: reports/
+          retention-days: 30
