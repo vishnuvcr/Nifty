@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
-import requests
+from curl_cffi import requests
 
 from nifty_mc.strategy_catalog import build_strategy
 
@@ -59,15 +59,23 @@ def parse_float(value: object) -> float | None:
 
 class NSEClient:
     def __init__(self) -> None:
-        self.session = requests.Session()
+        self.session = requests.Session(impersonate="chrome")
         self.session.headers.update(NSE_HEADERS)
         self.warmed = False
 
     def warm(self) -> None:
         if self.warmed:
             return
-        r = self.session.get(NSE_BASE + "/", timeout=30)
-        r.raise_for_status()
+        # NSE is protected by Akamai bot mitigation. A browser-like TLS
+        # fingerprint plus a real page visit is required before API calls.
+        page = self.session.get(NSE_BASE + "/option-chain", timeout=30)
+        page.raise_for_status()
+        warm_api = self.session.get(
+            NSE_BASE + "/api/allIndices",
+            params={"index": "NIFTY 50"},
+            timeout=30,
+        )
+        warm_api.raise_for_status()
         self.warmed = True
 
     def get_json(self, path: str, params: dict[str, object] | None = None) -> dict:
@@ -132,44 +140,82 @@ class NSEClient:
                     dates.add(pd.Timestamp(ts).normalize())
         return dates
 
-    def fetch_option_chain(self) -> tuple[pd.DataFrame, float | None, str]:
-        endpoints = [
-            ("/api/option-chain-v3", {"type": "Indices", "symbol": "NIFTY"}),
-            ("/api/option-chain-indices", {"symbol": "NIFTY"}),
+    def fetch_option_chain(
+        self, requested_expiry: pd.Timestamp | None = None
+    ) -> tuple[pd.DataFrame, float | None, str, pd.Timestamp]:
+        # NSE's current v3 flow requires expiry discovery first.
+        contract_info = self.get_json(
+            "/api/option-chain-contract-info",
+            params={"symbol": "NIFTY"},
+        )
+        raw_expiries = contract_info.get("expiryDates") or []
+        expiry_dates = [
+            pd.Timestamp(x).normalize()
+            for x in raw_expiries
+            if not pd.isna(pd.to_datetime(x, errors="coerce"))
         ]
-        last_error: Exception | None = None
-        for path, params in endpoints:
-            try:
-                payload = self.get_json(path, params=params)
-                records = payload.get("records", {})
-                underlying = parse_float(records.get("underlyingValue"))
-                raw = records.get("data") or payload.get("data") or payload.get("filtered", {}).get("data") or []
-                rows: list[dict[str, object]] = []
-                for rec in raw:
-                    expiry = pd.to_datetime(rec.get("expiryDate"), errors="coerce")
-                    strike = parse_float(rec.get("strikePrice"))
-                    if pd.isna(expiry) or strike is None:
-                        continue
-                    for typ in ("CE","PE"):
-                        q = rec.get(typ)
-                        if not isinstance(q, dict):
-                            continue
-                        rows.append({
-                            "expiry": pd.Timestamp(expiry).normalize(),
-                            "strike": float(strike),
-                            "option_type": typ,
-                            "last_price": parse_float(q.get("lastPrice")),
-                            "bid": parse_float(q.get("bidprice") if q.get("bidprice") is not None else q.get("bidPrice")),
-                            "ask": parse_float(q.get("askPrice") if q.get("askPrice") is not None else q.get("askprice")),
-                            "open_interest": parse_float(q.get("openInterest")),
-                            "volume": parse_float(q.get("totalTradedVolume")),
-                        })
-                if not rows:
-                    raise RuntimeError("NSE option-chain response contained no CE/PE rows.")
-                return pd.DataFrame(rows), underlying, path
-            except Exception as exc:
-                last_error = exc
-        raise RuntimeError(f"All NSE option-chain endpoints failed: {last_error}")
+        if not expiry_dates:
+            raise RuntimeError("NSE returned no NIFTY option expiry dates.")
+
+        available = set(expiry_dates)
+        if requested_expiry is None:
+            target_expiry = expiry_dates[0]
+        else:
+            target_expiry = pd.Timestamp(requested_expiry).normalize()
+            if target_expiry not in available:
+                available_text = ", ".join(d.date().isoformat() for d in expiry_dates[:10])
+                raise RuntimeError(
+                    f"Requested expiry {target_expiry.date()} is not available in NSE contract info. "
+                    f"Available front expiries: {available_text}"
+                )
+
+        expiry_text = target_expiry.strftime("%d-%b-%Y")
+        path = "/api/option-chain-v3"
+        payload = self.get_json(
+            path,
+            params={
+                "type": "Indices",
+                "symbol": "NIFTY",
+                "expiry": expiry_text,
+            },
+        )
+        records = payload.get("records", {})
+        underlying = parse_float(records.get("underlyingValue"))
+        raw = (
+            records.get("data")
+            or payload.get("data")
+            or payload.get("filtered", {}).get("data")
+            or []
+        )
+        rows: list[dict[str, object]] = []
+        for rec in raw:
+            expiry = pd.to_datetime(rec.get("expiryDate"), errors="coerce")
+            strike = parse_float(rec.get("strikePrice"))
+            if pd.isna(expiry) or strike is None:
+                continue
+            for typ in ("CE", "PE"):
+                q = rec.get(typ)
+                if not isinstance(q, dict):
+                    continue
+                rows.append({
+                    "expiry": pd.Timestamp(expiry).normalize(),
+                    "strike": float(strike),
+                    "option_type": typ,
+                    "last_price": parse_float(q.get("lastPrice")),
+                    "bid": parse_float(
+                        q.get("bidprice") if q.get("bidprice") is not None else q.get("bidPrice")
+                    ),
+                    "ask": parse_float(
+                        q.get("askPrice") if q.get("askPrice") is not None else q.get("askprice")
+                    ),
+                    "open_interest": parse_float(q.get("openInterest")),
+                    "volume": parse_float(q.get("totalTradedVolume")),
+                })
+        if not rows:
+            raise RuntimeError(
+                f"NSE option-chain response contained no CE/PE rows for {expiry_text}."
+            )
+        return pd.DataFrame(rows), underlying, path, target_expiry
 
 def trading_sessions_between(start: pd.Timestamp, end: pd.Timestamp, holidays: set[pd.Timestamp]) -> pd.DatetimeIndex:
     days = pd.date_range(start.normalize(), end.normalize(), freq="D")
@@ -559,9 +605,15 @@ def main() -> None:
             raise SystemExit("Live mode only supports today's decision date.")
 
     client = NSEClient()
-    index_df = client.fetch_index_history((decision - pd.Timedelta(days=365*5)).date(), decision.date())
+    index_df = client.fetch_index_history(
+        (decision - pd.Timedelta(days=365*5)).date(),
+        decision.date(),
+    )
     holidays = client.fetch_holidays()
-    chain, chain_underlying, chain_endpoint = client.fetch_option_chain()
+    requested_expiry = pd.Timestamp(args.expiry).normalize() if args.expiry else None
+    chain, chain_underlying, chain_endpoint, chain_expiry = client.fetch_option_chain(
+        requested_expiry
+    )
 
     ledger_path = Path(args.ledger)
     ledger = read_csv_or_empty(ledger_path, LEDGER_COLUMNS)
@@ -603,15 +655,11 @@ def main() -> None:
     if not decision_is_session:
         payload["notes"] = "Decision date is not present in NSE NIFTY 50 EOD history."
     else:
-        future_expiries = sorted(e for e in chain["expiry"].dropna().unique() if pd.Timestamp(e).date() >= decision.date())
-        if args.expiry:
-            target_expiry = pd.Timestamp(args.expiry).normalize()
-            if target_expiry not in set(pd.to_datetime(future_expiries)):
-                raise SystemExit(f"Requested expiry {target_expiry.date()} is not in the live chain.")
-        elif future_expiries:
-            target_expiry = pd.Timestamp(future_expiries[0]).normalize()
-        else:
-            raise RuntimeError("No future expiry is present in the live NIFTY option chain.")
+        target_expiry = chain_expiry
+        if target_expiry.date() < decision.date():
+            raise RuntimeError(
+                f"NSE returned an expired front expiry {target_expiry.date()} for decision date {decision.date()}."
+            )
         payload["target_expiry"] = target_expiry.date().isoformat()
 
         sessions = trading_sessions_between(decision, target_expiry, holidays)
