@@ -336,17 +336,18 @@ def main() -> None:
                 s = summary(selected["net_pnl"].to_numpy(float) if not selected.empty else np.array([]))
                 positive = 0
                 regime_parts = []
-                for regime, rg in selected.groupby("selected_regime"):
-                    rs = summary(rg["net_pnl"].to_numpy(float))
-                    positive += int(rs["mean"] > 0 and rs["pf"] > 1)
-                    regime_parts.append(
-                        {
-                            "lookback": lookback, "qlo": qlo, "qhi": qhi,
-                            "test_year": test_year, "regime": regime,
-                            "strategy": str(rg["selected_strategy"].iloc[0]),
-                            **{f"test_{k}": v for k, v in rs.items()},
-                        }
-                    )
+                if not selected.empty:
+                    for regime, rg in selected.groupby("selected_regime"):
+                        rs = summary(rg["net_pnl"].to_numpy(float))
+                        positive += int(rs["mean"] > 0 and rs["pf"] > 1)
+                        regime_parts.append(
+                            {
+                                "lookback": lookback, "qlo": qlo, "qhi": qhi,
+                                "test_year": test_year, "regime": regime,
+                                "strategy": str(rg["selected_strategy"].iloc[0]),
+                                **{f"test_{k}": v for k, v in rs.items()},
+                            }
+                        )
                 all_fold_rows.extend(regime_parts)
 
                 fold_metrics.append(
