@@ -31,14 +31,21 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: python -m pip install --upgrade pip pandas numpy pyarrow
+        run: python -m pip install --upgrade pip pandas numpy pyarrow huggingface_hub
 
       - name: Fetch public SENSEX 1-minute research dataset
         run: |
-          git clone --depth 1 --filter=blob:none --sparse https://huggingface.co/datasets/thetrademarkk/india-index-options-1m.git data/raw_sensex
-          cd data/raw_sensex
-          git sparse-checkout set index/SENSEX.parquet options/SENSEX
-          git lfs pull --include="index/SENSEX.parquet,options/SENSEX/*.parquet"
+          rm -rf data/raw_sensex
+          python - <<'PY'
+          from huggingface_hub import snapshot_download
+          snapshot_download(
+              repo_id="thetrademarkk/india-index-options-1m",
+              repo_type="dataset",
+              local_dir="data/raw_sensex",
+              allow_patterns=["index/SENSEX.parquet", "options/SENSEX/*.parquet"],
+          )
+          PY
+          test -f data/raw_sensex/index/SENSEX.parquet
 
       - name: Run development backtest
         run: python scripts/sensex_backtest_v1.py --options-dir data/raw_sensex/options/SENSEX --index-path data/raw_sensex/index/SENSEX.parquet --split development --slippage "${{ inputs.slippage || '0.5' }}" --out-dir reports/sensex_options
