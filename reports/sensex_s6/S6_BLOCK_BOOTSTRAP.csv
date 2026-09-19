@@ -1,0 +1,3 @@
+strategy,n_validation_holdout_trades,observed_mean_pnl,observed_total_pnl,bootstrap_ci_low_mean_pnl,bootstrap_ci_high_mean_pnl,bootstrap_p_mean_gt_zero
+Adaptive,28,3253.3354240771378,91093.39187415986,-3080.2671922532086,9467.811267415189,0.8413
+Batman,26,8173.539764175377,212512.0338685598,1353.7913016826274,14539.765529300807,0.9921

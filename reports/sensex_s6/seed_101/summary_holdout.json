@@ -1,0 +1,25 @@
+{
+  "split": "holdout",
+  "slippage_points_per_leg": 0.5,
+  "adaptive": {
+    "trades": 18,
+    "total_pnl": 51324.12448707991,
+    "mean_pnl": 2851.3402492822174,
+    "median_pnl": 3929.0649739600126,
+    "win_rate": 0.6111111111111112,
+    "profit_factor": 1.5427809174067812,
+    "max_dd": -56409.761790640085,
+    "bootstrap_mean": 2851.3402492822174,
+    "bootstrap_mean_ci_low": -4796.706810448881,
+    "bootstrap_mean_ci_high": 11822.667095624241
+  },
+  "batman": {
+    "trades": 26,
+    "total_pnl": 205049.27990399973,
+    "mean_pnl": 7886.510765538451,
+    "median_pnl": 11320.162863720003,
+    "win_rate": 0.7692307692307693,
+    "profit_factor": 3.514281850793065,
+    "max_dd": -58729.40135671978
+  }
+}
