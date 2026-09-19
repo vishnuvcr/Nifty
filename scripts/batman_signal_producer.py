@@ -5,7 +5,7 @@ import html
 import json
 import math
 import os
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -16,6 +16,7 @@ from curl_cffi import requests
 from nifty_mc.strategy_catalog import build_strategy
 
 IST = ZoneInfo("Asia/Kolkata")
+ENTRY_TIME_IST = time(9, 30)
 NSE_BASE = "https://www.nseindia.com"
 NSE_HEADERS = {
     "User-Agent": (
@@ -28,7 +29,8 @@ NSE_HEADERS = {
 }
 
 SIGNAL_COLUMNS = [
-    "run_timestamp_ist","decision_date","target_expiry","status","signal",
+    "run_timestamp_ist","entry_timestamp_ist","decision_date","model_data_cutoff","quote_retrieved_at_ist",
+    "target_expiry","status","signal",
     "spot","spot_source","mc_paths","lookback_sessions","horizon_sessions",
     "p20_terminal","p35_terminal","p65_terminal","p80_terminal",
     "p20_strike","p35_strike","c65_strike","c80_strike",
@@ -43,6 +45,7 @@ LEDGER_COLUMNS = [
     "signal_id","decision_date","expiry","strategy","signal","spot","lot_size",
     "lots","risk_budget_inr","mc_ev_points_net","mc_pop","es95_points",
     "es99_points","entry_cost_points","entry_cashflow_points_per_unit",
+    "entry_timestamp_ist","model_data_cutoff","quote_retrieved_at_ist",
     "legs_json","status","exit_date","exit_spot","exit_intrinsic_points_per_unit",
     "realized_pnl_points_per_unit","realized_pnl_inr","notes",
 ]
@@ -295,10 +298,9 @@ def side_execution_price(row: pd.Series, side: str) -> tuple[float, str]:
     px = row.get(key)
     if px is not None and math.isfinite(float(px)) and float(px) > 0:
         return float(px), key
-    last = row.get("last_price")
-    if last is not None and math.isfinite(float(last)) and float(last) > 0:
-        return float(last), "last_price_fallback"
-    raise ValueError(f"Missing executable quote for {row['option_type']} {row['strike']}.")
+    raise ValueError(
+        f"Missing executable {key} quote for {row['option_type']} {row['strike']}."
+    )
 
 def find_option_row(chain: pd.DataFrame, expiry: pd.Timestamp, option_type: str, strike: float) -> pd.Series:
     mask = (
@@ -543,11 +545,14 @@ small{{color:#8b949e}} table{{width:100%;border-collapse:collapse;font-size:14px
 .badge{{display:inline-block;padding:4px 9px;border-radius:999px;background:#21262d;font-weight:700}} a{{color:#58a6ff}}
 </style></head><body><main>
 <h1>Batman Signal Producer</h1>
-<p><small>Frozen protocol • 3 trading sessions before expiry • 5,000 MC paths • 756-session lookback • net EV gate.</small></p>
+<p><small>Frozen protocol • entry at 09:30 IST • 3 trading sessions before expiry • 5,000 MC paths • 756-session lookback • net EV gate.</small></p>
 <div class="card"><h2>Latest run</h2>
 <p><span class="badge">{status} / {signal}</span></p>
 <div class="grid">
 <div><small>Decision date</small><div class="kpi">{decision}</div></div>
+<div><small>Fixed entry time</small><div class="kpi">09:30 IST</div></div>
+<div><small>Model cutoff</small><div class="kpi">{html.escape(str(latest.get("model_data_cutoff","—")))}</div></div>
+<div><small>Quote snapshot</small><div class="kpi">{html.escape(str(latest.get("quote_retrieved_at_ist","—")))}</div></div>
 <div><small>Expiry</small><div class="kpi">{expiry or "—"}</div></div>
 <div><small>Spot</small><div class="kpi">{fmt(latest.get("spot"))}</div></div>
 <div><small>MC EV net</small><div class="kpi">{fmt(latest.get("mc_expected_pnl_points_net"))}</div></div>
@@ -597,6 +602,9 @@ def telegram_message(latest: dict, closures: list[dict[str, object]]) -> str:
         f"Expiry: {latest.get('target_expiry') or '—'}",
         f"Status: {latest.get('status')}",
         f"Signal: {latest.get('signal')}",
+        f"Entry time: 09:30 IST",
+        f"Model cutoff: {latest.get('model_data_cutoff') or '—'}",
+        f"Quote snapshot: {latest.get('quote_retrieved_at_ist') or '—'}",
     ]
     if latest.get("spot") is not None:
         lines.append(f"Spot: {float(latest['spot']):,.2f}")
@@ -663,6 +671,18 @@ def main() -> None:
     )
     holidays = client.fetch_holidays()
 
+    # Freeze the model at the most recent completed session before entry.
+    # Entry-day option quotes are fetched separately after 09:30 IST.
+    prior_history = index_df.loc[index_df["date"] < decision].copy()
+    if prior_history.empty:
+        raise RuntimeError(
+            f"No completed NIFTY 50 session exists before entry date {decision.date()}."
+        )
+    model_cutoff = pd.Timestamp(prior_history["date"].max()).normalize()
+    model_spot = float(
+        prior_history.loc[prior_history["date"].eq(model_cutoff), "close"].iloc[-1]
+    )
+
     ledger_path = Path(args.ledger)
     ledger = read_csv_or_empty(ledger_path, LEDGER_COLUMNS)
     ledger_path.parent.mkdir(parents=True, exist_ok=True)
@@ -673,11 +693,7 @@ def main() -> None:
         ledger_path.parent.mkdir(parents=True, exist_ok=True)
         ledger.to_csv(ledger_path, index=False)
 
-    decision_is_session = decision in set(index_df["date"])
-    index_close = None
-    x = index_df.loc[index_df["date"].eq(decision), "close"]
-    if not x.empty:
-        index_close = float(x.iloc[-1])
+    decision_is_session = decision.weekday() < 5 and decision not in holidays
 
     chain = pd.DataFrame(
         columns=["expiry","strike","option_type","last_price","bid","ask","open_interest","volume"]
@@ -687,32 +703,34 @@ def main() -> None:
     chain_expiry = None
     chain_error = None
 
-    if decision_is_session:
+    quote_retrieved_at: datetime | None = None
+    if decision_is_session and current.time() >= ENTRY_TIME_IST:
         requested_expiry = pd.Timestamp(args.expiry).normalize() if args.expiry else None
         try:
             chain, chain_underlying, chain_endpoint, chain_expiry = client.fetch_option_chain(
                 requested_expiry
             )
+            quote_retrieved_at = now_ist()
         except Exception as exc:
             chain_error = exc
 
-    if index_close is not None:
-        spot = index_close
-        spot_source = f"{client.index_history_source}_EOD_INDEX"
-    elif chain_underlying is not None:
-        spot = chain_underlying
-        spot_source = "NSE_OPTION_CHAIN_UNDERLYING"
-    else:
-        spot = float(index_df["close"].iloc[-1]) if not index_df.empty else None
-        spot_source = f"{client.index_history_source}_LATEST_CLOSE"
+    spot = model_spot
+    spot_source = f"{client.index_history_source}_PREVIOUS_SESSION_CLOSE"
 
     payload: dict[str, object] = {
         "producer":"Batman Signal Producer",
         "strategy":"Batman",
         "run_timestamp_ist":current.isoformat(),
+        "entry_timestamp_ist":"",
         "decision_date":decision.date().isoformat(),
+        "model_data_cutoff":model_cutoff.date().isoformat(),
+        "quote_retrieved_at_ist":quote_retrieved_at.isoformat() if quote_retrieved_at else "",
         "target_expiry":"",
-        "status":"NOT_TRADING_DAY" if not decision_is_session else ("DATA_UNAVAILABLE" if chain_error else "OK"),
+        "status":"NOT_TRADING_DAY" if not decision_is_session else (
+            "WAITING_FOR_ENTRY_TIME"
+            if current.time() < ENTRY_TIME_IST
+            else ("DATA_UNAVAILABLE" if chain_error else "OK")
+        ),
         "signal":"NO_TRADE",
         "spot":spot,
         "spot_source":spot_source,
@@ -727,6 +745,8 @@ def main() -> None:
 
     if not decision_is_session:
         payload["notes"] = "Decision date is not a NIFTY 50 trading session; no option-chain fetch was attempted."
+    elif current.time() < ENTRY_TIME_IST:
+        payload["notes"] = "Entry processing is held until the fixed 09:30 IST entry time."
     elif chain_error is not None:
         payload["status"] = "DATA_UNAVAILABLE"
         payload["notes"] = f"NSE option-chain unavailable: {chain_error}"
@@ -746,7 +766,13 @@ def main() -> None:
             payload["status"] = "NOT_ENTRY_DAY"
             payload["notes"] = f"Frozen entry rule requires exactly 3 future trading sessions; found {len(future_sessions)}."
         else:
-            returns = np.log(index_df.loc[index_df["date"] <= decision, "close"]).diff().dropna().tail(args.lookback).to_numpy(float)
+            returns = (
+                np.log(index_df.loc[index_df["date"] <= model_cutoff, "close"])
+                .diff()
+                .dropna()
+                .tail(args.lookback)
+                .to_numpy(float)
+            )
             if len(returns) < args.lookback:
                 raise RuntimeError(f"Need {args.lookback} historical returns, found {len(returns)}.")
             terminal = mc_paths(float(spot), returns, len(future_sessions), args.paths, args.seed)
@@ -757,11 +783,20 @@ def main() -> None:
             payload.update(metrics)
             payload["status"] = "ENTRY_DAY"
             payload["horizon_sessions"] = len(future_sessions)
-            payload["notes"] = "ENTER only when net MC EV > 0 and at least one risk-sized lot fits configured paper capital."
+            payload["entry_timestamp_ist"] = quote_retrieved_at.isoformat() if quote_retrieved_at else ""
+            payload["quote_retrieved_at_ist"] = quote_retrieved_at.isoformat() if quote_retrieved_at else ""
+            payload["notes"] = (
+                "Fixed entry time 09:30 IST. Model data is frozen through the prior completed "
+                "NIFTY session; option premiums come only from the entry-day NSE snapshot. "
+                "ENTER only when net MC EV > 0 and at least one risk-sized lot fits configured paper capital."
+            )
 
     signal_row = {
         "run_timestamp_ist":payload["run_timestamp_ist"],
+        "entry_timestamp_ist":payload.get("entry_timestamp_ist",""),
         "decision_date":payload["decision_date"],
+        "model_data_cutoff":payload.get("model_data_cutoff",""),
+        "quote_retrieved_at_ist":payload.get("quote_retrieved_at_ist",""),
         "target_expiry":payload.get("target_expiry",""),
         "status":payload.get("status",""),
         "signal":payload.get("signal",""),
@@ -822,6 +857,9 @@ def main() -> None:
                 "es99_points":payload.get("mc_es99_points"),
                 "entry_cost_points":payload.get("entry_cost_points",0),
                 "entry_cashflow_points_per_unit":payload.get("entry_cashflow_points_per_unit"),
+                "entry_timestamp_ist":payload.get("entry_timestamp_ist",""),
+                "model_data_cutoff":payload.get("model_data_cutoff",""),
+                "quote_retrieved_at_ist":payload.get("quote_retrieved_at_ist",""),
                 "legs_json":json.dumps(payload.get("legs",[]), separators=(",",":")),
                 "status":"OPEN" if payload.get("signal") == "ENTER" else "NO_TRADE",
                 "exit_date":"","exit_spot":"","exit_intrinsic_points_per_unit":"",
@@ -840,6 +878,10 @@ def main() -> None:
     Path(args.site_dir, "data", "producer_metadata.json").write_text(
         json.dumps({
             "run_timestamp_ist":payload["run_timestamp_ist"],
+            "entry_time_ist":"09:30",
+            "entry_timestamp_ist":payload.get("entry_timestamp_ist",""),
+            "model_data_cutoff":payload.get("model_data_cutoff",""),
+            "quote_retrieved_at_ist":payload.get("quote_retrieved_at_ist",""),
             "nse_option_chain_endpoint":chain_endpoint,
             "capital":args.capital,
             "risk_pct":args.risk_pct,
