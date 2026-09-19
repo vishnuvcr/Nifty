@@ -322,7 +322,7 @@ def bootstrap_mean_ci(values: np.ndarray, block: int = 4, n_resamples: int = 200
     return float(np.mean(values)), float(np.quantile(means, 0.025)), float(np.quantile(means, 0.975))
 
 
-def run_backtest(options_dir: Path, index_path: Path, split_name: str, slippage: float, seed_base: int, mc_index_path: Path | None = None) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
+def run_backtest(options_dir: Path, index_path: Path, split_name: str, slippage: float, seed_base: int, mc_index_path: Path | None = None, ignore_risk_budget_gate: bool = False) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
     idx1m = load_index(index_path)
     mc_idx = load_index(mc_index_path) if mc_index_path is not None else idx1m
     daily = daily_close(mc_idx)
@@ -389,7 +389,9 @@ def run_backtest(options_dir: Path, index_path: Path, split_name: str, slippage:
                 est_risk_inr = risk_points * 20
                 lots = int(math.floor(risk_budget / est_risk_inr)) if est_risk_inr > 0 else 0
                 net_ev = float(np.mean(net_dist))
-                eligible = net_ev > 0 and lots >= 1
+                eligible = net_ev > 0 and (ignore_risk_budget_gate or lots >= 1)
+                if ignore_risk_budget_gate and net_ev > 0:
+                    lots = 1
                 reason = "eligible" if eligible else ("negative_net_ev" if net_ev <= 0 else "no_risk_sized_lot")
                 candidate_rows.append({
                     "split": split_name,
@@ -609,13 +611,15 @@ def main() -> None:
     ap.add_argument("--slippage", type=float, default=0.5)
     ap.add_argument("--seed-base", type=int, default=20260920)
     ap.add_argument("--mc-index-path", required=False, default=None)
+    ap.add_argument("--one-lot-edge", action="store_true", help="Ignore the account-affordability gate for the transfer-edge test; evaluate one lot when net MC EV > 0.")
     ap.add_argument("--out-dir", required=True)
     args = ap.parse_args()
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     candidates, adaptive_trades, stats = run_backtest(
         Path(args.options_dir), Path(args.index_path), args.split, args.slippage, args.seed_base,
-        Path(args.mc_index_path) if args.mc_index_path else None
+        Path(args.mc_index_path) if args.mc_index_path else None,
+        args.one_lot_edge,
     )
     candidates.to_csv(out_dir / f"candidates_{args.split}.csv", index=False)
     if not candidates.empty and "realized_pnl_inr_per_lot" in candidates.columns:
