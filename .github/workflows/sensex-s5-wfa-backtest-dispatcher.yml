@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - research/sensex-s5-wfa-backtest-v1
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       slippage:
