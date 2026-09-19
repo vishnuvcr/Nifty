@@ -1,9 +1,6 @@
 name: Batman Signal Producer
 
 on:
-  push:
-    branches:
-      - research/adaptive-paper-signals-v1
   workflow_dispatch:
     inputs:
       capital:
@@ -34,8 +31,6 @@ on:
         description: "Monte Carlo seed"
         required: true
         default: "20260919"
-  schedule:
-    - cron: "0 4 * * 1-5"
 
 concurrency:
   group: nifty-paper-pages
