@@ -31,6 +31,7 @@ SPLITS = {
 
 
 def load_index(path: Path) -> pd.DataFrame:
+    # Frozen backtest uses only the cached primary SENSEX index dataset; no runtime Yahoo dependency.
     df = pd.read_parquet(path)
     df["timestamp"] = pd.to_datetime(df["timestamp"], errors="coerce")
     df["trading_day"] = pd.to_datetime(df["trading_day"], errors="coerce").dt.normalize()
