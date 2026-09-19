@@ -91,7 +91,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add paper_trading/batman_ledger.csv                   paper_trading/adaptive_ledger.csv                   site
+          git fetch origin research/adaptive-paper-signals-v1
+          git pull --rebase --autostash origin research/adaptive-paper-signals-v1
+          git add paper_trading/batman_ledger.csv paper_trading/adaptive_ledger.csv site
           if git diff --cached --quiet; then
             echo "No refresh state changes."
           else
