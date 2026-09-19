@@ -32,8 +32,8 @@ def test_frozen_risk_filters():
 
 
 def test_trailing_rank_is_past_only():
-    h = pd.Series([1.0, 2.0, 3.0])
-    assert trailing_rank(h, 2.5, 3) == 2/3
-    assert trailing_rank(h, 0.5, 3) == 0.0
-    assert trailing_rank(h, 3.5, 3) == 1.0
-    assert trailing_rank(pd.Series([1.0, np.nan]), 2.0, 3) is None
+    h = pd.Series(np.arange(30, dtype=float))
+    assert trailing_rank(h, 28.5, 30) == 29/30
+    assert trailing_rank(h, -1.0, 30) == 0.0
+    assert trailing_rank(h, 30.5, 30) == 1.0
+    assert trailing_rank(pd.Series([1.0, np.nan]), 2.0, 30) is None
