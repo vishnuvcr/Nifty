@@ -2,26 +2,37 @@
 
 Research framework for Nifty 50 expiry-range forecasting, bull/bear/neutral classification, and Long Iron Condor evaluation.
 
-## Branch
-Primary research branch: `research/monte-carlo-wfa-v1`
+## Research branches
 
-## Current modules
-- `src/nifty_mc/gbm.py`: physical-measure GBM terminal simulations
-- `src/nifty_mc/volatility.py`: realized/EWMA volatility estimators
-- `src/nifty_mc/trend.py`: bull/bear/neutral classifier
-- `src/nifty_mc/iron_condor.py`: expiration payoff and Monte Carlo metrics
-- `src/nifty_mc/walk_forward.py`: chronological out-of-sample forecast engine
-- `src/nifty_mc/run_experiment.py`: CSV-driven research runner
-- `docs/RESEARCH_SPEC.md`: research protocol
-- `configs/default.yaml`: baseline experiment parameters
+Primary NIFTY research remains separate from the SENSEX transfer study.
 
-## Data contract
-Price CSV must contain a date/datetime field and a close/price field.
+- NIFTY Phase-10 Adaptive research: `research/adaptive-paper-signals-v1`
+- SENSEX Batman + Adaptive transfer study: `research/sensex-batman-adaptive-v1`
 
-Origin CSV:
-`decision_date,expiry_date`
+## SENSEX transfer study
 
-Historical option-chain data will be added as a separate layer. It must contain timestamp/expiry/strike/type plus executable bid/ask or a documented reconstruction method.
+The SENSEX study tests the frozen Phase-10 Batman and Adaptive strategy specifications on BSE SENSEX options without retuning them on SENSEX outcomes.
 
-## Important
-This repository currently contains the research scaffold; no live-trading claim is made. The next stage is historical data ingestion and a full option-chain walk-forward experiment.
+Study files:
+- [SENSEX research plan](docs/sensex_options/RESEARCH_PLAN.md)
+- [Phase status](docs/sensex_options/PHASE_STATUS.md)
+- [Error log](docs/sensex_options/ERROR_LOG.md)
+- [Conversation/audit log](docs/sensex_options/CONVERSATION_LOG.md)
+- [Data manifest](docs/sensex_options/DATA_MANIFEST.md)
+- [Batman config](configs/sensex_batman_v1.json)
+- [Adaptive config](configs/sensex_adaptive_v1.json)
+
+Current status: **S0 transfer-specification freeze in progress; no SENSEX performance conclusion yet.**
+
+The SENSEX study is intentionally excluded from the NIFTY MC-WFO manuscript until and unless a separate cross-index analysis is formally created.
+
+## NIFTY research principles
+
+- Strict walk-forward / out-of-sample validation
+- No look-ahead leakage
+- Separate physical-measure forecasting from option-implied risk-neutral quantities
+- Transaction costs, slippage and bid/ask assumptions
+- GBM as a baseline, with bootstrap/GARCH/regime-aware extensions
+- Reproducible experiments and fixed random seeds
+
+No live-trading claim is made by this repository research framework.
