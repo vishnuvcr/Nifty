@@ -23,3 +23,5 @@ Parent research branch: research/adaptive-paper-signals-v1
 No SENSEX performance conclusion has been made. This branch currently contains the transfer-study specification and audit scaffolding only.
 
 S5 run checkpoint instrumentation was added on the default branch so the phase records job start even when Actions run details are not exposed by the connector.
+
+S5 trigger revision: default-branch dispatcher is active; this commit exists solely to trigger the reproducible base backtest after workflow instrumentation.
