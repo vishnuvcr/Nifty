@@ -1,21 +1,100 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Adaptive Regime Paper Trading v1</title>
 <style>
-:root{color-scheme:dark}body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#0b1220;color:#e8eef6}
-main{max-width:1200px;margin:auto;padding:24px}.card{background:#111a2a;border:1px solid #2a374b;border-radius:14px;padding:18px;margin:14px 0}
-a{color:#7fb0ff}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px;border-bottom:1px solid #293547;text-align:left}
-.badge{display:inline-block;padding:5px 10px;border-radius:999px;background:#21304a;font-weight:700}.warn{background:#2b2416;border-color:#59471e}
+:root{color-scheme:dark}
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#0b1220;color:#e8eef6}
+main{max-width:1250px;margin:auto;padding:24px}
+.card{background:#111a2a;border:1px solid #2a374b;border-radius:14px;padding:18px;margin:14px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.kpi{font-size:23px;font-weight:750}
+small{color:#93a5bb}
+a{color:#7fb0ff}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px;border-bottom:1px solid #293547;text-align:left;vertical-align:top}
+.badge{display:inline-block;padding:5px 10px;border-radius:999px;background:#21304a;font-weight:700}
+.warn{background:#2b2416;border-color:#59471e}
+.ok{background:#142b20;border-color:#285d43}
+.note{color:#aebdce;line-height:1.55}
 </style></head>
 <body><main>
 <p><a href="../">← Strategy selector</a> · <a href="../batman/">Batman</a></p>
-<div class="card"><span class="badge">ADAPTIVE PAPER TRADING v1</span><h1>Adaptive Regime Signal Producer</h1>
-<p>Awaiting the first v1 production run on this branch. The workflow will replace this placeholder with the latest signal, candidate-screen and ledger data after execution.</p></div>
-<div class="card warn"><h2>Frozen research boundary</h2><p>The candidate universe comes from the completed pre-2026 CPCV result. Exact strategy identity was unstable across CPCV paths. The primary-candidate ranking used here is a new prospective research rule and is not historically validated.</p></div>
-<div class="card"><h2>Candidate sets</h2><table><tr><th>Regime</th><th>Candidate strategies</th></tr>
-<tr><td>Low</td><td>Risk Reversal · Long Synthetic Future · Buy Call</td></tr>
-<tr><td>Medium</td><td>Short Straddle · Put Ratio Spread · Short Strangle · Strip · Buy Put</td></tr>
-<tr><td>High</td><td>Sell Put · Risk Reversal · Long Synthetic Future · Batman</td></tr></table></div>
-<div class="card"><h2>Published artifacts</h2><p><a href="data/adaptive_latest.json">Latest JSON</a> · <a href="data/adaptive_signals.csv">Signals CSV</a> · <a href="data/adaptive_candidate_screen.csv">Candidate screen CSV</a> · <a href="data/adaptive_ledger.csv">Paper ledger CSV</a></p><p><a href="../../docs/adaptive-paper-trading-v1.md">Research design</a></p></div>
+<div class="card">
+<span class="badge">ADAPTIVE PAPER TRADING v1</span>
+<h1>Adaptive Regime Signal Producer</h1>
+<p class="note">Candidate-set paper trader derived from the completed pre-2026 CPCV finding. The regime-level evidence and the prospective primary-selection rule are displayed separately.</p>
+</div>
+
+<div class="card">
+<h2>Latest signal</h2>
+<p><span class="badge">NOT_TRADING_DAY / NO_TRADE</span></p>
+<div class="grid">
+<div><small>Decision date</small><div class="kpi">2026-09-19</div></div>
+<div><small>Volatility regime</small><div class="kpi">low</div></div>
+<div><small>RV20 rank</small><div class="kpi">0.111</div></div>
+<div><small>Expiry</small><div class="kpi">—</div></div>
+<div><small>Spot</small><div class="kpi">23,346.40</div></div>
+<div><small>Primary</small><div class="kpi">NO_TRADE</div></div>
+<div><small>Primary net MC EV</small><div class="kpi">—</div></div>
+<div><small>Primary lots</small><div class="kpi">0</div></div>
+</div>
+<p class="note">Decision date is not a NIFTY trading session; no option-chain request was made.</p>
+</div>
+
+<div class="card">
+<h2>Primary paper-trade structure</h2>
+<table><tr><th>Side</th><th>Type</th><th>Strike</th><th>Qty/lot</th><th>Entry price</th></tr></table>
+</div>
+
+<div class="card">
+<h2>Primary MC / risk metrics</h2>
+<table>
+<tr><th>Metric</th><th>Value</th></tr>
+<tr><td>MC EV gross / stress cost / net</td><td>— / — / —</td></tr>
+<tr><td>MC POP</td><td>—</td></tr>
+<tr><td>ES95 / ES99</td><td>— / —</td></tr>
+<tr><td>Risk budget / estimated risk per lot</td><td>₹2,000.00 / ₹—</td></tr>
+<tr><td>Minimum capital for one lot</td><td>₹—</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Paper-trading summary</h2>
+<div class="grid">
+<div><small>Closed trades</small><div class="kpi">0</div></div>
+<div><small>Win rate</small><div class="kpi">0.0%</div></div>
+<div><small>Profit factor</small><div class="kpi">0.00</div></div>
+<div><small>Total P&L</small><div class="kpi">₹0.00</div></div>
+<div><small>Max drawdown</small><div class="kpi">₹0.00</div></div>
+</div>
+</div>
+
+<div class="card">
+<h2>Candidate screen</h2>
+<p class="note">Every strategy in the frozen regime candidate set is evaluated. <b>PRIMARY</b> means highest net MC EV among candidates that passed the MC EV gate and could fund at least one risk-sized lot.</p>
+<table><tr><th>Date</th><th>Regime</th><th>Strategy</th><th>Net EV</th><th>POP</th><th>Risk pts</th><th>Lots</th><th>Eligible</th><th>Selected</th></tr>
+
+</table>
+</div>
+
+<div class="card">
+<h2>Signal history</h2>
+<table><tr><th>Date</th><th>Expiry</th><th>Regime</th><th>Primary</th><th>Signal</th><th>Net EV</th><th>Lots</th></tr>
+<tr><td>2026-09-19</td><td></td><td>low</td><td></td><td>NO_TRADE</td><td>—</td><td>0</td></tr>
+</table>
+</div>
+
+<div class="card ok">
+<h2>Research boundary</h2>
+<p class="note">The completed CPCV phase supports the regime-conditioned effect and showed instability in exact strategy identity. The candidate universe above is frozen from that phase. The highest-net-EV primary selection is a new prospective rule and is not historically validated. The 2026 holdout used previously is not reopened.</p>
+</div>
+
+<div class="card">
+<h2>Published artifacts</h2>
+<p><a href="data/adaptive_latest.json">Latest JSON</a> · <a href="data/adaptive_signals.csv">Signals CSV</a> · <a href="data/adaptive_candidate_screen.csv">Candidate screen CSV</a> · <a href="data/adaptive_ledger.csv">Paper ledger CSV</a> · <a href="data/adaptive_metadata.json">Metadata JSON</a></p>
+</div>
+
+<div class="card"><small>Paper trading only. Model data is frozen through the prior completed session. Missing/invalid data is not imputed. No broker order execution is performed.</small></div>
 </main></body></html>

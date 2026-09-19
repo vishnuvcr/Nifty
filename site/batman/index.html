@@ -4,27 +4,57 @@
 <title>Batman Signal Producer</title>
 <style>
 body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#0d1117;color:#e6edf3}
-main{max-width:1200px;margin:auto;padding:24px}.card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;margin:14px 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.kpi{font-size:24px;font-weight:700}
-small{color:#8b949e}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:8px;border-bottom:1px solid #30363d;text-align:left}
-.badge{display:inline-block;padding:4px 9px;border-radius:999px;background:#21262d;font-weight:700}a{color:#58a6ff}
+main{max-width:1200px;margin:auto;padding:24px} .card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;margin:14px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px} .kpi{font-size:24px;font-weight:700}
+small{color:#8b949e} table{width:100%;border-collapse:collapse;font-size:14px} th,td{padding:8px;border-bottom:1px solid #30363d;text-align:left}
+.badge{display:inline-block;padding:4px 9px;border-radius:999px;background:#21262d;font-weight:700} a{color:#58a6ff}
 </style></head><body><main>
-<p><a href="../">← Strategy selector</a> · <a href="../adaptive/">Adaptive Regime</a></p>
 <h1>Batman Signal Producer</h1>
 <p><small>Frozen protocol • entry at 09:30 IST • 3 trading sessions before expiry • 5,000 MC paths • 756-session lookback • net EV gate.</small></p>
-<div class="card"><h2>Latest preserved run</h2><p><span class="badge">BACKFILL_ENTRY_DAY / NO_TRADE</span></p>
-<div class="grid"><div><small>Decision date</small><div class="kpi">2026-09-17</div></div><div><small>Entry</small><div class="kpi">09:30 IST</div></div>
-<div><small>Model cutoff</small><div class="kpi">2026-09-16</div></div><div><small>Expiry</small><div class="kpi">2026-09-22</div></div>
-<div><small>Spot</small><div class="kpi">23,217.60</div></div><div><small>MC EV net</small><div class="kpi">-23.58</div></div>
-<div><small>MC POP</small><div class="kpi">0.434</div></div><div><small>Lots</small><div class="kpi">0</div></div></div>
-<p>The Batman state is now published under this dedicated page and directory. Its workflow and ledger remain independent of Adaptive v1.</p></div>
-<div class="card"><h2>MC results</h2><table><tr><th>Metric</th><th>Value</th></tr>
-<tr><td>P20 / P35 / P65 / P80 terminal</td><td>22,991.37 / 23,129.41 / 23,353.41 / 23,497.99</td></tr>
-<tr><td>Gross EV / stress cost / net EV</td><td>-11.58 / 12.00 / -23.58</td></tr>
-<tr><td>MC POP</td><td>0.434</td></tr><tr><td>ES95 / ES99</td><td>467.60 / 780.62</td></tr></table></div>
-<div class="card"><h2>Batman structure</h2><table><tr><th>Side</th><th>Type</th><th>Strike</th><th>Qty/lot</th><th>Entry</th></tr>
-<tr><td>BUY</td><td>PE</td><td>23,150</td><td>1</td><td>58.55</td></tr><tr><td>SELL</td><td>PE</td><td>23,000</td><td>2</td><td>30.25</td></tr>
-<tr><td>BUY</td><td>CE</td><td>23,350</td><td>1</td><td>94.60</td></tr><tr><td>SELL</td><td>CE</td><td>23,500</td><td>2</td><td>38.90</td></tr></table></div>
-<div class="card"><h2>Published artifacts</h2><p><a href="data/latest_signal.json">Latest JSON</a> · <a href="data/batman_signals.csv">Signals CSV</a> · <a href="data/batman_paper_ledger.csv">Paper ledger CSV</a></p></div>
-<div class="card"><small>Paper trading only. Missing/invalid data is not imputed. No broker orders are placed.</small></div>
+<div class="card"><h2>Latest run</h2>
+<p><span class="badge">NOT_TRADING_DAY / NO_TRADE</span></p>
+<div class="grid">
+<div><small>Decision date</small><div class="kpi">2026-09-19</div></div>
+<div><small>Fixed entry time</small><div class="kpi">09:30 IST</div></div>
+<div><small>Model cutoff</small><div class="kpi">2026-09-18</div></div>
+<div><small>Quote snapshot</small><div class="kpi"></div></div>
+<div><small>Expiry</small><div class="kpi">—</div></div>
+<div><small>Spot</small><div class="kpi">23,346.40</div></div>
+<div><small>MC EV net</small><div class="kpi">—</div></div>
+<div><small>MC POP</small><div class="kpi">—</div></div>
+<div><small>Lots</small><div class="kpi">—</div></div>
+</div><p>Decision date is not a NIFTY 50 trading session; no option-chain fetch was attempted.</p></div>
+
+<div class="card"><h2>MC results</h2><table>
+<tr><th>Metric</th><th>Value</th></tr>
+<tr><td>P20 / P35 / P65 / P80 terminal</td><td>— / — / — / —</td></tr>
+<tr><td>P20 / P35 / C65 / C80 strikes</td><td>— / — / — / —</td></tr>
+<tr><td>Gross EV / stress cost / net EV</td><td>— / — / —</td></tr>
+<tr><td>MC POP</td><td>—</td></tr>
+<tr><td>ES95 / ES99</td><td>— / —</td></tr>
+<tr><td>Risk budget / estimated risk per lot</td><td>₹— / ₹—</td></tr>
+<tr><td>Minimum capital for 1 lot</td><td>₹—</td></tr>
+</table></div>
+
+<div class="card"><h2>Suggested Batman structure</h2>
+<table><tr><th>Side</th><th>Type</th><th>Strike</th><th>Qty/lot</th><th>Entry price</th></tr></table></div>
+
+<div class="card"><h2>Paper-trading summary</h2>
+<div class="grid">
+<div><small>Closed trades</small><div class="kpi">0</div></div>
+<div><small>Win rate</small><div class="kpi">0.0%</div></div>
+<div><small>Profit factor</small><div class="kpi">0.00</div></div>
+<div><small>Total P&L</small><div class="kpi">₹0.00</div></div>
+<div><small>Max drawdown</small><div class="kpi">₹0.00</div></div>
+</div></div>
+
+<div class="card"><h2>Recent signals</h2>
+<table><tr><th>Date</th><th>Expiry</th><th>Status</th><th>Signal</th><th>Spot</th><th>Net EV</th><th>POP</th><th>Lots</th></tr><tr><td>2026-09-17</td><td>2026-09-22</td><td>BACKFILL_ENTRY_DAY</td><td>NO_TRADE</td><td>23,217.60</td><td>-23.58</td><td>0.434</td><td>0.0</td></tr><tr><td>2026-09-19</td><td>nan</td><td>NOT_TRADING_DAY</td><td>NO_TRADE</td><td>23,346.40</td><td>nan</td><td>nan</td><td>nan</td></tr></table>
+<p><a href="data/latest_signal.json">Latest JSON</a> · <a href="data/batman_signals.csv">Signals CSV</a> · <a href="data/batman_paper_ledger.csv">Paper ledger CSV</a></p>
+</div>
+
+<div class="card"><h2>Recent paper trades</h2>
+<table><tr><th>Entry</th><th>Expiry</th><th>Signal</th><th>Status</th><th>Lots</th><th>Net EV</th><th>Realized P&L ₹</th></tr><tr><td>2026-09-17</td><td>2026-09-22</td><td>NO_TRADE</td><td>NO_TRADE</td><td>0</td><td>-23.58</td><td>nan</td></tr></table></div>
+
+<div class="card"><small>Option-chain data is obtained from NSE public endpoints; NIFTY history uses NSE when available and Yahoo Finance only as a documented fallback. This is a research/paper-trading publication system and does not place broker orders. Missing/invalid data is not imputed.</small></div>
 </main></body></html>

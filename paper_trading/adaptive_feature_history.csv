@@ -1,1 +1,2 @@
-decision_date,trend20,trend60,rv20,p_expand
+decision_date,trend20,trend60,rv20,p_expand,model_data_cutoff,spot,rv20_rank,vol_regime,run_timestamp_ist
+2026-09-19,,,0.07326501520536877,,2026-09-18,23346.400390625,0.1111111111111111,low,2026-09-19T17:02:32.668107+05:30
