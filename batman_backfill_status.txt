@@ -1,8 +1,0 @@
-run_id=35424498861
-backfill_rc=1
-timestamp=2026-09-19T05:39:09Z
------ LOG -----
-  File "/home/runner/work/Nifty/Nifty/scripts/backfill_batman_first_trade.py", line 277
-    main()    settlements = fetch_nse_settlements(strikes)
-              ^^^^^^^^^^^
-SyntaxError: invalid syntax
