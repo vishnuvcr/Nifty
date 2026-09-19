@@ -1,5 +1,9 @@
 name: Batman First Trade Backfill
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/batman-first-trade-backfill.yml"
   schedule:
     - cron: "5 6 19 9 *"
   workflow_dispatch:
