@@ -34,3 +34,9 @@ Type: transaction-cost modelling
 Observation: Paytm Money currently publishes an F&O FAQ with Rs.10 per unique executed order, while older official Paytm Money communications describe Rs.20 for newer accounts and different legacy rates.
 Resolution: S2 will use account/effective-date-aware cost scenarios and clearly label the selected base case; no single brokerage number will be assumed for all historical observations.
 Prevention: version the cost schedule by effective date and source.
+
+### E006 — BSE EOD BhavCopy is not executable-quote data
+Type: data-source limitation
+Observation: BSE's published equity-derivatives Bhav Copy format contains open/high/low/close/WAP, volume and OI fields but not historical best bid/ask snapshots. That is insufficient by itself to reproduce a 09:30 executable entry.
+Resolution: S1 will distinguish an executable intraday dataset from an EOD-only proxy dataset. The primary trading inference requires point-in-time executable quotes; an EOD-only run, if used, must be labelled a proxy analysis and cannot be presented as an executable backtest.
+Prevention: quote_source and quote_quality are mandatory fields in the SENSEX research dataset.
