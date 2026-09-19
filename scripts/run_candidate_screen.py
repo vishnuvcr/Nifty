@@ -5,6 +5,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from nifty_mc.strategy_catalog import build_strategy
+
 
 DEFINED_RISK = {
     "Buy Call", "Buy Put",
@@ -36,6 +38,15 @@ def summarize(x: pd.Series) -> dict[str, float]:
     }
 
 
+
+
+def contract_count(strategy: str) -> int:
+    dummy = {k: float(i + 100.0) for i, k in enumerate(
+        ["p10", "p20", "p25", "p35", "p45", "atm", "c55", "c65", "c75", "c80", "c90"]
+    )}
+    return int(sum(abs(int(leg.qty)) for leg in build_strategy(strategy, dummy)))
+
+
 def bootstrap_prob_positive(x: np.ndarray, n_iter: int, seed: int) -> tuple[float, float, float]:
     if len(x) == 0:
         return np.nan, np.nan, np.nan
@@ -62,7 +73,8 @@ def main() -> None:
         raise SystemExit(f"missing columns: {sorted(missing)}")
 
     t["year"] = t.decision_date.dt.year
-    t["net_pnl_after_cost"] = t.realized_pnl - t.n_legs * float(args.cost_per_leg)
+    t["contract_count"] = t["strategy"].map(contract_count)
+    t["net_pnl_after_cost"] = t.realized_pnl - t.contract_count * float(args.cost_per_leg)
 
     rows = []
     for strategy, g in t.groupby("strategy", sort=True):
@@ -94,6 +106,7 @@ def main() -> None:
         rows.append({
             "strategy": strategy,
             "risk_class": "defined-risk" if strategy in DEFINED_RISK else "requires_strict_risk_cap",
+            "contracts_per_strategy_unit": int(contract_count(strategy)),
             "dev_n": sdev["n"], "dev_mean": sdev["mean"], "dev_total": sdev["total"],
             "validation_n": sval["n"], "validation_mean": sval["mean"],
             "validation_total": sval["total"], "validation_win_rate": sval["win_rate"],
