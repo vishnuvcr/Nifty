@@ -132,3 +132,8 @@ Type: data coverage
 Observation: the frozen 756-session lookback makes 2024 development observations unavailable; usable validation begins 2025-10-09 and the available holdout ends 2026-05-21.
 Resolution: do not impute missing history or relabel no-data periods as strategy losses. Report the observed windows explicitly and keep the phase complete only for the available sample.
 Prevention: future replication must acquire a longer exchange-verified SENSEX history before interpreting multi-year walk-forward stability.
+\n\n### E017 — S6 dataset-fetch heredoc indentation error
+Type: CI execution
+Observation: the first corrected S6 workflow failed before downloading data because the shell heredoc terminator was indented, producing a bash syntax error.
+Resolution: rewrote the embedded Python block with a column-zero heredoc terminator in the rendered shell script.
+Prevention: validate YAML block scalar rendering for embedded heredocs before triggering a long workflow.
