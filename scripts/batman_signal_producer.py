@@ -648,7 +648,7 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=20260919)
     ap.add_argument("--ledger", default="paper_trading/batman_ledger.csv")
     ap.add_argument("--signals", default="paper_trading/batman_signals.csv")
-    ap.add_argument("--site-dir", default="site")
+    ap.add_argument("--site-dir", default="site/batman")
     ap.add_argument("--telegram-all-runs", action="store_true")
     args = ap.parse_args()
 
