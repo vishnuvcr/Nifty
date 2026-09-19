@@ -1,0 +1,34 @@
+{
+  "version": "sensex-adaptive-v1-transfer",
+  "parent_spec": "docs/adaptive-paper-trading-v1.md",
+  "underlying": "BSE SENSEX",
+  "regimes": {
+    "low": [
+      "Risk Reversal",
+      "Long Synthetic Future",
+      "Buy Call"
+    ],
+    "medium": [
+      "Short Straddle",
+      "Put Ratio Spread",
+      "Short Strangle",
+      "Strip",
+      "Buy Put"
+    ],
+    "high": [
+      "Sell Put",
+      "Risk Reversal",
+      "Long Synthetic Future",
+      "Batman"
+    ]
+  },
+  "entry_time_ist": "09:30",
+  "entry_sessions_before_expiry": 3,
+  "mc_paths": 5000,
+  "lookback_sessions": 756,
+  "rank_lookback_sessions": 252,
+  "stress_cost_model": "SENSEX-specific; versioned separately",
+  "risk_budget_pct": 0.02,
+  "primary_selection": "highest_net_mc_ev_among_eligible_candidates",
+  "primary_selection_validated_on_sensex": false
+}
