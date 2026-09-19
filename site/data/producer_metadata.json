@@ -1,0 +1,10 @@
+{
+  "mode": "retrospective-first-trade-backfill",
+  "model_data_cutoff": "2026-09-16",
+  "paper_entry_date": "2026-09-17",
+  "expiry": "2026-09-22",
+  "paths": 5000,
+  "lookback": 756,
+  "seed": 20260919,
+  "option_price_source": "NSE UDiFF 2026-09-17 ClsPric; bid/ask unavailable"
+}
