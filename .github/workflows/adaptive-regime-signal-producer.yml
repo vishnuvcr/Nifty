@@ -51,14 +51,14 @@ permissions:
   contents: write
 
 env:
-  CAPITAL: \${{ github.event.inputs.capital || '100000' }}
-  RISK_PCT: \${{ github.event.inputs.risk_pct || '0.02' }}
-  LOT_SIZE: \${{ github.event.inputs.lot_size || '65' }}
-  PATHS: \${{ github.event.inputs.paths || '5000' }}
-  COST_PER_CONTRACT: \${{ github.event.inputs.cost_per_contract || '2.0' }}
-  EXPIRY: \${{ github.event.inputs.expiry || '' }}
-  TELEGRAM_BOT_TOKEN: \${{ secrets.TELEGRAM_BOT_TOKEN }}
-  TELEGRAM_CHAT_ID: \${{ secrets.TELEGRAM_CHAT_ID }}
+  CAPITAL: ${{ github.event.inputs.capital || '100000' }}
+  RISK_PCT: ${{ github.event.inputs.risk_pct || '0.02' }}
+  LOT_SIZE: ${{ github.event.inputs.lot_size || '65' }}
+  PATHS: ${{ github.event.inputs.paths || '5000' }}
+  COST_PER_CONTRACT: ${{ github.event.inputs.cost_per_contract || '2.0' }}
+  EXPIRY: ${{ github.event.inputs.expiry || '' }}
+  TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+  TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
   V2_RUN_ID: "35425922439"
 
 jobs:
@@ -90,11 +90,11 @@ jobs:
 
       - name: Download run 9 historical feature seed
         env:
-          GH_TOKEN: \${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p input
           gh run download "$V2_RUN_ID" \
-            --repo "\${{ github.repository }}" \
+            --repo "${{ github.repository }}" \
             --name strategy-regime-lab-v2-results \
             --dir input
           test -f input/nifty_regime_predictions.csv
@@ -112,12 +112,12 @@ jobs:
           if [ -n "$EXPIRY" ]; then
             CMD+=(--expiry "$EXPIRY")
           fi
-          "\${CMD[@]}"
+          "${CMD[@]}"
 
       - name: Upload research artifact
         uses: actions/upload-artifact@v4
         with:
-          name: adaptive-regime-signal-run-\${{ github.run_id }}
+          name: adaptive-regime-signal-run-${{ github.run_id }}
           path: |
             site/adaptive/
             paper_trading/adaptive_regime_signals.csv
