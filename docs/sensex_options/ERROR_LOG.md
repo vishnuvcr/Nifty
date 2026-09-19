@@ -137,3 +137,8 @@ Type: CI execution
 Observation: the first corrected S6 workflow failed before downloading data because the shell heredoc terminator was indented, producing a bash syntax error.
 Resolution: rewrote the embedded Python block with a column-zero heredoc terminator in the rendered shell script.
 Prevention: validate YAML block scalar rendering for embedded heredocs before triggering a long workflow.
+\n\n### E018 — First S6 heredoc correction did not alter rendered workflow
+Type: CI execution / correction control
+Observation: the first attempted heredoc correction did not change the rendered YAML because the content replacement failed to match; the next run repeated E017.
+Resolution: removed the embedded heredoc entirely and replaced it with a single-line Python invocation.
+Prevention: after each CI syntax correction, re-fetch the committed workflow text and verify the exact rendered shell block before relying on the rerun.
