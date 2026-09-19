@@ -241,8 +241,10 @@ def main() -> None:
                 x["gate"] = x["net_mc_ev"] > 0
 
                 selections = []
+                fold_selection_frames = []
                 for year in args.test_years:
                     selected, test_trades = rolling_fold(x, year, cost, "vol_regime")
+                    fold_selection_frames.append(selected)
                     if not selected.empty:
                         selected = selected.copy()
                         selected["lookback"] = lookback
@@ -275,10 +277,10 @@ def main() -> None:
                             **s,
                         })
 
-                if selections:
-                    stable = stable_mapping(selections[:3])
-                else:
-                    stable = stable_mapping([])
+                # The first three test years (2023-2025) are the pre-2026
+                # robustness folds. Preserve empty folds so a missing selection
+                # is not silently counted as a later fold.
+                stable = stable_mapping(fold_selection_frames[:3])
                 stable["lookback"] = lookback
                 stable["qlo"] = qlo
                 stable["qhi"] = qhi
