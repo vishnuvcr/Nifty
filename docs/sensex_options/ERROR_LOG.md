@@ -58,3 +58,10 @@ Prevention: treat a missing CI run as an infrastructure failure, never as a zero
 Type: methodology interpretation / reporting
 Observation: with a ₹100,000 account and 2% risk budget, the frozen risk-sizing gate returned zero lots for the evaluated SENSEX structures because one-lot ES95/ES99 risk often exceeded ₹2,000.
 Resolution: retain the frozen gate for Adaptive execution results, but separately report forced one-lot realized expiry P&L for every successfully priced candidate. This prevents conflating “not deployable at the chosen account size” with “strategy has no historical outcome.” The realized column is strictly post-entry evaluation and cannot affect selection.
+
+
+### E010 — Yahoo Finance HTTP 429 in S5 CI
+Type: external data acquisition
+Observation: S5 run 35472613682 failed at the independent Yahoo daily SENSEX-history fetch with HTTP 429 before the option backtest began.
+Resolution: removed the runtime Yahoo dependency from the S5 workflow. The frozen engine now requires the cached/primary SENSEX index dataset already used by the option dataset.
+Prevention: no live third-party API is allowed in the historical backtest path; data must be cached/pinned before execution.
