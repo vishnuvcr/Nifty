@@ -6,22 +6,36 @@ from pathlib import Path
 
 import pandas as pd
 
-from batman_signal_producer import (
-    NSEClient,
-    apply_closures,
-    calculate_realized_for_open_trades,
-    now_ist,
-)
-
-from adaptive_paper_signal_producer_v1 import (
-    CANDIDATE_COLUMNS,
-    SIGNAL_COLUMNS,
-    build_site as build_adaptive_site,
-    read_csv as adaptive_read_csv,
-    summary_stats as adaptive_summary_stats,
-)
-
-from batman_signal_producer import build_site as build_batman_site
+try:
+    from batman_signal_producer import (
+        NSEClient,
+        apply_closures,
+        calculate_realized_for_open_trades,
+        now_ist,
+        build_site as build_batman_site,
+    )
+    from adaptive_paper_signal_producer_v1 import (
+        CANDIDATE_COLUMNS,
+        SIGNAL_COLUMNS,
+        build_site as build_adaptive_site,
+        read_csv as adaptive_read_csv,
+        summary_stats as adaptive_summary_stats,
+    )
+except ImportError:
+    from scripts.batman_signal_producer import (
+        NSEClient,
+        apply_closures,
+        calculate_realized_for_open_trades,
+        now_ist,
+        build_site as build_batman_site,
+    )
+    from scripts.adaptive_paper_signal_producer_v1 import (
+        CANDIDATE_COLUMNS,
+        SIGNAL_COLUMNS,
+        build_site as build_adaptive_site,
+        read_csv as adaptive_read_csv,
+        summary_stats as adaptive_summary_stats,
+    )
 
 
 def main() -> None:
