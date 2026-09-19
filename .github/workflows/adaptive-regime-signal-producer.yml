@@ -1,4 +1,4 @@
-name: Adaptive Regime Signal Producer
+name: LEGACY — Adaptive Regime Signal Producer (DO NOT USE)
 
 on:
   push:
@@ -39,8 +39,6 @@ on:
         description: "Optional explicit expiry YYYY-MM-DD"
         required: false
         default: ""
-  schedule:
-    - cron: "0 4 * * 1-5"
 
 concurrency:
   group: adaptive-regime-signal-producer
@@ -141,7 +139,8 @@ jobs:
 
       - name: Publish summary
         run: |
-          echo "## Adaptive Regime Signal Producer" >> "$GITHUB_STEP_SUMMARY"
+          echo "## LEGACY workflow — DO NOT USE" >> "$GITHUB_STEP_SUMMARY"
           echo >> "$GITHUB_STEP_SUMMARY"
-          echo "Strategy identities are frozen: High vol → Short Strangle; Medium vol → Sell Put; Low vol → NO_TRADE." >> "$GITHUB_STEP_SUMMARY"
-          echo "Prospective entry protocol: exact 3 trading sessions before expiry, entry snapshot at 09:30 IST, model cutoff at prior completed session." >> "$GITHUB_STEP_SUMMARY"
+          echo "This workflow contains the superseded fixed regime mapping and is retained only for historical reproducibility."
+          echo "Use Adaptive Paper Signal Producer v1 for current prospective paper trading." >> "$GITHUB_STEP_SUMMARY"
+
