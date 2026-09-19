@@ -5,6 +5,8 @@ on:
     branches: ["research/monte-carlo-wfa-v1"]
     paths:
       - scripts/run_regime_strategy_router_v3.py
+      - scripts/run_regime_robustness_v1.py
+      - tests/test_regime_robustness_v1.py
       - .github/workflows/adaptive-regime-strategy-run9-snapshot.yml
   workflow_dispatch:
 
@@ -47,10 +49,23 @@ jobs:
             --final-start-year 2025 \
             --dev-min-n 30 \
             --validation-min-n 10
-      - name: Publish report
-        run: cat results/adaptive_regime_strategy_report.md
+      - name: Run robustness tests
+        run: pytest -q tests/test_regime_robustness_v1.py
+
+      - name: Run rolling regime robustness
+        run: |
+          python scripts/run_regime_robustness_v1.py             --trades input/strategy_trades.csv             --out-dir robustness_results             --costs 1 2 3 4             --lookbacks 63 126 252             --quantile-pairs 0.25,0.75 0.3333333333,0.6666666667 0.20,0.80             --test-years 2023 2024 2025 2026
+
+      - name: Publish reports
+        run: |
+          cat results/adaptive_regime_strategy_report.md
+          echo "---- robustness ----"
+          cat robustness_results/regime_robustness_report.md
+
       - uses: actions/upload-artifact@v4
         with:
           name: adaptive-regime-strategy-run9-snapshot
-          path: results/
+          path: |
+            results/
+            robustness_results/
           retention-days: 30
