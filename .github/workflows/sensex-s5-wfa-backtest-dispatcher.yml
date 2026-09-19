@@ -39,12 +39,29 @@ jobs:
           git push origin HEAD:research/sensex-s5-wfa-backtest-v1
       - name: Install dependencies
         run: python -m pip install --upgrade pip pandas numpy pyarrow
+      - name: Cache SENSEX dataset
+        uses: actions/cache@v4
+        with:
+          path: data/raw_sensex
+          key: sensex-options-${{ runner.os }}-2026-09-v2
+
       - name: Fetch SENSEX 1-minute dataset
         run: |
-          git clone --depth 1 --filter=blob:none --sparse https://huggingface.co/datasets/thetrademarkk/india-index-options-1m.git data/raw_sensex
-          cd data/raw_sensex
-          git sparse-checkout set --skip-checks index/SENSEX.parquet options/SENSEX
-          git lfs pull --include="index/SENSEX.parquet,options/SENSEX/*.parquet"
+          if [ -f data/raw_sensex/index/SENSEX.parquet ]; then
+            echo "Using cached SENSEX dataset."
+            exit 0
+          fi
+          python -m pip install huggingface_hub
+          mkdir -p data/raw_sensex
+          hf download thetrademarkk/india-index-options-1m index/SENSEX.parquet --repo-type dataset --local-dir data/raw_sensex
+          for year in 2024 2025; do
+            hf download thetrademarkk/india-index-options-1m --include "options/SENSEX/$year-*.parquet" --repo-type dataset --local-dir data/raw_sensex
+          done
+          for month in 01 02 03 04 05 06 07; do
+            hf download thetrademarkk/india-index-options-1m --include "options/SENSEX/2026-$month-*.parquet" --repo-type dataset --local-dir data/raw_sensex
+          done
+          test -f data/raw_sensex/index/SENSEX.parquet
+          test -d data/raw_sensex/options/SENSEX
       - name: Backtest development
         run: python scripts/sensex_backtest_v1.py --options-dir data/raw_sensex/options/SENSEX --index-path data/raw_sensex/index/SENSEX.parquet --split development --slippage "${{ inputs.slippage || '0.5' }}" --out-dir reports/sensex_options
       - name: Backtest validation
