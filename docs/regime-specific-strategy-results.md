@@ -92,3 +92,9 @@ The strongest regime-specific findings are:
 The 2D direction×volatility cells were too sparse/unstable to justify a more granular frozen router yet. Therefore the current evidence supports **regime-dependent strategy selection at the volatility level**, with the neutral-direction Jade Lizard as a separate secondary candidate rather than combining the two rules into one over-fitted router.
 
 These are paper-trading research results, not guarantees of future profitability. Short Strangle and Sell Put have substantial tail risk and require strict predefined risk limits.
+
+## Robustness status update
+
+The volatility-only mapping documented above is a **historical run-9 selection snapshot**, not the final promoted router. A subsequent rolling walk-forward robustness phase varied lookback, regime thresholds and stress costs. The simple frozen mapping did not remain stable and positive in the untouched 2026 holdout, so it was **not promoted**.
+
+The next research phase added simple past-only risk filters while keeping the strategy identities fixed. The resulting candidate is documented in `docs/regime-risk-filtered-results.md` and is the current paper-research candidate.
