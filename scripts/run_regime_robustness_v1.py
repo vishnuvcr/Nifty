@@ -35,30 +35,49 @@ def trailing_rank(values: pd.Series, window: int, min_history: int = 30) -> np.n
 
 
 def add_adaptive_regime(df: pd.DataFrame, lookback: int, qlo: float, qhi: float) -> pd.DataFrame:
-    x = df.sort_values(["decision_date", "decision_id"]).copy()
+    # Regime features are decision-date level observations. The strategy table
+    # contains up to 36 strategy rows per decision, so ranking directly on the
+    # raw table would duplicate observations and could let the current decision
+    # leak into later strategy rows from the same date. Build ranks on one row
+    # per decision_id, then merge the labels back to every strategy row.
+    base = (
+        df.sort_values(["decision_date", "decision_id"])
+        .drop_duplicates("decision_id", keep="first")
+        .copy()
+    )
     for col in ("trend20", "trend60", "rv20", "p_expand"):
-        x[f"{col}_rank"] = trailing_rank(x[col], lookback)
-    x["trend_score_adaptive"] = 0.5 * x["trend20_rank"] + 0.5 * x["trend60_rank"]
-    x["direction_adaptive"] = np.where(
-        (x["trend20_rank"] >= qhi) & (x["trend60_rank"] >= qhi),
+        base[f"{col}_rank"] = trailing_rank(base[col], lookback)
+    base["trend_score_adaptive"] = 0.5 * base["trend20_rank"] + 0.5 * base["trend60_rank"]
+    base["direction_adaptive"] = np.where(
+        (base["trend20_rank"] >= qhi) & (base["trend60_rank"] >= qhi),
         "bull",
         np.where(
-            (x["trend20_rank"] <= qlo) & (x["trend60_rank"] <= qlo),
+            (base["trend20_rank"] <= qlo) & (base["trend60_rank"] <= qlo),
             "bear",
             "neutral",
         ),
     )
     breakout = (
-        (x["p_expand_rank"] >= qhi)
-        & (np.abs(x["trend_score_adaptive"] - 0.5) < 0.18)
+        (base["p_expand_rank"] >= qhi)
+        & (np.abs(base["trend_score_adaptive"] - 0.5) < 0.18)
     )
-    x.loc[breakout, "direction_adaptive"] = "breakout"
-    x["vol_regime"] = np.where(
-        x["rv20_rank"] <= qlo, "low",
-        np.where(x["rv20_rank"] <= qhi, "medium", "high"),
+    base.loc[breakout, "direction_adaptive"] = "breakout"
+    base["vol_regime"] = np.where(
+        base["rv20_rank"] <= qlo, "low",
+        np.where(base["rv20_rank"] <= qhi, "medium", "high"),
     )
-    x["regime_adaptive"] = x["direction_adaptive"] + "_" + x["vol_regime"]
-    return x
+    base["regime_adaptive"] = base["direction_adaptive"] + "_" + base["vol_regime"]
+
+    label_cols = [
+        "decision_id", "trend20_rank", "trend60_rank", "rv20_rank",
+        "p_expand_rank", "trend_score_adaptive", "direction_adaptive",
+        "vol_regime", "regime_adaptive",
+    ]
+    out = df.drop(
+        columns=[c for c in label_cols if c != "decision_id" and c in df.columns],
+        errors="ignore",
+    ).merge(base[label_cols], on="decision_id", how="left", validate="many_to_one")
+    return out
 
 
 def profit_factor(values: np.ndarray) -> float:
