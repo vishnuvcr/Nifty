@@ -1,16 +1,31 @@
 {
   "producer": "Adaptive Paper Signal Producer v1",
-  "phase": "10",
-  "entry_signal_schedule": "09:30 IST weekdays when NIFTY is a trading session",
-  "refresh_schedule": "16:00 IST weekdays",
+  "research_basis": "Pre-2026 CPCV + block bootstrap",
+  "candidate_universe": {
+    "low": [
+      "Risk Reversal",
+      "Long Synthetic Future",
+      "Buy Call"
+    ],
+    "medium": [
+      "Short Straddle",
+      "Put Ratio Spread",
+      "Short Strangle",
+      "Strip",
+      "Buy Put"
+    ],
+    "high": [
+      "Sell Put",
+      "Risk Reversal",
+      "Long Synthetic Future",
+      "Batman"
+    ]
+  },
+  "entry_time_ist": "09:30",
   "entry_sessions_before_expiry": 3,
   "mc_paths": 5000,
   "lookback_sessions": 756,
-  "rank_lookback_sessions": 252,
-  "stress_cost_points_per_contract": 2,
-  "risk_pct": 0.02,
-  "lot_size": 65,
-  "paper_only": true,
+  "stress_cost_points_per_contract": 2.0,
   "primary_selection": "highest_net_mc_ev_among_eligible_candidates",
   "primary_selection_validated": false
 }
