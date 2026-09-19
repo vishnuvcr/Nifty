@@ -62,6 +62,7 @@ class NSEClient:
         self.session = requests.Session(impersonate="chrome")
         self.session.headers.update(NSE_HEADERS)
         self.warmed = False
+        self.index_history_source = "NSE"
 
     def warm(self) -> None:
         if self.warmed:
@@ -97,36 +98,87 @@ class NSEClient:
                 self.warmed = False
         raise RuntimeError(f"NSE request failed for {path}: {last_error}")
 
+    def fetch_index_history_yahoo(self, start: date, end: date) -> pd.DataFrame:
+        start_ts = int(pd.Timestamp(start, tz=IST).timestamp())
+        end_ts = int((pd.Timestamp(end, tz=IST) + pd.Timedelta(days=1)).timestamp())
+        r = self.session.get(
+            "https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI",
+            params={
+                "period1": start_ts,
+                "period2": end_ts,
+                "interval": "1d",
+                "events": "history",
+                "includeAdjustedClose": "true",
+            },
+            timeout=30,
+        )
+        r.raise_for_status()
+        payload = r.json()
+        result = ((payload.get("chart") or {}).get("result") or [None])[0]
+        if not result:
+            raise RuntimeError("Yahoo Finance returned no ^NSEI history.")
+        timestamps = result.get("timestamp") or []
+        closes = (((result.get("indicators") or {}).get("quote") or [{}])[0]).get("close") or []
+        rows = []
+        for ts, close in zip(timestamps, closes):
+            px = parse_float(close)
+            if px is None:
+                continue
+            local_date = pd.Timestamp(ts, unit="s", tz="UTC").tz_convert(IST).normalize().tz_localize(None)
+            rows.append({"date": local_date, "close": px})
+        if not rows:
+            raise RuntimeError("Yahoo Finance returned no usable ^NSEI closes.")
+        return (
+            pd.DataFrame(rows)
+            .drop_duplicates("date")
+            .sort_values("date")
+            .reset_index(drop=True)
+        )
+
     def fetch_index_history(self, start: date, end: date) -> pd.DataFrame:
-        chunks: list[pd.DataFrame] = []
-        cursor = start
-        while cursor <= end:
-            chunk_end = min(cursor + timedelta(days=349), end)
-            payload = self.get_json(
-                "/api/historical/indicesHistory",
-                params={
-                    "indexType": "NIFTY 50",
-                    "from": cursor.strftime("%d-%m-%Y"),
-                    "to": chunk_end.strftime("%d-%m-%Y"),
-                },
-            )
-            records = payload.get("data", {}).get("indexCloseOnlineRecords", [])
-            if records:
-                df = pd.DataFrame(records)
-                date_col = "EOD_TIMESTAMP" if "EOD_TIMESTAMP" in df.columns else "TIMESTAMP"
-                close_col = "EOD_CLOSE_INDEX_VAL" if "EOD_CLOSE_INDEX_VAL" in df.columns else "CLOSE"
-                if date_col in df.columns and close_col in df.columns:
-                    x = pd.DataFrame({
-                        "date": pd.to_datetime(df[date_col], errors="coerce"),
-                        "close": pd.to_numeric(df[close_col], errors="coerce"),
-                    }).dropna()
-                    chunks.append(x)
-            cursor = chunk_end + timedelta(days=1)
-        if not chunks:
-            raise RuntimeError("NSE returned no NIFTY 50 index history.")
-        out = pd.concat(chunks, ignore_index=True)
-        out["date"] = out["date"].dt.normalize()
-        return out.dropna(subset=["date","close"]).drop_duplicates("date").sort_values("date").reset_index(drop=True)
+        try:
+            chunks: list[pd.DataFrame] = []
+            cursor = start
+            while cursor <= end:
+                chunk_end = min(cursor + timedelta(days=349), end)
+                payload = self.get_json(
+                    "/api/historical/indicesHistory",
+                    params={
+                        "indexType": "NIFTY 50",
+                        "from": cursor.strftime("%d-%m-%Y"),
+                        "to": chunk_end.strftime("%d-%m-%Y"),
+                    },
+                )
+                records = payload.get("data", {}).get("indexCloseOnlineRecords", [])
+                if records:
+                    df = pd.DataFrame(records)
+                    date_col = "EOD_TIMESTAMP" if "EOD_TIMESTAMP" in df.columns else "TIMESTAMP"
+                    close_col = "EOD_CLOSE_INDEX_VAL" if "EOD_CLOSE_INDEX_VAL" in df.columns else "CLOSE"
+                    if date_col in df.columns and close_col in df.columns:
+                        x = pd.DataFrame({
+                            "date": pd.to_datetime(df[date_col], errors="coerce"),
+                            "close": pd.to_numeric(df[close_col], errors="coerce"),
+                        }).dropna()
+                        chunks.append(x)
+                cursor = chunk_end + timedelta(days=1)
+            if not chunks:
+                raise RuntimeError("NSE returned no NIFTY 50 index history.")
+            out = pd.concat(chunks, ignore_index=True)
+            out["date"] = out["date"].dt.normalize()
+            out = out.dropna(subset=["date","close"]).drop_duplicates("date").sort_values("date").reset_index(drop=True)
+            self.index_history_source = "NSE"
+            return out
+        except Exception as nse_error:
+            try:
+                out = self.fetch_index_history_yahoo(start, end)
+                self.index_history_source = "Yahoo Finance fallback"
+                print(f"INDEX_HISTORY_FALLBACK: NSE history failed ({nse_error}); using Yahoo Finance ^NSEI history.")
+                return out
+            except Exception as yahoo_error:
+                raise RuntimeError(
+                    f"NIFTY 50 history failed from both NSE and Yahoo Finance. "
+                    f"NSE={nse_error}; Yahoo={yahoo_error}"
+                )
 
     def fetch_holidays(self) -> set[pd.Timestamp]:
         payload = self.get_json("/api/holiday-master", params={"type": "trading"})
@@ -534,7 +586,7 @@ small{{color:#8b949e}} table{{width:100%;border-collapse:collapse;font-size:14px
 <div class="card"><h2>Recent paper trades</h2>
 <table><tr><th>Entry</th><th>Expiry</th><th>Signal</th><th>Status</th><th>Lots</th><th>Net EV</th><th>Realized P&L ₹</th></tr>{ledger_rows}</table></div>
 
-<div class="card"><small>Market data is obtained from NSE public endpoints. This is a research/paper-trading publication system and does not place broker orders. Missing/invalid data is not imputed.</small></div>
+<div class="card"><small>Option-chain data is obtained from NSE public endpoints; NIFTY history uses NSE when available and Yahoo Finance only as a documented fallback. This is a research/paper-trading publication system and does not place broker orders. Missing/invalid data is not imputed.</small></div>
 </main></body></html>"""
     (site_dir / "index.html").write_text(page, encoding="utf-8")
 
@@ -646,7 +698,7 @@ def main() -> None:
         "mc_paths":args.paths,
         "lookback_sessions":args.lookback,
         "chain_endpoint":chain_endpoint,
-        "source":"NSE public data endpoints",
+        "source":f"NSE option-chain endpoints; index history={client.index_history_source}",
         "closures":closures,
         "legs":[],
         "notes":"",
