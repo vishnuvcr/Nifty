@@ -92,6 +92,8 @@ jobs:
           legacy_daily = legacy.groupby('trading_day', as_index=False).tail(1)[['timestamp','trading_day','close']]
           hf = pd.read_parquet('data/raw_sensex/index/SENSEX.parquet')
           hf['timestamp'] = pd.to_datetime(hf['timestamp'], errors='coerce')
+          if getattr(hf['timestamp'].dt, 'tz', None) is not None:
+              hf['timestamp'] = hf['timestamp'].dt.tz_localize(None)
           hf['trading_day'] = pd.to_datetime(hf['trading_day'], errors='coerce').dt.normalize()
           hf['close'] = pd.to_numeric(hf['close'], errors='coerce')
           hf = hf.dropna(subset=['timestamp','trading_day','close']).sort_values('timestamp')
