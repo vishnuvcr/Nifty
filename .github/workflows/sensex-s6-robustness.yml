@@ -94,7 +94,7 @@ jobs:
             for split in development validation holdout; do
               out="reports/sensex_s6/slippage_${slip}"
               mkdir -p "${out}"
-              python scripts/sensex_backtest_v1.py                 --options-dir data/raw_sensex/options/SENSEX                 --index-path data/raw_sensex/index/SENSEX.parquet                 --split "${split}"                 --slippage "${slip}"                 --seed-base 20260920                 --one-lot-edge                 --out-dir "${out}"
+              python scripts/sensex_backtest_v1.py                 --options-dir data/raw_sensex/options/SENSEX                 --index-path data/raw_sensex/index/SENSEX.parquet                 --mc-index-path data/external/sensex_mc_daily.parquet                 --split "${split}"                 --slippage "${slip}"                 --seed-base 20260920                 --one-lot-edge                 --out-dir "${out}"
             done
           done
 
@@ -106,9 +106,29 @@ jobs:
             for split in validation holdout; do
               out="reports/sensex_s6/seed_${seed}"
               mkdir -p "${out}"
-              python scripts/sensex_backtest_v1.py                 --options-dir data/raw_sensex/options/SENSEX                 --index-path data/raw_sensex/index/SENSEX.parquet                 --split "${split}"                 --slippage 0.50                 --seed-base "${seed}"                 --one-lot-edge                 --out-dir "${out}"
+              python scripts/sensex_backtest_v1.py                 --options-dir data/raw_sensex/options/SENSEX                 --index-path data/raw_sensex/index/SENSEX.parquet                 --mc-index-path data/external/sensex_mc_daily.parquet                 --split "${split}"                 --slippage 0.50                 --seed-base "${seed}"                 --one-lot-edge                 --out-dir "${out}"
             done
           done
+
+      - name: Verify S5 reproducibility at base scenario
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          ref=json.loads(Path('docs/sensex_options/S5_BASELINE_REFERENCE.json').read_text())
+          for split in ('development','validation','holdout'):
+              got=json.loads(Path(f'reports/sensex_s6/slippage_0.50/summary_{split}.json').read_text())
+              exp=ref[split]
+              checks = {
+                  'adaptive_trades': got['adaptive']['trades'] == exp['adaptive_trades'],
+                  'adaptive_total_pnl': abs(got['adaptive']['total_pnl'] - exp['adaptive_total_pnl']) < 1e-6,
+                  'batman_trades': got['batman']['trades'] == exp['batman_trades'],
+                  'batman_total_pnl': abs(got['batman']['total_pnl'] - exp['batman_total_pnl']) < 1e-6,
+              }
+              if not all(checks.values()):
+                  raise SystemExit(f'S5 reproducibility mismatch {split}: {checks}')
+          print('S5 baseline reproduction gate: PASS')
+          PY
 
       - name: Build statistical robustness summary
         run: python scripts/sensex_s6_robustness.py --reports-dir reports/sensex_s6 --out-dir reports/sensex_s6
