@@ -32,8 +32,11 @@ def classify_adaptive(d: pd.DataFrame) -> pd.DataFrame:
     # The raw trade table contains multiple strategies per decision, so doing
     # the ranking on raw rows would duplicate observations and let the current
     # decision leak into later rows from the same date.
+    work = d.copy()
+    if "decision_id" not in work.columns:
+        work["decision_id"] = work["decision_date"].astype(str)
     base = (
-        d.sort_values(["decision_date", "decision_id"])
+        work.sort_values(["decision_date", "decision_id"])
         .drop_duplicates("decision_id", keep="first")
         .copy()
     )
@@ -62,8 +65,8 @@ def classify_adaptive(d: pd.DataFrame) -> pd.DataFrame:
         "p_expand_rank", "trend_score_adaptive", "direction_adaptive",
         "vol_regime", "regime_adaptive",
     ]
-    out = d.drop(
-        columns=[c for c in label_cols if c != "decision_id" and c in d.columns],
+    out = work.drop(
+        columns=[c for c in label_cols if c != "decision_id" and c in work.columns],
         errors="ignore",
     ).merge(base[label_cols], on="decision_id", how="left", validate="many_to_one")
     return out
