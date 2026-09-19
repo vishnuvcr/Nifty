@@ -621,8 +621,13 @@ def main() -> None:
         "vol_regime": regime["vol_regime"],
         "run_timestamp_ist": current.isoformat(),
     }
+    today_is_session = decision.weekday() < 5 and decision not in holidays
+
     feature_df = pd.read_csv(feature_path) if feature_path.exists() else pd.DataFrame()
-    if "decision_date" not in feature_df.columns or feature_row["decision_date"] not in set(feature_df.get("decision_date", pd.Series(dtype=str)).astype(str)):
+    if today_is_session and (
+        "decision_date" not in feature_df.columns
+        or feature_row["decision_date"] not in set(feature_df.get("decision_date", pd.Series(dtype=str)).astype(str))
+    ):
         feature_df = pd.concat([feature_df, pd.DataFrame([feature_row])], ignore_index=True)
         feature_df.to_csv(feature_path, index=False)
 
@@ -666,7 +671,6 @@ def main() -> None:
         "notes": "",
     }
 
-    today_is_session = decision.weekday() < 5 and decision not in holidays
     if not today_is_session:
         latest["status"] = "NOT_TRADING_DAY"
         latest["notes"] = "Decision date is not a NIFTY trading session; no option-chain request was made."
@@ -853,7 +857,8 @@ def main() -> None:
         "signal_id": signal_id,
         "notes": latest.get("notes", ""),
     }
-    signals = append_once(signals, signal_row, "signal_id")
+    if today_is_session and latest["status"] in {"ENTRY_DAY", "NOT_ENTRY_DAY", "DATA_UNAVAILABLE"}:
+        signals = append_once(signals, signal_row, "signal_id")
 
     if latest["signal"] == "ENTER" and latest.get("target_expiry"):
         if signal_id not in set(ledger["signal_id"].astype(str)):
