@@ -544,6 +544,7 @@ main{{max-width:1200px;margin:auto;padding:24px}} .card{{background:#161b22;bord
 small{{color:#8b949e}} table{{width:100%;border-collapse:collapse;font-size:14px}} th,td{{padding:8px;border-bottom:1px solid #30363d;text-align:left}}
 .badge{{display:inline-block;padding:4px 9px;border-radius:999px;background:#21262d;font-weight:700}} a{{color:#58a6ff}}
 </style></head><body><main>
+<p><a href="../">← Strategy selector</a> · <a href="../adaptive/">Adaptive Regime</a></p>
 <h1>Batman Signal Producer</h1>
 <p><small>Frozen protocol • entry at 09:30 IST • 3 trading sessions before expiry • 5,000 MC paths • 756-session lookback • net EV gate.</small></p>
 <div class="card"><h2>Latest run</h2>
