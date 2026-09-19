@@ -147,3 +147,8 @@ Type: statistical reporting / data-shape handling
 Observation: some Monte Carlo seed scenarios legitimately produced no closed trades for a strategy, and the backtest wrote an empty CSV. The S6 summary parser treated that as a malformed file and stopped the robustness phase.
 Resolution: empty trade CSVs are now treated as valid zero-trade outputs and skipped in concatenation; the scenario-level JSON summary remains the authoritative zero-trade record.
 Prevention: reporting code must distinguish valid empty result sets from corrupt files, with zero-trade cases explicitly represented in scenario summaries.
+\n\n### E020 — S6 used a different MC history input than the completed S5 baseline
+Type: methodology / provenance
+Observation: the initial S6 implementation passed the raw 1-minute SENSEX index parquet directly as the Monte Carlo/regime history. The completed S5 transfer run used an independently constructed daily history combining cached pre-2024 SENSEX warmup data with the daily closes from the primary SENSEX index parquet.
+Resolution: S6 now reproduces the S5 composite daily MC history exactly, passes it through --mc-index-path for every slippage and seed scenario, and adds an explicit S5 baseline reproduction gate before sensitivity results are interpreted.
+Prevention: robustness phases must reuse the exact validated baseline data-engine contract and include an automated reproducibility checksum before alternative scenarios are accepted.
