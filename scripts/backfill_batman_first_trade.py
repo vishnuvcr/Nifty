@@ -112,39 +112,44 @@ def main():
     terminal = mc_paths(cutoff_spot, returns, 3, PATHS, SEED)
 
     qs = np.percentile(terminal, [20, 35, 65, 80])
-    # NIFTY strikes are 50-point spaced in this series; map to nearest listed-like levels.
     raw_targets = {"p20": qs[0], "p35": qs[1], "c65": qs[2], "c80": qs[3]}
     available = np.arange(21000.0, 25501.0, 50.0)
     used = set()
     strikes = {}
     for label, target in sorted(raw_targets.items(), key=lambda kv: kv[1]):
         for candidate in available[np.argsort(np.abs(available - target))]:
-            if float(candidate) not in used:
-                strikes[label] = float(candidate)
-                used.add(float(candidate))
+            candidate = float(candidate)
+            if candidate not in used:
+                strikes[label] = candidate
+                used.add(candidate)
                 break
 
+    prices = fetch_nse_settlements(strikes)
+    print(json.dumps({
+        "cutoff_spot": cutoff_spot,
+        "terminal_quantiles": qs.tolist(),
+        "mapped_strikes": strikes,
+        "nse_prices": prices,
+    }, indent=2))
+
     rows = []
-    print(json.dumps({"cutoff_spot": cutoff_spot, "terminal_quantiles": qs.tolist(), "raw_targets": raw_targets, "mapped_strikes": strikes}, indent=2))
-    for label, typ in [("p20", "PE"), ("p35", "PE"), ("c65", "CE"), ("c80", "CE")]:
-        px, url = fetch_prev_close(typ, strikes[label])
+    for label, option_type in [("p20", "PE"), ("p35", "PE"), ("c65", "CE"), ("c80", "CE")]:
         rows.append({
             "expiry": EXPIRY,
             "strike": strikes[label],
-            "option_type": typ,
-            "last_price": px,
+            "option_type": option_type,
+            "last_price": prices[label],
             "bid": np.nan,
             "ask": np.nan,
             "open_interest": np.nan,
             "volume": np.nan,
-            "source_url": url,
         })
     chain = pd.DataFrame(rows)
 
     metrics = build_batman_signal(
         cutoff_spot,
         terminal,
-        chain[["expiry","strike","option_type","last_price","bid","ask","open_interest","volume"]],
+        chain,
         EXPIRY,
         LOT_SIZE,
         CAPITAL,
@@ -156,16 +161,23 @@ def main():
     signals_path = Path("paper_trading/batman_signals.csv")
     ledger = read_csv_or_empty(ledger_path, LEDGER_COLUMNS)
     signals = read_csv_or_empty(signals_path, SIGNAL_COLUMNS)
-
     signal_id = f"{ENTRY.date().isoformat()}|{EXPIRY.date().isoformat()}|Batman"
+    run_ts = pd.Timestamp.now(tz=IST).isoformat()
+    note = (
+        "RETROACTIVE PAPER-TRADE BACKFILL: model data cutoff 2026-09-16; "
+        "paper entry date 2026-09-17; expiry 2026-09-22; 3 future trading sessions. "
+        "Option entry uses NSE UDiFF 2026-09-17 ClsPric; historical bid/ask are unavailable, "
+        "so this is a reconstructed paper entry and not an executable historical quote."
+    )
+
     signal_row = {
-        "run_timestamp_ist": pd.Timestamp.now(tz=IST).isoformat(),
+        "run_timestamp_ist": run_ts,
         "decision_date": ENTRY.date().isoformat(),
         "target_expiry": EXPIRY.date().isoformat(),
         "status": "BACKFILL_ENTRY_DAY",
         "signal": metrics["signal"],
         "spot": cutoff_spot,
-        "spot_source": "Yahoo Finance ^NSEI; data cutoff 2026-09-16",
+        "spot_source": "Yahoo Finance ^NSEI; model cutoff 2026-09-16",
         "mc_paths": PATHS,
         "lookback_sessions": LOOKBACK,
         "horizon_sessions": 3,
@@ -191,9 +203,9 @@ def main():
         "minimum_capital_for_one_lot_inr": metrics["minimum_capital_for_one_lot_inr"],
         "recommended_lots": metrics["recommended_lots"],
         "entry_cashflow_points_per_unit": metrics["entry_cashflow_points_per_unit"],
-        "entry_price_source": "NSE UDiFF bhavcopy ClsPric (2026-09-17 close proxy)",
+        "entry_price_source": "NSE UDiFF ClsPric 2026-09-17",
         "signal_id": signal_id,
-        "notes": "RETROACTIVE PAPER-TRADE BACKFILL: MC data cutoff 2026-09-16; expiry 2026-09-22; 3 future trading sessions from 2026-09-17. Entry option prices use NSE UDiFF 2026-09-17 ClsPric; bid/ask are unavailable in EOD bhavcopy, so this is a reconstructed paper entry, not an executable historical quote.",
+        "notes": note,
     }
 
     if signal_id not in set(signals.get("signal_id", pd.Series(dtype=str)).astype(str)):
@@ -224,7 +236,7 @@ def main():
             "exit_intrinsic_points_per_unit": "",
             "realized_pnl_points_per_unit": "",
             "realized_pnl_inr": "",
-            "notes": signal_row["notes"],
+            "notes": note,
         }
         ledger = pd.concat([ledger, pd.DataFrame([ledger_row])], ignore_index=True)
         ledger.to_csv(ledger_path, index=False)
@@ -232,19 +244,39 @@ def main():
     latest = {
         "producer": "Batman Signal Producer — retrospective first-trade backfill",
         "strategy": "Batman",
-        "run_timestamp_ist": signal_row["run_timestamp_ist"],
+        "run_timestamp_ist": run_ts,
         "decision_date": ENTRY.date().isoformat(),
         "target_expiry": EXPIRY.date().isoformat(),
         "status": signal_row["status"],
-        **metrics,
+        "signal": metrics["signal"],
+        "data_cutoff": CUTOFF.date().isoformat(),
         "spot": cutoff_spot,
         "spot_source": signal_row["spot_source"],
         "mc_paths": PATHS,
         "lookback_sessions": LOOKBACK,
         "horizon_sessions": 3,
-        "data_cutoff": CUTOFF.date().isoformat(),
-        "entry_price_source": signal_row["entry_price_source"],
-        "notes": signal_row["notes"],
+        "p20_terminal": metrics["p20_terminal"],
+        "p35_terminal": metrics["p35_terminal"],
+        "p65_terminal": metrics["p65_terminal"],
+        "p80_terminal": metrics["p80_terminal"],
+        "strikes": strikes,
+        "mc_expected_pnl_points_gross": metrics["mc_expected_pnl_points_gross"],
+        "entry_cost_points": metrics["entry_cost_points"],
+        "mc_expected_pnl_points_net": metrics["mc_expected_pnl_points_net"],
+        "mc_probability_profit": metrics["mc_probability_profit"],
+        "mc_es95_points": metrics["mc_es95_points"],
+        "mc_es99_points": metrics["mc_es99_points"],
+        "lot_size": LOT_SIZE,
+        "contracts_per_strategy_lot": metrics["contracts_per_strategy_lot"],
+        "risk_points_per_lot": metrics["risk_points_per_lot"],
+        "risk_budget_inr": metrics["risk_budget_inr"],
+        "estimated_risk_inr_per_lot": metrics["estimated_risk_inr_per_lot"],
+        "minimum_capital_for_one_lot_inr": metrics["minimum_capital_for_one_lot_inr"],
+        "recommended_lots": metrics["recommended_lots"],
+        "entry_cashflow_points_per_unit": metrics["entry_cashflow_points_per_unit"],
+        "entry_price_source": "NSE UDiFF ClsPric 2026-09-17",
+        "legs": metrics["legs"],
+        "notes": note,
     }
     build_site(Path("site"), latest, signals, ledger)
     Path("site/data/producer_metadata.json").write_text(
@@ -263,165 +295,11 @@ def main():
     print(json.dumps({
         "signal": metrics["signal"],
         "recommended_lots": metrics["recommended_lots"],
-        "spot_cutoff": cutoff_spot,
-        "terminal_quantiles": qs.tolist(),
-        "strikes": strikes,
-        "legs": metrics["legs"],
         "mc_ev_net": metrics["mc_expected_pnl_points_net"],
         "mc_pop": metrics["mc_probability_profit"],
         "es95": metrics["mc_es95_points"],
         "es99": metrics["mc_es99_points"],
-    }, indent=2, default=str))
-
-if __name__ == "__main__":
-    main()    settlements = fetch_nse_settlements(strikes)
-    print(json.dumps({"nse_prices": settlements}, indent=2))
-    rows = []
-    for label, typ in [("p20","PE"),("p35","PE"),("c65","CE"),("c80","CE")]:
-        px=settlements[label]
-        rows.append({
-            "expiry": EXPIRY,
-            "strike": strikes[label],
-            "option_type": typ,
-            "last_price": px,
-            "bid": np.nan,
-            "ask": np.nan,
-            "open_interest": np.nan,
-            "volume": np.nan,
-            "source_url": "https://nsearchives.nseindia.com/content/fo/BhavCopy_NSE_FO_0_0_0_20260917_F_0000.csv.zip",
-        })
-    chain = pd.DataFrame(rows)
-
-    metrics = build_batman_signal(
-        cutoff_spot,
-        terminal,
-        chain[["expiry","strike","option_type","last_price","bid","ask","open_interest","volume"]],
-        EXPIRY,
-        LOT_SIZE,
-        CAPITAL,
-        RISK_PCT,
-        COST_PER_CONTRACT,
-    )
-
-    ledger_path = Path("paper_trading/batman_ledger.csv")
-    signals_path = Path("paper_trading/batman_signals.csv")
-    ledger = read_csv_or_empty(ledger_path, LEDGER_COLUMNS)
-    signals = read_csv_or_empty(signals_path, SIGNAL_COLUMNS)
-
-    signal_id = f"{ENTRY.date().isoformat()}|{EXPIRY.date().isoformat()}|Batman"
-    signal_row = {
-        "run_timestamp_ist": pd.Timestamp.now(tz=IST).isoformat(),
-        "decision_date": ENTRY.date().isoformat(),
-        "target_expiry": EXPIRY.date().isoformat(),
-        "status": "BACKFILL_ENTRY_DAY",
-        "signal": metrics["signal"],
-        "spot": cutoff_spot,
-        "spot_source": "Yahoo Finance ^NSEI; data cutoff 2026-09-16",
-        "mc_paths": PATHS,
-        "lookback_sessions": LOOKBACK,
-        "horizon_sessions": 3,
-        "p20_terminal": metrics["p20_terminal"],
-        "p35_terminal": metrics["p35_terminal"],
-        "p65_terminal": metrics["p65_terminal"],
-        "p80_terminal": metrics["p80_terminal"],
-        "p20_strike": strikes["p20"],
-        "p35_strike": strikes["p35"],
-        "c65_strike": strikes["c65"],
-        "c80_strike": strikes["c80"],
-        "mc_ev_points_gross": metrics["mc_expected_pnl_points_gross"],
-        "entry_cost_points": metrics["entry_cost_points"],
-        "mc_ev_points_net": metrics["mc_expected_pnl_points_net"],
-        "mc_pop": metrics["mc_probability_profit"],
-        "mc_es95_points": metrics["mc_es95_points"],
-        "mc_es99_points": metrics["mc_es99_points"],
-        "lot_size": LOT_SIZE,
-        "contracts_per_strategy_lot": metrics["contracts_per_strategy_lot"],
-        "risk_points_per_lot": metrics["risk_points_per_lot"],
-        "risk_budget_inr": metrics["risk_budget_inr"],
-        "estimated_risk_inr_per_lot": metrics["estimated_risk_inr_per_lot"],
-        "minimum_capital_for_one_lot_inr": metrics["minimum_capital_for_one_lot_inr"],
-        "recommended_lots": metrics["recommended_lots"],
-        "entry_cashflow_points_per_unit": metrics["entry_cashflow_points_per_unit"],
-        "entry_price_source": "IIFL previous close (2026-09-17 entry proxy)",
-        "signal_id": signal_id,
-        "notes": "RETROACTIVE PAPER-TRADE BACKFILL: MC data cutoff 2026-09-16; expiry 2026-09-22; 3 future trading sessions from 2026-09-17. Entry option prices use 2026-09-17 close via IIFL Friday pages' Prev. Close fields; this is a reconstructed paper entry, not an executable historical quote.",
-    }
-
-    if signal_id not in set(signals.get("signal_id", pd.Series(dtype=str)).astype(str)):
-        signals = pd.concat([signals, pd.DataFrame([signal_row])], ignore_index=True)
-        signals.to_csv(signals_path, index=False)
-
-    if signal_id not in set(ledger.get("signal_id", pd.Series(dtype=str)).astype(str)):
-        ledger_row = {
-            "signal_id": signal_id,
-            "decision_date": ENTRY.date().isoformat(),
-            "expiry": EXPIRY.date().isoformat(),
-            "strategy": "Batman",
-            "signal": metrics["signal"],
-            "spot": cutoff_spot,
-            "lot_size": LOT_SIZE,
-            "lots": metrics["recommended_lots"],
-            "risk_budget_inr": metrics["risk_budget_inr"],
-            "mc_ev_points_net": metrics["mc_expected_pnl_points_net"],
-            "mc_pop": metrics["mc_probability_profit"],
-            "es95_points": metrics["mc_es95_points"],
-            "es99_points": metrics["mc_es99_points"],
-            "entry_cost_points": metrics["entry_cost_points"],
-            "entry_cashflow_points_per_unit": metrics["entry_cashflow_points_per_unit"],
-            "legs_json": json.dumps(metrics["legs"], separators=(",", ":")),
-            "status": "OPEN" if metrics["signal"] == "ENTER" and metrics["recommended_lots"] >= 1 else "NO_TRADE",
-            "exit_date": "",
-            "exit_spot": "",
-            "exit_intrinsic_points_per_unit": "",
-            "realized_pnl_points_per_unit": "",
-            "realized_pnl_inr": "",
-            "notes": signal_row["notes"],
-        }
-        ledger = pd.concat([ledger, pd.DataFrame([ledger_row])], ignore_index=True)
-        ledger.to_csv(ledger_path, index=False)
-
-    latest = {
-        "producer": "Batman Signal Producer — retrospective first-trade backfill",
-        "strategy": "Batman",
-        "run_timestamp_ist": signal_row["run_timestamp_ist"],
-        "decision_date": ENTRY.date().isoformat(),
-        "target_expiry": EXPIRY.date().isoformat(),
-        "status": signal_row["status"],
-        **metrics,
-        "spot": cutoff_spot,
-        "spot_source": signal_row["spot_source"],
-        "mc_paths": PATHS,
-        "lookback_sessions": LOOKBACK,
-        "horizon_sessions": 3,
-        "data_cutoff": CUTOFF.date().isoformat(),
-        "entry_price_source": signal_row["entry_price_source"],
-        "notes": signal_row["notes"],
-    }
-    build_site(Path("site"), latest, signals, ledger)
-    Path("site/data/producer_metadata.json").write_text(
-        json.dumps({
-            "mode": "retrospective-first-trade-backfill",
-            "model_data_cutoff": CUTOFF.date().isoformat(),
-            "paper_entry_date": ENTRY.date().isoformat(),
-            "expiry": EXPIRY.date().isoformat(),
-            "paths": PATHS,
-            "lookback": LOOKBACK,
-            "seed": SEED,
-            "option_price_source": "IIFL previous close fields representing 2026-09-17 close",
-        }, indent=2),
-        encoding="utf-8",
-    )
-    print(json.dumps({
-        "signal": metrics["signal"],
-        "recommended_lots": metrics["recommended_lots"],
-        "spot_cutoff": cutoff_spot,
-        "terminal_quantiles": qs.tolist(),
-        "strikes": strikes,
         "legs": metrics["legs"],
-        "mc_ev_net": metrics["mc_expected_pnl_points_net"],
-        "mc_pop": metrics["mc_probability_profit"],
-        "es95": metrics["mc_es95_points"],
-        "es99": metrics["mc_es99_points"],
     }, indent=2, default=str))
 
 if __name__ == "__main__":
