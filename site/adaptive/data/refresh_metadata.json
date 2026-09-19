@@ -1,7 +1,11 @@
 {
-  "refresh_timestamp_ist": "2026-09-19T18:13:32.034265+05:30",
-  "refresh_cutoff": "2026-09-19",
-  "mode": "refresh_only_no_new_entries",
-  "batman_closures": 0,
-  "adaptive_closures": 0
+  "phase": "10",
+  "status": "VALIDATED",
+  "mode": "phase10_validation_complete",
+  "validated_runs": {
+    "signal_generation_run": 35443596322,
+    "refresh_only_run": 35443657350,
+    "tests_run": "latest research-tests",
+    "latest_test_run": 35443642826
+  }
 }
