@@ -111,10 +111,29 @@ jobs:
         run: python scripts/sensex_backtest_v1.py --options-dir data/raw_sensex/options/SENSEX --index-path data/raw_sensex/index/SENSEX.parquet --split validation --slippage "${{ inputs.slippage || '0.5' }}" --out-dir reports/sensex_options
       - name: Backtest holdout
         run: python scripts/sensex_backtest_v1.py --options-dir data/raw_sensex/options/SENSEX --index-path data/raw_sensex/index/SENSEX.parquet --split holdout --slippage "${{ inputs.slippage || '0.5' }}" --out-dir reports/sensex_options
+      - name: Inspect backtest outputs
+        run: |
+          for f in reports/sensex_options/summary_*.json reports/sensex_options/strategy_realized_summary_*.csv; do
+            echo "===== $f ====="
+            cat "$f" || true
+          done
+          echo "===== Candidate counts ====="
+          python - <<'PY'
+          from pathlib import Path
+          import pandas as pd
+          for p in sorted(Path("reports/sensex_options").glob("candidates_*.csv")):
+              df=pd.read_csv(p)
+              print(p.name, "rows=",len(df))
+              if "strategy" in df.columns:
+                  print(df.groupby(["strategy","status"]).size().to_string())
+          PY
+
       - name: Publish reports
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add reports/sensex_options
-          git commit -m "research: publish SENSEX S5 backtest results [skip ci]" || true
+          git commit -m "research: publish SENSEX S5 backtest results [skip ci]"
+          git fetch origin research/sensex-s5-wfa-backtest-v1
+          git rebase origin/research/sensex-s5-wfa-backtest-v1
           git push origin HEAD:research/sensex-s5-wfa-backtest-v1
