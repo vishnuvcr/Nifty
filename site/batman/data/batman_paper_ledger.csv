@@ -1,0 +1,2 @@
+signal_id,decision_date,expiry,strategy,signal,spot,lot_size,lots,risk_budget_inr,mc_ev_points_net,mc_pop,es95_points,es99_points,entry_cost_points,entry_cashflow_points_per_unit,legs_json,status,exit_date,exit_spot,exit_intrinsic_points_per_unit,realized_pnl_points_per_unit,realized_pnl_inr,notes
+2026-09-17|2026-09-22|Batman,2026-09-17,2026-09-22,Batman,NO_TRADE,23217.599609375,65,0,2000,-23.575601480748773,0.4344,467.601073080105,780.6185953876956,12,-14.849999999999994,"[]",NO_TRADE,,,,,,"Preserved Batman backfill."
