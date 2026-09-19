@@ -1,6 +1,9 @@
 name: Batman Signal Producer
 
 on:
+  push:
+    branches:
+      - research/adaptive-paper-signals-v1
   workflow_dispatch:
     inputs:
       capital:
@@ -35,7 +38,7 @@ on:
     - cron: "0 4 * * 1-5"
 
 concurrency:
-  group: batman-signal-producer
+  group: nifty-paper-pages
   cancel-in-progress: false
 
 permissions:
@@ -85,7 +88,8 @@ jobs:
             --paths "$PATHS"
             --cost-per-contract "$COST_PER_CONTRACT"
             --decision-date auto
-            --seed "$SEED")
+            --seed "$SEED"
+            --site-dir site/batman)
           if [ -n "$EXPIRY" ]; then
             CMD+=(--expiry "$EXPIRY")
           fi
