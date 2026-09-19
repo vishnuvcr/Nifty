@@ -37,3 +37,6 @@ See the active research branch for the relevant experiment protocol.
 
 ### SENSEX execution note
 The frozen S5 backtest workflow is `.github/workflows/sensex-s5-wfa-backtest-dispatcher.yml` on `main`; it checks out `research/sensex-s5-wfa-backtest-v1`, downloads the validated public SENSEX 1-minute dataset, and runs development/validation/holdout with the frozen Batman and Adaptive rules. No numerical result is considered valid until a successful run commits `reports/sensex_options/`.
+
+
+SENSEX results: https://github.com/vishnuvcr/Nifty/blob/research/sensex-s5-wfa-backtest-v1/reports/sensex_options/RESULT_SUMMARY.md
