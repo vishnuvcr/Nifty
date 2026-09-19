@@ -31,7 +31,42 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install -e .
       - name: Run first trade backfill
-        run: python scripts/backfill_batman_first_trade.py
+        id: backfill
+        continue-on-error: true
+        run: |
+          set +e
+          python scripts/backfill_batman_first_trade.py > /tmp/backfill.log 2>&1
+          rc=$?
+          cat /tmp/backfill.log
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Publish diagnostic
+        if: always()
+        run: |
+          {
+            echo "run_id=${{ github.run_id }}"
+            echo "backfill_rc=${{ steps.backfill.outputs.rc }}"
+            echo "----- LOG -----"
+            cat /tmp/backfill.log 2>/dev/null || true
+          } > batman_backfill_status_v2.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout main
+          git fetch origin main
+          git reset --hard origin/main
+          cp batman_backfill_status_v2.txt /tmp/batman_backfill_status_v2.txt
+          cp /tmp/batman_backfill_status_v2.txt batman_backfill_status_v2.txt
+          git add batman_backfill_status_v2.txt
+          git commit -m "chore: publish Batman backfill v2 diagnostic" || true
+          git push origin main
+      - name: Stop if backfill failed
+        if: steps.backfill.outputs.rc != '0'
+        run: exit 1
+      - name: Checkout research branch again
+        uses: actions/checkout@v4
+        with:
+          ref: research/monte-carlo-wfa-v1
+          fetch-depth: 0
       - name: Show generated records
         run: |
           echo "=== SIGNAL ==="
