@@ -1,8 +1,13 @@
-run_id=35424305912
+run_id=35424337517
 backfill_rc=1
-timestamp=2026-09-19T05:34:50Z
+timestamp=2026-09-19T05:35:46Z
 ----- LOG -----
 Traceback (most recent call last):
-  File "/home/runner/work/Nifty/Nifty/scripts/backfill_batman_first_trade.py", line 14, in <module>
-    from scripts.batman_signal_producer import (
-ModuleNotFoundError: No module named 'scripts'
+  File "/home/runner/work/Nifty/Nifty/scripts/backfill_batman_first_trade.py", line 260, in <module>
+    main()
+  File "/home/runner/work/Nifty/Nifty/scripts/backfill_batman_first_trade.py", line 113, in main
+    px, url = fetch_prev_close(typ, strikes[label])
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/Nifty/Nifty/scripts/backfill_batman_first_trade.py", line 88, in fetch_prev_close
+    raise RuntimeError(f"Unable to parse previous close from {url}")
+RuntimeError: Unable to parse previous close from https://www.indiainfoline.com/markets/derivatives/option-chain/nifty/22-09-2026-pe-23000
