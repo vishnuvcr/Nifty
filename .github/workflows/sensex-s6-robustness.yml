@@ -40,15 +40,7 @@ jobs:
           set -euo pipefail
           if [[ ! -f data/raw_sensex/index/SENSEX.parquet ]]; then
             rm -rf data/raw_sensex
-            python - <<'PY'
-            from huggingface_hub import snapshot_download
-            snapshot_download(
-                repo_id="thetrademarkk/india-index-options-1m",
-                repo_type="dataset",
-                local_dir="data/raw_sensex",
-                allow_patterns=["index/SENSEX.parquet", "options/SENSEX/*.parquet"],
-            )
-            PY
+            python -c 'from huggingface_hub import snapshot_download; snapshot_download(repo_id="thetrademarkk/india-index-options-1m", repo_type="dataset", local_dir="data/raw_sensex", allow_patterns=["index/SENSEX.parquet", "options/SENSEX/*.parquet"])'
           fi
           test -f data/raw_sensex/index/SENSEX.parquet
           test -d data/raw_sensex/options/SENSEX
