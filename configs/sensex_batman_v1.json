@@ -1,0 +1,27 @@
+{
+  "version": "sensex-batman-v1-transfer",
+  "parent_spec": "docs/batman-paper-trading-candidate.md",
+  "underlying": "BSE SENSEX",
+  "entry_time_ist": "09:30",
+  "entry_sessions_before_expiry": 3,
+  "mc_paths": 5000,
+  "lookback_sessions": 756,
+  "quantiles": [
+    "P20",
+    "P35",
+    "P65",
+    "P80"
+  ],
+  "structure": {
+    "P35_PE": 1,
+    "P20_PE": -2,
+    "P65_CE": 1,
+    "P80_CE": -2
+  },
+  "mc_gate": "net_ev_gt_zero",
+  "minimum_position": "at_least_one_risk_sized_lot",
+  "risk_proxy": "max(ES95,ES99)",
+  "risk_budget_pct": 0.02,
+  "execution_cost_model": "SENSEX-specific; versioned separately",
+  "historical_holdout_tuning": false
+}
