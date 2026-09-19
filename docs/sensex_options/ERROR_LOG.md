@@ -113,3 +113,10 @@ Type: transferability / risk sizing
 Observation: with ₹100,000 paper capital and a 2% risk budget, every evaluated SENSEX candidate required more than ₹2,000 estimated ES risk per lot, so the original operational affordability gate yielded zero trades despite positive MC-EV observations.
 Resolution: run a separate pre-registered one-lot transfer-edge analysis using the unchanged MC-EV gate, while retaining the original affordability result as a separate operational diagnostic. One-lot P&L is capital-independent and therefore avoids arbitrary account-size selection.
 Prevention: never conflate instrument-transfer edge evidence with a particular account-capital sizing constraint.
+
+
+### E014 — Final SENSEX options coverage ends 2026-05-21
+Type: data coverage
+Observation: the cached option dataset used by S5 contains SENSEX expiry files through 2026-05-21 for the holdout. The pre-registered Jan-Jul 2026 window therefore could not be fully populated.
+Resolution: the final holdout is reported explicitly as 2026-01-01 through 2026-05-21; no later dates are imputed or silently omitted.
+Prevention: every report must state the actual maximum option-expiry date present in the cached dataset.
