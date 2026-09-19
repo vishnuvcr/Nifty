@@ -28,27 +28,45 @@ def trailing_rank(values: pd.Series, window: int = 126, min_history: int = 30) -
 
 
 def classify_adaptive(d: pd.DataFrame) -> pd.DataFrame:
-    d = d.sort_values("decision_date").copy()
-    for col in ["trend20","trend60","rv20","p_expand"]:
-        d[col + "_rank"] = trailing_rank(d[col])
-    d["trend_score_adaptive"] = 0.5 * d["trend20_rank"] + 0.5 * d["trend60_rank"]
+    # Rank regime features once per decision date, not once per strategy row.
+    # The raw trade table contains multiple strategies per decision, so doing
+    # the ranking on raw rows would duplicate observations and let the current
+    # decision leak into later rows from the same date.
+    base = (
+        d.sort_values(["decision_date", "decision_id"])
+        .drop_duplicates("decision_id", keep="first")
+        .copy()
+    )
+    for col in ["trend20", "trend60", "rv20", "p_expand"]:
+        base[col + "_rank"] = trailing_rank(base[col])
+    base["trend_score_adaptive"] = 0.5 * base["trend20_rank"] + 0.5 * base["trend60_rank"]
     direction = np.where(
-        (d.trend20_rank >= 2/3) & (d.trend60_rank >= 2/3), "bull",
+        (base.trend20_rank >= 2/3) & (base.trend60_rank >= 2/3), "bull",
         np.where(
-            (d.trend20_rank <= 1/3) & (d.trend60_rank <= 1/3), "bear", "neutral"
+            (base.trend20_rank <= 1/3) & (base.trend60_rank <= 1/3), "bear", "neutral"
         )
     )
     breakout = (
-        (d.p_expand_rank >= 2/3)
-        & (np.abs(d.trend_score_adaptive - 0.5) < 0.18)
+        (base.p_expand_rank >= 2/3)
+        & (np.abs(base.trend_score_adaptive - 0.5) < 0.18)
     )
-    d["direction_adaptive"] = np.where(breakout, "breakout", direction)
-    d["vol_regime"] = np.where(
-        d.rv20_rank <= 1/3, "low",
-        np.where(d.rv20_rank <= 2/3, "medium", "high")
+    base["direction_adaptive"] = np.where(breakout, "breakout", direction)
+    base["vol_regime"] = np.where(
+        base.rv20_rank <= 1/3, "low",
+        np.where(base.rv20_rank <= 2/3, "medium", "high")
     )
-    d["regime_adaptive"] = d.direction_adaptive + "_" + d.vol_regime
-    return d
+    base["regime_adaptive"] = base.direction_adaptive + "_" + base.vol_regime
+
+    label_cols = [
+        "decision_id", "trend20_rank", "trend60_rank", "rv20_rank",
+        "p_expand_rank", "trend_score_adaptive", "direction_adaptive",
+        "vol_regime", "regime_adaptive",
+    ]
+    out = d.drop(
+        columns=[c for c in label_cols if c != "decision_id" and c in d.columns],
+        errors="ignore",
+    ).merge(base[label_cols], on="decision_id", how="left", validate="many_to_one")
+    return out
 
 
 def summarize(x: np.ndarray) -> dict[str, float]:
