@@ -1,5 +1,5 @@
 name: Refresh NIFTY Paper Trading Dashboards
-# v1: centrally publishes isolated Batman and Adaptive dashboards from the research branch. 16:00 IST is refresh-only.
+# v1: centrally publishes isolated Batman and Adaptive dashboards from the research branch. 16:00 IST is refresh-only. Phase 10 dashboard template is current.
 
 on:
   # Rebuild once when the publisher itself is changed; normal refresh is 16:00 IST.
