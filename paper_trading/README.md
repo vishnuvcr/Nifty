@@ -4,7 +4,7 @@ The historical optimization is frozen. Do not alter the Batman entry thresholds 
 
 ## Daily process
 
-1. Obtain the NIFTY index close and the complete option-chain snapshot for the decision date.
+1. At 09:30 IST on the decision day, freeze the model from the prior completed NIFTY 50 session close and obtain the entry-day complete NSE option-chain snapshot.
 2. Run `scripts/batman_paper_signal.py`.
 3. If the signal is `ENTER`, record the generated four legs, premiums, MC EV, MC POP, ES95/ES99 and recommended lots.
 4. Append the signal with `scripts/paper_trade_ledger.py`.
@@ -13,7 +13,7 @@ The historical optimization is frozen. Do not alter the Batman entry thresholds 
 
 ## Frozen Batman rule
 
-- Entry: 3 trading sessions before expiry.
+- Entry: fixed at 09:30 IST, exactly 3 trading sessions before expiry.
 - MC: 5,000 bootstrap paths using the previous 756 daily log returns.
 - Strikes: P20/P35/P65/P80 terminal MC quantiles mapped to the nearest unique listed strikes.
 - Structure: +1 P35, -2 P20, +1 C65, -2 C80.
