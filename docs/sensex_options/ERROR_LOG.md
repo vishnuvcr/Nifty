@@ -65,3 +65,10 @@ Type: external data acquisition
 Observation: S5 run 35472613682 failed at the independent Yahoo daily SENSEX-history fetch with HTTP 429 before the option backtest began.
 Resolution: removed the runtime Yahoo dependency from the S5 workflow. The frozen engine now requires the cached/primary SENSEX index dataset already used by the option dataset.
 Prevention: no live third-party API is allowed in the historical backtest path; data must be cached/pinned before execution.
+
+
+### E011 — Stale Yahoo MC argument remained after E010
+Type: workflow/code integration
+Observation: the first E010 retry removed the Yahoo download step but the branch workflow still passed `--mc-index-path data/external/sensex_daily_yahoo.parquet`, causing FileNotFoundError after the SENSEX option dataset downloaded successfully.
+Resolution: removed the stale argument; the engine falls back to the cached primary SENSEX index series for the past-only MC return history.
+Prevention: after removing an external dependency, search both workflow and code for all references before rerun.
