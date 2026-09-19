@@ -169,9 +169,9 @@ def compute_volatility_regime(index_df: pd.DataFrame, cutoff: pd.Timestamp, rank
     if rv20_series.empty:
         raise ValueError("Unable to calculate RV20.")
     latest = float(rv20_series.iloc[-1])
-    hist = rv20_series.iloc[-rank_window:]
+    hist = rv20_series.iloc[:-1].tail(rank_window)
     if len(hist) < min(60, rank_window):
-        raise ValueError("Insufficient trailing RV20 history for regime rank.")
+        raise ValueError("Insufficient past-only RV20 history for regime rank.")
     rank = float(np.mean(hist.to_numpy(float) <= latest))
     if rank <= 1 / 3:
         regime = "low"
