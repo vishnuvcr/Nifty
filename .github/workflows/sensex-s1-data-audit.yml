@@ -1,0 +1,41 @@
+name: SENSEX S1 Data Audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: "SENSEX phase branch to audit"
+        required: true
+        default: "research/sensex-s1-data-audit-v1"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout phase branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref }}
+
+      - name: Validate research scaffolding
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          required = [
+              "docs/sensex_options/RESEARCH_PLAN.md",
+              "docs/sensex_options/PHASE_STATUS.md",
+              "docs/sensex_options/ERROR_LOG.md",
+              "docs/sensex_options/DATA_MANIFEST.md",
+              "docs/sensex_options/FROZEN_PROVENANCE.md",
+              "docs/sensex_options/SOURCE_REGISTER.md",
+              "configs/sensex_batman_v1.json",
+              "configs/sensex_adaptive_v1.json",
+          ]
+          missing = [p for p in required if not Path(p).exists()]
+          if missing:
+              raise SystemExit("Missing required files: " + ", ".join(missing))
+          print("S1 research scaffolding validated.")
+          PY
