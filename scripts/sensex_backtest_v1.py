@@ -582,7 +582,7 @@ def run_batman_from_candidates(candidates: pd.DataFrame, options_dir: Path, inde
     idx1m = load_index(index_path)
     out = []
     for _, row in rows.iterrows():
-        if row.get("status") != "EVALUATED" or not bool(row.get("eligible")):
+        if row.get("status") not in ("EVALUATED", "STANDALONE_EVALUATED") or not bool(row.get("eligible")):
             continue
         expiry = pd.Timestamp(row["expiry"])
         entry = pd.Timestamp(row["entry_date"])
