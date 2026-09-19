@@ -45,7 +45,29 @@ jobs:
         uses: actions/cache@v4
         with:
           path: data/raw_sensex
-          key: sensex-options-${{ runner.os }}-2026-09-v2
+          key: sensex-options-${{ runner.os }}-2026-09-v3
+
+      - name: Fetch independent daily SENSEX history
+        run: |
+          mkdir -p data/external
+          python - <<'PY'
+          import json, urllib.request
+          from datetime import datetime, timezone
+          import pandas as pd
+          start = int(datetime(2021, 1, 1, tzinfo=timezone.utc).timestamp())
+          end = int(datetime(2026, 9, 21, tzinfo=timezone.utc).timestamp())
+          url = f"https://query1.finance.yahoo.com/v8/finance/chart/%5EBSESN?period1={start}&period2={end}&interval=1d&events=history&includeAdjustedClose=true"
+          with urllib.request.urlopen(url, timeout=30) as r:
+              payload = json.load(r)
+          result = payload["chart"]["result"][0]
+          ts = pd.to_datetime(result["timestamp"], unit="s", utc=True).tz_convert("Asia/Kolkata")
+          q = result["indicators"]["quote"][0]
+          df = pd.DataFrame({"timestamp": ts, "open": q["open"], "high": q["high"], "low": q["low"], "close": q["close"]})
+          df = df.dropna(subset=["close"]).copy()
+          df["trading_day"] = df["timestamp"].dt.normalize().dt.tz_localize(None)
+          df.to_parquet("data/external/sensex_daily_yahoo.parquet", index=False)
+          print("daily rows:", len(df), "from", df["trading_day"].min(), "to", df["trading_day"].max())
+          PY
 
       - name: Fetch SENSEX 1-minute dataset
         run: |
@@ -65,11 +87,11 @@ jobs:
           test -f data/raw_sensex/index/SENSEX.parquet
           test -d data/raw_sensex/options/SENSEX
       - name: Backtest development
-        run: python scripts/sensex_backtest_v1.py --options-dir data/raw_sensex/options/SENSEX --index-path data/raw_sensex/index/SENSEX.parquet --split development --slippage "${{ inputs.slippage || '0.5' }}" --out-dir reports/sensex_options
+        run: python scripts/sensex_backtest_v1.py --options-dir data/raw_sensex/options/SENSEX --index-path data/raw_sensex/index/SENSEX.parquet --mc-index-path data/external/sensex_daily_yahoo.parquet --split development --slippage "${{ inputs.slippage || '0.5' }}" --out-dir reports/sensex_options
       - name: Backtest validation
-        run: python scripts/sensex_backtest_v1.py --options-dir data/raw_sensex/options/SENSEX --index-path data/raw_sensex/index/SENSEX.parquet --split validation --slippage "${{ inputs.slippage || '0.5' }}" --out-dir reports/sensex_options
+        run: python scripts/sensex_backtest_v1.py --options-dir data/raw_sensex/options/SENSEX --index-path data/raw_sensex/index/SENSEX.parquet --mc-index-path data/external/sensex_daily_yahoo.parquet --split validation --slippage "${{ inputs.slippage || '0.5' }}" --out-dir reports/sensex_options
       - name: Backtest holdout
-        run: python scripts/sensex_backtest_v1.py --options-dir data/raw_sensex/options/SENSEX --index-path data/raw_sensex/index/SENSEX.parquet --split holdout --slippage "${{ inputs.slippage || '0.5' }}" --out-dir reports/sensex_options
+        run: python scripts/sensex_backtest_v1.py --options-dir data/raw_sensex/options/SENSEX --index-path data/raw_sensex/index/SENSEX.parquet --mc-index-path data/external/sensex_daily_yahoo.parquet --split holdout --slippage "${{ inputs.slippage || '0.5' }}" --out-dir reports/sensex_options
       - name: Publish reports
         run: |
           git config user.name "github-actions[bot]"
