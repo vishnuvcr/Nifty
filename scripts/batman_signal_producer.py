@@ -459,9 +459,21 @@ def fmt(value: object, digits: int = 2) -> str:
     if value is None:
         return "—"
     try:
-        return f"{float(value):,.{digits}f}"
+        x = float(value)
+        if not math.isfinite(x):
+            return "—"
+        return f"{x:,.{digits}f}"
     except (TypeError, ValueError):
         return html.escape(str(value))
+
+
+def text_value(value: object) -> str:
+    if value is None:
+        return "—"
+    text = str(value)
+    if text.strip().lower() in {"nan", "nat", "none", ""}:
+        return "—"
+    return html.escape(text)
 
 def build_site(site_dir: Path, latest: dict, signals: pd.DataFrame, ledger: pd.DataFrame) -> None:
     site_dir.mkdir(parents=True, exist_ok=True)
@@ -491,7 +503,7 @@ def build_site(site_dir: Path, latest: dict, signals: pd.DataFrame, ledger: pd.D
     status = html.escape(str(latest.get("status", "")))
     signal = html.escape(str(latest.get("signal", "")))
     decision = html.escape(str(latest.get("decision_date", "")))
-    expiry = html.escape(str(latest.get("target_expiry", "")))
+    expiry = text_value(latest.get("target_expiry"))
     legs = latest.get("legs", [])
 
     leg_rows = "".join(
@@ -508,14 +520,14 @@ def build_site(site_dir: Path, latest: dict, signals: pd.DataFrame, ledger: pd.D
     recent_signals = signals.tail(20).iloc[::-1] if not signals.empty else signals
     signal_rows = "".join(
         "<tr>"
-        f"<td>{html.escape(str(row.get('decision_date')))}</td>"
-        f"<td>{html.escape(str(row.get('target_expiry')))}</td>"
-        f"<td>{html.escape(str(row.get('status')))}</td>"
-        f"<td>{html.escape(str(row.get('signal')))}</td>"
+        f"<td>{text_value(row.get('decision_date'))}</td>"
+        f"<td>{text_value(row.get('target_expiry'))}</td>"
+        f"<td>{text_value(row.get('status'))}</td>"
+        f"<td>{text_value(row.get('signal'))}</td>"
         f"<td>{fmt(row.get('spot'))}</td>"
         f"<td>{fmt(row.get('mc_ev_points_net'))}</td>"
         f"<td>{fmt(row.get('mc_pop'), 3)}</td>"
-        f"<td>{html.escape(str(row.get('recommended_lots')))}</td>"
+        f"<td>{text_value(row.get('recommended_lots'))}</td>"
         "</tr>"
         for _, row in recent_signals.iterrows()
     )
@@ -523,10 +535,10 @@ def build_site(site_dir: Path, latest: dict, signals: pd.DataFrame, ledger: pd.D
     ledger_rows = "".join(
         "<tr>"
         f"<td>{html.escape(str(row.get('decision_date')))}</td>"
-        f"<td>{html.escape(str(row.get('expiry')))}</td>"
+        f"<td>{text_value(row.get('expiry'))}</td>"
         f"<td>{html.escape(str(row.get('signal')))}</td>"
         f"<td>{html.escape(str(row.get('status')))}</td>"
-        f"<td>{html.escape(str(row.get('lots')))}</td>"
+        f"<td>{text_value(row.get('lots'))}</td>"
         f"<td>{fmt(row.get('mc_ev_points_net'))}</td>"
         f"<td>{fmt(row.get('realized_pnl_inr'))}</td>"
         "</tr>"
