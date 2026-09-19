@@ -430,7 +430,78 @@ def run_backtest(options_dir: Path, index_path: Path, split_name: str, slippage:
                     "status": "NO_TRADE",
                     "reason": str(exc),
                 })
+        # Preserve Adaptive candidates exactly as regime-conditioned, while evaluating
+        # standalone Batman independently on every eligible expiry/date.
+        standalone_batman = [r.copy() for r in candidate_rows if r.get("strategy") == "Batman"]
+        if standalone_batman:
+            for r in standalone_batman:
+                r["universe"] = "Batman_standalone"
+        else:
+            try:
+                targets = strategy_targets("Batman", terminal, spot)
+                strikes = map_unique_strikes(snapshot, targets)
+                legs, entry_cashflow, contract_count = leg_pricing("Batman", strikes, snapshot, expiry, 20, slippage)
+                gross_dist = payoff_distribution(terminal, legs, entry_cashflow, 20)
+                expected_cost_inr, entry_cost_inr = transaction_costs(entry_date, legs, 20, entry_cashflow, terminal)
+                net_dist = gross_dist - expected_cost_inr / 20.0
+                q05 = float(np.quantile(net_dist, 0.05))
+                q01 = float(np.quantile(net_dist, 0.01))
+                es95 = float(max(0.0, -np.mean(net_dist[net_dist <= q05])))
+                es99 = float(max(0.0, -np.mean(net_dist[net_dist <= q01])))
+                risk_points = max(es95, es99)
+                risk_budget = 100000.0 * 0.02
+                est_risk_inr = risk_points * 20
+                lots = int(math.floor(risk_budget / est_risk_inr)) if est_risk_inr > 0 else 0
+                net_ev = float(np.mean(net_dist))
+                standalone_batman = [{
+                    "split": split_name,
+                    "expiry": str(expiry.date()),
+                    "entry_date": str(entry_date.date()),
+                    "strategy": "Batman",
+                    "regime": regime["vol_regime"],
+                    "rv20": regime["rv20"],
+                    "rv20_rank": regime["rv20_rank"],
+                    "spot": spot,
+                    "p20": float(np.percentile(terminal,20)),
+                    "p35": float(np.percentile(terminal,35)),
+                    "p65": float(np.percentile(terminal,65)),
+                    "p80": float(np.percentile(terminal,80)),
+                    "strikes_json": json.dumps(strikes, sort_keys=True),
+                    "entry_cashflow_points": entry_cashflow,
+                    "mc_ev_gross": float(np.mean(gross_dist)),
+                    "mc_ev_net": net_ev,
+                    "mc_pop": float(np.mean(net_dist > 0)),
+                    "es95_points": es95,
+                    "es99_points": es99,
+                    "risk_points_per_lot": risk_points,
+                    "risk_budget_inr": risk_budget,
+                    "estimated_risk_inr_per_lot": est_risk_inr,
+                    "recommended_lots": lots,
+                    "contract_count": contract_count,
+                    "eligible": net_ev > 0 and lots >= 1,
+                    "eligibility_reason": "eligible" if (net_ev > 0 and lots >= 1) else ("negative_net_ev" if net_ev <= 0 else "no_risk_sized_lot"),
+                    "slippage_points_per_leg": slippage,
+                    "entry_cost_inr_expected": expected_cost_inr,
+                    "entry_cost_inr_entry_only": entry_cost_inr,
+                    "legs_json": json.dumps(legs, sort_keys=True),
+                    "cpcv_frequency": 0,
+                    "status": "STANDALONE_EVALUATED",
+                    "universe": "Batman_standalone",
+                }]
+            except Exception as exc:
+                standalone_batman = [{
+                    "split": split_name,
+                    "expiry": str(expiry.date()),
+                    "entry_date": str(entry_date.date()),
+                    "strategy": "Batman",
+                    "regime": regime["vol_regime"],
+                    "status": "NO_TRADE",
+                    "reason": str(exc),
+                    "universe": "Batman_standalone",
+                }]
+
         all_rows.extend(candidate_rows)
+        all_rows.extend(standalone_batman)
         eligible_rows = [r for r in candidate_rows if bool(r.get("eligible"))]
         primary = sorted(eligible_rows, key=lambda r: (-float(r["mc_ev_net"]), -int(r["cpcv_frequency"]), str(r["strategy"])))[0] if eligible_rows else None
         if primary is not None:
