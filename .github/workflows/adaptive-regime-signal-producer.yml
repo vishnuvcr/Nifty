@@ -141,6 +141,6 @@ jobs:
         run: |
           echo "## LEGACY workflow — DO NOT USE" >> "$GITHUB_STEP_SUMMARY"
           echo >> "$GITHUB_STEP_SUMMARY"
-          echo "This workflow contains the superseded fixed regime mapping and is retained only for historical reproducibility."
+          echo "This workflow contains the superseded fixed regime mapping and is retained only for historical reproducibility." >> "$GITHUB_STEP_SUMMARY"
           echo "Use Adaptive Paper Signal Producer v1 for current prospective paper trading." >> "$GITHUB_STEP_SUMMARY"
 
