@@ -8,3 +8,5 @@ pytest
 pyarrow
 
 requests
+
+curl_cffi
