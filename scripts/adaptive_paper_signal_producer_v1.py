@@ -431,6 +431,7 @@ th,td{{padding:8px;border-bottom:1px solid #293547;text-align:left;vertical-alig
 <span class="badge">ADAPTIVE PAPER TRADING v1</span>
 <h1>Adaptive Regime Signal Producer</h1>
 <p class="note">Candidate-set paper trader derived from the completed pre-2026 CPCV finding. The regime-level evidence and the prospective primary-selection rule are displayed separately.</p>
+<p class="note"><b>Automation:</b> new entry signals are generated at 09:30 IST on trading weekdays. The 16:00 IST job is refresh-only: it settles matured paper trades and republishes the dashboards without creating a second entry signal.</p>
 </div>
 
 <div class="card">
