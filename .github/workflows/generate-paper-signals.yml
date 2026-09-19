@@ -1,0 +1,141 @@
+name: Generate NIFTY Paper Trading Signals
+
+on:
+  schedule:
+    # 09:30 IST = 04:00 UTC
+    - cron: "0 4 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      capital:
+        description: "Paper capital in INR"
+        required: true
+        default: "100000"
+      risk_pct:
+        description: "Risk budget fraction per trade"
+        required: true
+        default: "0.02"
+      lot_size:
+        description: "NIFTY lot size"
+        required: true
+        default: "65"
+      paths:
+        description: "Monte Carlo paths"
+        required: true
+        default: "5000"
+      cost_per_contract:
+        description: "Stress cost per option contract, in points"
+        required: true
+        default: "2.0"
+      expiry:
+        description: "Optional explicit expiry YYYY-MM-DD"
+        required: false
+        default: ""
+      seed:
+        description: "Optional fixed Monte Carlo seed; blank = deterministic per decision date"
+        required: false
+        default: ""
+
+concurrency:
+  group: nifty-paper-signal-generation
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      CAPITAL: ${{ github.event.inputs.capital || '100000' }}
+      RISK_PCT: ${{ github.event.inputs.risk_pct || '0.02' }}
+      LOT_SIZE: ${{ github.event.inputs.lot_size || '65' }}
+      PATHS: ${{ github.event.inputs.paths || '5000' }}
+      COST_PER_CONTRACT: ${{ github.event.inputs.cost_per_contract || '2.0' }}
+      EXPIRY: ${{ github.event.inputs.expiry || '' }}
+      SEED: ${{ github.event.inputs.seed || '' }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+    steps:
+      - name: Checkout adaptive research branch
+        uses: actions/checkout@v4
+        with:
+          ref: research/adaptive-paper-signals-v1
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -e .
+
+      - name: Generate Batman signal
+        run: |
+          CMD=(python scripts/batman_signal_producer.py
+            --capital "$CAPITAL"
+            --risk-pct "$RISK_PCT"
+            --lot-size "$LOT_SIZE"
+            --paths "$PATHS"
+            --cost-per-contract "$COST_PER_CONTRACT"
+            --decision-date auto
+            --site-dir site/batman)
+          if [ -n "$EXPIRY" ]; then CMD+=(--expiry "$EXPIRY"); fi
+          if [ -n "$SEED" ]; then CMD+=(--seed "$SEED"); fi
+          "${CMD[@]}"
+
+      - name: Generate Adaptive signal
+        run: |
+          CMD=(python scripts/adaptive_paper_signal_producer_v1.py
+            --capital "$CAPITAL"
+            --risk-pct "$RISK_PCT"
+            --lot-size "$LOT_SIZE"
+            --paths "$PATHS"
+            --cost-per-contract "$COST_PER_CONTRACT"
+            --decision-date auto
+            --site-dir site/adaptive)
+          if [ -n "$EXPIRY" ]; then CMD+=(--expiry "$EXPIRY"); fi
+          if [ -n "$SEED" ]; then CMD+=(--seed "$SEED"); fi
+          "${CMD[@]}"
+
+      - name: Persist signal state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add paper_trading/batman_ledger.csv                   paper_trading/batman_signals.csv                   paper_trading/adaptive_ledger.csv                   paper_trading/adaptive_signals.csv                   paper_trading/adaptive_candidate_screen.csv                   paper_trading/adaptive_feature_history.csv                   site
+          if git diff --cached --quiet; then
+            echo "No signal state changes."
+          else
+            git commit -m "chore: generate paper trading signals [skip ci]"
+            git push origin HEAD:research/adaptive-paper-signals-v1
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy GitHub Pages
+        uses: actions/deploy-pages@v4
+
+      - name: Publish summary
+        run: |
+          {
+            echo "## NIFTY signal generation"
+            echo
+            echo "- Signal generation: weekdays at 09:30 IST"
+            echo "- Branch: research/adaptive-paper-signals-v1"
+            echo "- Pages: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+            echo "- Batman: /batman/"
+            echo "- Adaptive: /adaptive/"
+            echo
+            echo "This workflow generates new entry signals. The 16:00 IST workflow is refresh-only and never creates a second entry signal."
+          } >> "$GITHUB_STEP_SUMMARY"
