@@ -9,7 +9,7 @@ Last updated: 2026-09-20 (Asia/Kolkata) — S1 step update
 | S2 Execution-cost model | NOT STARTED | Source Paytm Money, BSE and statutory cost rules with effective dates. |
 | S3 SENSEX Batman implementation | IN PROGRESS | Engine specification and SENSEX execution adapter are being implemented without changing Batman rules. |
 | S4 SENSEX Adaptive implementation | IN PROGRESS | Same engine will implement the frozen candidate router without SENSEX-driven re-selection. |
-| S5 Historical walk-forward transfer test | NOT STARTED | Untouched final SENSEX holdout required. |
+| S5 Historical walk-forward transfer test | RUNNING | Base-cost walk-forward job triggered from the default-branch dispatcher; results will be committed to reports/sensex_options. |
 | S6 Robustness/statistical inference | NOT STARTED | Dependence-aware bootstrap + cost/quote/seed sensitivity. |
 | S7 Prospective paper trading | NOT STARTED | Allowed only after S1-S6 integrity gates. |
 | S8 Separate SENSEX report | NOT STARTED | Standalone manuscript/report; NIFTY manuscript remains untouched. |
