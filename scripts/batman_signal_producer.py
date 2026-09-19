@@ -662,10 +662,6 @@ def main() -> None:
         decision.date(),
     )
     holidays = client.fetch_holidays()
-    requested_expiry = pd.Timestamp(args.expiry).normalize() if args.expiry else None
-    chain, chain_underlying, chain_endpoint, chain_expiry = client.fetch_option_chain(
-        requested_expiry
-    )
 
     ledger_path = Path(args.ledger)
     ledger = read_csv_or_empty(ledger_path, LEDGER_COLUMNS)
@@ -682,8 +678,33 @@ def main() -> None:
     x = index_df.loc[index_df["date"].eq(decision), "close"]
     if not x.empty:
         index_close = float(x.iloc[-1])
-    spot = index_close if index_close is not None else chain_underlying
-    spot_source = "NSE_EOD_INDEX" if index_close is not None else "NSE_OPTION_CHAIN_UNDERLYING"
+
+    chain = pd.DataFrame(
+        columns=["expiry","strike","option_type","last_price","bid","ask","open_interest","volume"]
+    )
+    chain_underlying = None
+    chain_endpoint = ""
+    chain_expiry = None
+    chain_error = None
+
+    if decision_is_session:
+        requested_expiry = pd.Timestamp(args.expiry).normalize() if args.expiry else None
+        try:
+            chain, chain_underlying, chain_endpoint, chain_expiry = client.fetch_option_chain(
+                requested_expiry
+            )
+        except Exception as exc:
+            chain_error = exc
+
+    if index_close is not None:
+        spot = index_close
+        spot_source = f"{client.index_history_source}_EOD_INDEX"
+    elif chain_underlying is not None:
+        spot = chain_underlying
+        spot_source = "NSE_OPTION_CHAIN_UNDERLYING"
+    else:
+        spot = float(index_df["close"].iloc[-1]) if not index_df.empty else None
+        spot_source = f"{client.index_history_source}_LATEST_CLOSE"
 
     payload: dict[str, object] = {
         "producer":"Batman Signal Producer",
@@ -691,7 +712,7 @@ def main() -> None:
         "run_timestamp_ist":current.isoformat(),
         "decision_date":decision.date().isoformat(),
         "target_expiry":"",
-        "status":"NOT_TRADING_DAY" if not decision_is_session else "OK",
+        "status":"NOT_TRADING_DAY" if not decision_is_session else ("DATA_UNAVAILABLE" if chain_error else "OK"),
         "signal":"NO_TRADE",
         "spot":spot,
         "spot_source":spot_source,
@@ -705,9 +726,14 @@ def main() -> None:
     }
 
     if not decision_is_session:
-        payload["notes"] = "Decision date is not present in NSE NIFTY 50 EOD history."
+        payload["notes"] = "Decision date is not a NIFTY 50 trading session; no option-chain fetch was attempted."
+    elif chain_error is not None:
+        payload["status"] = "DATA_UNAVAILABLE"
+        payload["notes"] = f"NSE option-chain unavailable: {chain_error}"
     else:
         target_expiry = chain_expiry
+        if target_expiry is None:
+            raise RuntimeError("NSE option chain did not provide a target expiry.")
         if target_expiry.date() < decision.date():
             raise RuntimeError(
                 f"NSE returned an expired front expiry {target_expiry.date()} for decision date {decision.date()}."
@@ -808,7 +834,7 @@ def main() -> None:
 
     build_site(Path(args.site_dir), payload, signals, ledger)
 
-    if payload.get("status") == "ENTRY_DAY" or closures or args.telegram_all_runs:
+    if payload.get("status") in {"ENTRY_DAY", "DATA_UNAVAILABLE"} or closures or args.telegram_all_runs:
         send_telegram(telegram_message(payload, closures))
 
     Path(args.site_dir, "data", "producer_metadata.json").write_text(
