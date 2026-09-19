@@ -60,3 +60,12 @@ def test_batman_mc_signal_builds():
     assert result["contracts_per_strategy_lot"] == 6
     assert result["mc_expected_pnl_points_net"] <= result["mc_expected_pnl_points_gross"]
     assert result["entry_cost_points"] == 12.0
+
+def test_batman_workflow_is_configured_for_manual_schedule_pages_and_telegram():
+    workflow = Path(".github/workflows/batman-signal-producer.yml").read_text(encoding="utf-8")
+    assert "workflow_dispatch:" in workflow
+    assert 'cron: "10 10 * * 1-5"' in workflow
+    assert "actions/upload-pages-artifact@v3" in workflow
+    assert "actions/deploy-pages@v4" in workflow
+    assert "TELEGRAM_BOT_TOKEN" in workflow
+    assert "TELEGRAM_CHAT_ID" in workflow
