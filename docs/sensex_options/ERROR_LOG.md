@@ -142,3 +142,8 @@ Type: CI execution / correction control
 Observation: the first attempted heredoc correction did not change the rendered YAML because the content replacement failed to match; the next run repeated E017.
 Resolution: removed the embedded heredoc entirely and replaced it with a single-line Python invocation.
 Prevention: after each CI syntax correction, re-fetch the committed workflow text and verify the exact rendered shell block before relying on the rerun.
+\n\n### E019 — S6 robustness summary rejected valid zero-trade CSV
+Type: statistical reporting / data-shape handling
+Observation: some Monte Carlo seed scenarios legitimately produced no closed trades for a strategy, and the backtest wrote an empty CSV. The S6 summary parser treated that as a malformed file and stopped the robustness phase.
+Resolution: empty trade CSVs are now treated as valid zero-trade outputs and skipped in concatenation; the scenario-level JSON summary remains the authoritative zero-trade record.
+Prevention: reporting code must distinguish valid empty result sets from corrupt files, with zero-trade cases explicitly represented in scenario summaries.
