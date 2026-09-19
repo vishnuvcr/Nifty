@@ -333,6 +333,15 @@ def fmt(value: object, digits: int = 2) -> str:
         return html.escape(str(value))
 
 
+def text_value(value: object) -> str:
+    if value is None:
+        return "—"
+    text = str(value)
+    if text.strip().lower() in {"nan", "nat", "none", ""}:
+        return "—"
+    return html.escape(text)
+
+
 def build_site(site_dir: Path, latest: dict[str, Any], candidates: pd.DataFrame, signals: pd.DataFrame, ledger: pd.DataFrame) -> None:
     site_dir.mkdir(parents=True, exist_ok=True)
     data_dir = site_dir / "data"
@@ -363,13 +372,13 @@ def build_site(site_dir: Path, latest: dict[str, Any], candidates: pd.DataFrame,
     for _, row in recent_candidates.iterrows():
         candidate_rows.append(
             "<tr>"
-            f"<td>{html.escape(str(row.get('decision_date')))}</td>"
-            f"<td>{html.escape(str(row.get('vol_regime')))}</td>"
-            f"<td>{html.escape(str(row.get('strategy')))}</td>"
+            f"<td>{text_value(row.get('decision_date'))}</td>"
+            f"<td>{text_value(row.get('vol_regime'))}</td>"
+            f"<td>{text_value(row.get('strategy'))}</td>"
             f"<td>{fmt(row.get('mc_ev_points_net'))}</td>"
             f"<td>{fmt(row.get('mc_pop'), 3)}</td>"
             f"<td>{fmt(row.get('risk_points_per_lot'))}</td>"
-            f"<td>{html.escape(str(row.get('recommended_lots')))}</td>"
+            f"<td>{text_value(row.get('recommended_lots'))}</td>"
             f"<td>{'YES' if bool(row.get('eligible')) else 'NO'}</td>"
             f"<td>{'PRIMARY' if bool(row.get('primary_selected')) else ''}</td>"
             "</tr>"
@@ -381,12 +390,12 @@ def build_site(site_dir: Path, latest: dict[str, Any], candidates: pd.DataFrame,
         signal_rows.append(
             "<tr>"
             f"<td>{html.escape(str(row.get('decision_date')))}</td>"
-            f"<td>{html.escape(str(row.get('target_expiry')))}</td>"
+            f"<td>{text_value(row.get('target_expiry'))}</td>"
             f"<td>{html.escape(str(row.get('vol_regime')))}</td>"
-            f"<td>{html.escape(str(row.get('primary_strategy')))}</td>"
-            f"<td>{html.escape(str(row.get('signal')))}</td>"
+            f"<td>{text_value(row.get('primary_strategy'))}</td>"
+            f"<td>{text_value(row.get('signal'))}</td>"
             f"<td>{fmt(row.get('primary_net_ev_points'))}</td>"
-            f"<td>{html.escape(str(row.get('primary_recommended_lots')))}</td>"
+            f"<td>{text_value(row.get('primary_recommended_lots'))}</td>"
             "</tr>"
         )
 
