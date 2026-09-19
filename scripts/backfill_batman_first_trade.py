@@ -109,6 +109,7 @@ def main():
                 break
 
     rows = []
+    print(json.dumps({"cutoff_spot": cutoff_spot, "terminal_quantiles": qs.tolist(), "raw_targets": raw_targets, "mapped_strikes": strikes}, indent=2))
     for label, typ in [("p20", "PE"), ("p35", "PE"), ("c65", "CE"), ("c80", "CE")]:
         px, url = fetch_prev_close(typ, strikes[label])
         rows.append({
