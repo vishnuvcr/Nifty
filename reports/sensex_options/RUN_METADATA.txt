@@ -1,0 +1,6 @@
+dataset=thetrademarkk/india-index-options-1m
+license=cc-by-nc-4.0
+entry=09:30 IST, 3 trading sessions before actual expiry
+mc=5000 bootstrap paths, 756 daily returns
+base_slippage_points_per_leg=0.5
+timestamp_utc=2026-09-19T22:34:32.387639+00:00
