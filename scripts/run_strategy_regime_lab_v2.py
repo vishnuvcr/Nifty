@@ -4,6 +4,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from scipy.stats import norm
+
 from nifty_mc.strategy_catalog import STRATEGY_NAMES, STRATEGY_META, build_strategy
 
 def option_price(chain, expiry, typ, strike):
@@ -39,17 +41,78 @@ def mc_terminal(spot, returns, horizon_days, n, seed):
     sampled = rng.choice(r, size=n * h, replace=True).reshape(n, h)
     return spot * np.exp(sampled.sum(axis=1))
 
-def mc_terminal_pair(spot, returns, front_days, next_days, n, seed):
-    r = returns[np.isfinite(returns)]
-    if len(r) < 60:
+def bs_price(spot, strike, tau, vol, option_type):
+    spot = float(spot); strike = float(strike); tau = float(tau); vol = float(vol)
+    if tau <= 0 or vol <= 0:
+        return max(spot - strike, 0.0) if option_type == "CE" else max(strike - spot, 0.0)
+    sig = vol * np.sqrt(tau)
+    d1 = (np.log(max(spot, 1e-12) / max(strike, 1e-12)) + 0.5 * vol * vol * tau) / sig
+    d2 = d1 - sig
+    if option_type == "CE":
+        return spot * norm.cdf(d1) - strike * norm.cdf(d2)
+    return strike * norm.cdf(-d2) - spot * norm.cdf(-d1)
+
+def implied_vol(price, spot, strike, tau, option_type):
+    intrinsic = max(spot - strike, 0.0) if option_type == "CE" else max(strike - spot, 0.0)
+    upper = spot if option_type == "CE" else strike
+    target = float(price)
+    if not np.isfinite(target) or target < intrinsic - 1e-8 or target >= upper + 1e-8:
         return None
-    hf = max(1, int(front_days))
-    hn = max(hf + 1, int(next_days))
-    rng = np.random.default_rng(seed)
-    sampled = rng.choice(r, size=n * hn, replace=True).reshape(n, hn)
-    front = spot * np.exp(sampled[:, :hf].sum(axis=1))
-    nxt = spot * np.exp(sampled.sum(axis=1))
-    return front, nxt
+    if target <= intrinsic + 1e-8:
+        return 1e-6
+    lo, hi = 1e-6, 6.0
+    if bs_price(spot, strike, tau, hi, option_type) < target:
+        return None
+    for _ in range(80):
+        mid = 0.5 * (lo + hi)
+        v = bs_price(spot, strike, tau, mid, option_type)
+        if v > target:
+            hi = mid
+        else:
+            lo = mid
+    return float(0.5 * (lo + hi))
+
+def calendar_payoff_paths_front(front_terminal, priced, spot, decision, front_expiry, next_expiry):
+    if next_expiry is None:
+        return None
+    total = np.zeros(len(front_terminal), dtype=float)
+    entry = -sum(leg.qty * px for leg, px in priced)
+    tau_entry = max((pd.Timestamp(next_expiry) - pd.Timestamp(decision)).days, 1) / 365.0
+    tau_remaining = max((pd.Timestamp(next_expiry) - pd.Timestamp(front_expiry)).days, 0) / 365.0
+    for leg, px in priced:
+        if leg.expiry == "front":
+            value = np.maximum(
+                (front_terminal - leg.strike) if leg.option_type == "CE" else (leg.strike - front_terminal), 0.0
+            )
+        else:
+            iv = implied_vol(px, spot, leg.strike, tau_entry, leg.option_type)
+            if iv is None:
+                return None
+            value = np.array([
+                bs_price(s, leg.strike, tau_remaining, iv, leg.option_type)
+                for s in front_terminal
+            ], dtype=float)
+        total += leg.qty * value
+    return total + entry, float(entry)
+
+def realized_calendar_pnl(front_spot, front_chain, next_chain_at_front, priced,
+                           front_expiry, next_expiry):
+    entry = -sum(leg.qty * px for leg, px in priced)
+    pnl = 0.0
+    for leg, _ in priced:
+        if leg.expiry == "front":
+            intrinsic = (
+                max(front_spot - leg.strike, 0.0)
+                if leg.option_type == "CE"
+                else max(leg.strike - front_spot, 0.0)
+            )
+            pnl += leg.qty * intrinsic
+        else:
+            px = option_price(next_chain_at_front, next_expiry, leg.option_type, leg.strike)
+            if px is None:
+                return None
+            pnl += leg.qty * px
+    return float(pnl + entry), float(entry)
 
 def unique_strikes(strikes, targets):
     strikes = np.sort(np.unique(np.asarray(strikes, dtype=float)))
@@ -197,10 +260,6 @@ def main():
         next_exp_session = next_sessions.iloc[-1].date.normalize() if not next_sessions.empty else None
         hist = idx.loc[idx.date <= decision, "logret"].dropna().tail(756).to_numpy()
         terminal = mc_terminal(float(spot), hist, len(sessions), args.paths, 100000 + i)
-        calendar_terminal = (
-            mc_terminal_pair(float(spot), hist, len(sessions), len(next_sessions), args.paths, 200000 + i)
-            if next_expiry is not None and not next_sessions.empty else None
-        )
         if terminal is None:
             continue
         qs = np.percentile(terminal, [10, 20, 25, 35, 45, 55, 65, 75, 80, 90])
@@ -214,7 +273,7 @@ def main():
         chain = day[day.expiry == expiry]
         if chain.empty:
             continue
-        next_chain = day[day.expiry == next_expiry] if next_expiry is not None else pd.DataFrame()
+        entry_next_chain = day[day.expiry == next_expiry] if next_expiry is not None else pd.DataFrame()
         feats = decision_features(idx, decision, terminal, float(spot))
         if feats is None:
             continue
@@ -238,7 +297,7 @@ def main():
                 if leg_expiry is None:
                     ok = False
                     break
-                leg_chain = chain if leg.expiry == "front" else next_chain
+                leg_chain = chain if leg.expiry == "front" else entry_next_chain
                 if leg_chain.empty:
                     ok = False
                     break
@@ -250,10 +309,14 @@ def main():
             if not ok:
                 continue
 
-            if any(leg.expiry == "next" for leg in legs):
-                if calendar_terminal is None:
+            is_calendar = any(leg.expiry == "next" for leg in legs)
+            if is_calendar:
+                cal_paths = calendar_payoff_paths_front(
+                    terminal, priced, float(spot), decision, expiry, next_expiry
+                )
+                if cal_paths is None:
                     continue
-                pnl_paths, entry = payoff_paths_calendar(calendar_terminal[0], calendar_terminal[1], priced)
+                pnl_paths, entry = cal_paths
             else:
                 pnl_paths, entry = payoff_paths(terminal, priced)
             q05 = float(np.quantile(pnl_paths, 0.05))
@@ -270,21 +333,31 @@ def main():
             else:
                 risk_for_ror = 0.0
             realized_front_spot = float(price[exp_session])
-            realized_next_spot = float(price[next_exp_session]) if next_exp_session is not None else None
-            realized = 0.0
-            for leg, _ in priced:
-                if leg.expiry == "front":
-                    settled_spot = realized_front_spot
-                else:
-                    if realized_next_spot is None:
-                        ok = False
-                        break
-                    settled_spot = realized_next_spot
-                intrinsic = max(settled_spot - leg.strike, 0.0) if leg.option_type == "CE" else max(leg.strike - settled_spot, 0.0)
-                realized += leg.qty * intrinsic
-            if not ok:
-                continue
-            realized_pnl = float(realized + entry)
+            if is_calendar:
+                front_chain_at_settlement = chain
+                settle_day = by_day.get(exp_session)
+                if settle_day is None or next_expiry is None:
+                    continue
+                next_chain_at_front = settle_day[settle_day.expiry == next_expiry]
+                if next_chain_at_front.empty:
+                    continue
+                realized = realized_calendar_pnl(
+                    realized_front_spot, front_chain_at_settlement, next_chain_at_front,
+                    priced, expiry, next_expiry
+                )
+                if realized is None:
+                    continue
+                realized_pnl, entry = realized
+            else:
+                realized = 0.0
+                for leg, _ in priced:
+                    intrinsic = (
+                        max(realized_front_spot - leg.strike, 0.0)
+                        if leg.option_type == "CE"
+                        else max(leg.strike - realized_front_spot, 0.0)
+                    )
+                    realized += leg.qty * intrinsic
+                realized_pnl = float(realized + entry)
             rows.append({
                 "decision_id": did, "decision_date": decision.date(), "actual_expiry": expiry.date(),
                 "expiry_session": exp_session.date(), "spot": float(spot), "strategy": name,
@@ -295,7 +368,7 @@ def main():
                 "mc_risk_es95": float(risk_for_ror),
                 "realized_return_on_mc_risk": (realized_pnl / risk_for_ror) if risk_for_ror > 0 else np.nan,
                 "expiry_return": realized_front_spot / float(spot) - 1,
-                "settlement": "expiry", **feats
+                "settlement": "front_expiry_mtm" if is_calendar else "expiry", **feats
             })
 
     trades = pd.DataFrame(rows)
