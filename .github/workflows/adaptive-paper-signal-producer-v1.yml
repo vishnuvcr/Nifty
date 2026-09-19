@@ -46,15 +46,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      CAPITAL: \${{ github.event.inputs.capital || '100000' }}
-      RISK_PCT: \${{ github.event.inputs.risk_pct || '0.02' }}
-      LOT_SIZE: \${{ github.event.inputs.lot_size || '65' }}
-      PATHS: \${{ github.event.inputs.paths || '5000' }}
-      COST_PER_CONTRACT: \${{ github.event.inputs.cost_per_contract || '2.0' }}
-      EXPIRY: \${{ github.event.inputs.expiry || '' }}
-      SEED: \${{ github.event.inputs.seed || '' }}
-      TELEGRAM_BOT_TOKEN: \${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: \${{ secrets.TELEGRAM_CHAT_ID }}
+      CAPITAL: ${{ github.event.inputs.capital || '100000' }}
+      RISK_PCT: ${{ github.event.inputs.risk_pct || '0.02' }}
+      LOT_SIZE: ${{ github.event.inputs.lot_size || '65' }}
+      PATHS: ${{ github.event.inputs.paths || '5000' }}
+      COST_PER_CONTRACT: ${{ github.event.inputs.cost_per_contract || '2.0' }}
+      EXPIRY: ${{ github.event.inputs.expiry || '' }}
+      SEED: ${{ github.event.inputs.seed || '' }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
     steps:
       - name: Checkout adaptive research branch
@@ -90,7 +90,7 @@ jobs:
           if [ -n "$SEED" ]; then
             CMD+=(--seed "$SEED")
           fi
-          "\${CMD[@]}"
+          "${CMD[@]}"
 
       - name: Persist adaptive paper-trading state
         run: |
@@ -123,7 +123,7 @@ jobs:
             echo "## Adaptive Paper Signal Producer v1 (Manual)"
             echo
             echo "- Branch: research/adaptive-paper-signals-v1"
-            echo "- Pages: https://\${{ github.repository_owner }}.github.io/\${{ github.event.repository.name }}/adaptive/"
+            echo "- Pages: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/adaptive/"
             echo
             echo "Manual adaptive production completed. Daily automatic publication is handled by the central NIFTY Paper Trading Dashboards workflow at 16:00 IST."
           } >> "$GITHUB_STEP_SUMMARY"
