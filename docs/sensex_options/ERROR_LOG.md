@@ -72,3 +72,10 @@ Type: workflow/code integration
 Observation: the first E010 retry removed the Yahoo download step but the branch workflow still passed `--mc-index-path data/external/sensex_daily_yahoo.parquet`, causing FileNotFoundError after the SENSEX option dataset downloaded successfully.
 Resolution: removed the stale argument; the engine falls back to the cached primary SENSEX index series for the past-only MC return history.
 Prevention: after removing an external dependency, search both workflow and code for all references before rerun.
+
+
+### E012 — Git LFS public clone acquisition failed in S5
+Type: external dataset acquisition
+Observation: after E010/E011, the branch workflow failed during the Git/LFS sparse acquisition of the public SENSEX dataset before the backtest began (exit 128).
+Resolution: replaced Git/LFS acquisition with the Hugging Face Hub `snapshot_download` client and explicit file existence validation.
+Prevention: prefer the dataset provider's supported download API over an unauthenticated Git/LFS clone in CI.
