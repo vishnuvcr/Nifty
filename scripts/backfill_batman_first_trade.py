@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from curl_cffi import requests
 
-from scripts.batman_signal_producer import (
+from batman_signal_producer import (
     LEDGER_COLUMNS,
     SIGNAL_COLUMNS,
     build_batman_signal,
