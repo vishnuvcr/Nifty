@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import itertools
 from pathlib import Path
+import zlib
 
 import numpy as np
 import pandas as pd
@@ -100,7 +101,7 @@ def main() -> None:
     t["mc_ev_net"] = pd.to_numeric(t["mc_ev"], errors="coerce") - t["stress_cost"]
     t["gate_pass"] = t["mc_ev_net"] > 0
 
-    prefinal = t[t.year < args.final_start_year].copy()
+    prefinal = t[t.year <= args.dev_end_year].copy()
     if prefinal.empty:
         raise SystemExit("No pre-final observations available.")
     dates = np.array(sorted(prefinal.decision_date.dt.normalize().unique()))
@@ -179,16 +180,16 @@ def main() -> None:
             "strategy": strategy,
             **{f"final_{k}": v for k, v in summary(x).items()},
             "iid_bootstrap_p_positive": iid_bootstrap_prob_positive(
-                x, args.bootstrap, 100000 + abs(hash(strategy)) % 100000
+                x, args.bootstrap, 100000 + zlib.crc32(strategy.encode()) % 100000
             ),
             "mbb3_p_positive": moving_block_bootstrap_prob_positive(
-                x, max(1000, args.bootstrap // 2), 3, 200000 + abs(hash(strategy)) % 100000
+                x, max(1000, args.bootstrap // 2), 3, 200000 + zlib.crc32(strategy.encode()) % 100000
             ),
             "mbb5_p_positive": moving_block_bootstrap_prob_positive(
-                x, max(1000, args.bootstrap // 2), 5, 300000 + abs(hash(strategy)) % 100000
+                x, max(1000, args.bootstrap // 2), 5, 300000 + zlib.crc32(strategy.encode()) % 100000
             ),
             "mbb10_p_positive": moving_block_bootstrap_prob_positive(
-                x, max(1000, args.bootstrap // 2), 10, 400000 + abs(hash(strategy)) % 100000
+                x, max(1000, args.bootstrap // 2), 10, 400000 + zlib.crc32(strategy.encode()) % 100000
             ),
         })
     final_df = pd.DataFrame(final_rows)
