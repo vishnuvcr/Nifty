@@ -125,3 +125,10 @@ Type: robustness/statistical inference
 Observation: the first S6 workflow only varied slippage, re-downloaded the same historical dataset on each run, and did not quantify Monte Carlo seed instability or dependence-aware uncertainty.
 Resolution: S6 workflow now uses persistent GitHub Actions caching for the source dataset, runs a predeclared five-seed OOS sensitivity at fixed base slippage, and calculates a circular moving-block bootstrap over validation + holdout closed trades.
 Prevention: every robustness phase must include execution-cost sensitivity, model/random-seed sensitivity where stochastic components exist, and dependence-aware uncertainty before a performance conclusion is finalized.
+
+
+### E016 — Available SENSEX dataset does not support the full planned chronological sample
+Type: data coverage
+Observation: the frozen 756-session lookback makes 2024 development observations unavailable; usable validation begins 2025-10-09 and the available holdout ends 2026-05-21.
+Resolution: do not impute missing history or relabel no-data periods as strategy losses. Report the observed windows explicitly and keep the phase complete only for the available sample.
+Prevention: future replication must acquire a longer exchange-verified SENSEX history before interpreting multi-year walk-forward stability.
