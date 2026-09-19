@@ -29,3 +29,7 @@ The SENSEX study remains strictly separate from the NIFTY MC-WFO manuscript. One
 ## Branch
 
 research/sensex-s6-robustness-v1
+
+
+### S5/S6 conclusion
+The SENSEX transfer test is complete for the available public dataset. The ₹1 lakh/2% account gate produced no executable trades; the one-lot edge test produced positive validation/holdout results for the frozen Adaptive router and positive holdout results for the frozen Batman MC-gated subset. Evidence remains limited by data coverage and quote-quality constraints. See `SENSEX_BACKTEST_RESULT.md`.
