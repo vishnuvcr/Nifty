@@ -1,6 +1,12 @@
 name: Adaptive Regime Signal Producer
 
 on:
+  push:
+    branches: ["research/monte-carlo-wfa-v1"]
+    paths:
+      - scripts/adaptive_regime_signal_producer.py
+      - tests/test_adaptive_regime_signal_producer.py
+      - .github/workflows/adaptive-regime-signal-producer.yml
   workflow_dispatch:
     inputs:
       capital:
