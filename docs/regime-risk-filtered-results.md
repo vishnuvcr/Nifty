@@ -1,4 +1,4 @@
-# Regime Router Robustness and Risk-Filtered Candidate — V2 Run 9
+> **Status: SUPERSEDED.** The candidate documented in this file predates the corrected nested all-36-strategy discovery. Its 2026 holdout result must not be treated as the current research conclusion. See `docs/nested-regime-strategy-discovery-v1.md` for the latest untouched-holdout result.\n\n# Regime Router Robustness and Risk-Filtered Candidate — V2 Run 9
 
 Source dataset: strategy-regime-lab-v2 run 35425922439 on branch research/monte-carlo-wfa-v1.
 
