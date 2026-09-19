@@ -1,0 +1,134 @@
+[
+  {
+    "file": "reports/sensex_s6/slippage_0.25/summary_validation.json",
+    "split": "validation",
+    "slippage_points_per_leg": 0.25,
+    "adaptive_trades": 10,
+    "adaptive_total_pnl": 36087.91113879993,
+    "adaptive_win_rate": 0.6,
+    "batman_trades": 0,
+    "batman_total_pnl": 0.0,
+    "batman_win_rate": 0.0
+  },
+  {
+    "file": "reports/sensex_s6/slippage_0.25/summary_development.json",
+    "split": "development",
+    "slippage_points_per_leg": 0.25,
+    "adaptive_trades": 0,
+    "adaptive_total_pnl": 0.0,
+    "adaptive_win_rate": 0.0,
+    "batman_trades": 0,
+    "batman_total_pnl": 0.0,
+    "batman_win_rate": 0.0
+  },
+  {
+    "file": "reports/sensex_s6/slippage_0.25/summary_holdout.json",
+    "split": "holdout",
+    "slippage_points_per_leg": 0.25,
+    "adaptive_trades": 18,
+    "adaptive_total_pnl": 55490.095040759945,
+    "adaptive_win_rate": 0.6666666666666666,
+    "batman_trades": 26,
+    "batman_total_pnl": 213291.30165175977,
+    "batman_win_rate": 0.8461538461538461
+  },
+  {
+    "file": "reports/sensex_s6/slippage_2.00/summary_validation.json",
+    "split": "validation",
+    "slippage_points_per_leg": 2.0,
+    "adaptive_trades": 10,
+    "adaptive_total_pnl": 35737.76600079993,
+    "adaptive_win_rate": 0.6,
+    "batman_trades": 0,
+    "batman_total_pnl": 0.0,
+    "batman_win_rate": 0.0
+  },
+  {
+    "file": "reports/sensex_s6/slippage_2.00/summary_development.json",
+    "split": "development",
+    "slippage_points_per_leg": 2.0,
+    "adaptive_trades": 0,
+    "adaptive_total_pnl": 0.0,
+    "adaptive_win_rate": 0.0,
+    "batman_trades": 0,
+    "batman_total_pnl": 0.0,
+    "batman_win_rate": 0.0
+  },
+  {
+    "file": "reports/sensex_s6/slippage_2.00/summary_holdout.json",
+    "split": "holdout",
+    "slippage_points_per_leg": 2.0,
+    "adaptive_trades": 18,
+    "adaptive_total_pnl": 57864.46521055992,
+    "adaptive_win_rate": 0.6666666666666666,
+    "batman_trades": 26,
+    "batman_total_pnl": 207836.42716935975,
+    "batman_win_rate": 0.8461538461538461
+  },
+  {
+    "file": "reports/sensex_s6/slippage_1.00/summary_validation.json",
+    "split": "validation",
+    "slippage_points_per_leg": 1.0,
+    "adaptive_trades": 10,
+    "adaptive_total_pnl": 35937.848936799935,
+    "adaptive_win_rate": 0.6,
+    "batman_trades": 0,
+    "batman_total_pnl": 0.0,
+    "batman_win_rate": 0.0
+  },
+  {
+    "file": "reports/sensex_s6/slippage_1.00/summary_development.json",
+    "split": "development",
+    "slippage_points_per_leg": 1.0,
+    "adaptive_trades": 0,
+    "adaptive_total_pnl": 0.0,
+    "adaptive_win_rate": 0.0,
+    "batman_trades": 0,
+    "batman_total_pnl": 0.0,
+    "batman_win_rate": 0.0
+  },
+  {
+    "file": "reports/sensex_s6/slippage_1.00/summary_holdout.json",
+    "split": "holdout",
+    "slippage_points_per_leg": 1.0,
+    "adaptive_trades": 18,
+    "adaptive_total_pnl": 54186.31432655993,
+    "adaptive_win_rate": 0.6666666666666666,
+    "batman_trades": 26,
+    "batman_total_pnl": 210953.49830215977,
+    "batman_win_rate": 0.8461538461538461
+  },
+  {
+    "file": "reports/sensex_s6/slippage_0.50/summary_validation.json",
+    "split": "validation",
+    "slippage_points_per_leg": 0.5,
+    "adaptive_trades": 10,
+    "adaptive_total_pnl": 36037.89040479994,
+    "adaptive_win_rate": 0.6,
+    "batman_trades": 0,
+    "batman_total_pnl": 0.0,
+    "batman_win_rate": 0.0
+  },
+  {
+    "file": "reports/sensex_s6/slippage_0.50/summary_development.json",
+    "split": "development",
+    "slippage_points_per_leg": 0.5,
+    "adaptive_trades": 0,
+    "adaptive_total_pnl": 0.0,
+    "adaptive_win_rate": 0.0,
+    "batman_trades": 0,
+    "batman_total_pnl": 0.0,
+    "batman_win_rate": 0.0
+  },
+  {
+    "file": "reports/sensex_s6/slippage_0.50/summary_holdout.json",
+    "split": "holdout",
+    "slippage_points_per_leg": 0.5,
+    "adaptive_trades": 18,
+    "adaptive_total_pnl": 55055.50146935992,
+    "adaptive_win_rate": 0.6666666666666666,
+    "batman_trades": 26,
+    "batman_total_pnl": 212512.0338685598,
+    "batman_win_rate": 0.8461538461538461
+  }
+]

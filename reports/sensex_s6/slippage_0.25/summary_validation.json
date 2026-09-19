@@ -1,0 +1,25 @@
+{
+  "split": "validation",
+  "slippage_points_per_leg": 0.25,
+  "adaptive": {
+    "trades": 10,
+    "total_pnl": 36087.91113879993,
+    "mean_pnl": 3608.7911138799927,
+    "median_pnl": 4369.995861179901,
+    "win_rate": 0.6,
+    "profit_factor": 2.3269314132888677,
+    "max_dd": -27196.515793799903,
+    "bootstrap_mean": 3608.7911138799927,
+    "bootstrap_mean_ci_low": -5594.237544427995,
+    "bootstrap_mean_ci_high": 12893.264658455973
+  },
+  "batman": {
+    "trades": 0,
+    "total_pnl": 0.0,
+    "mean_pnl": 0.0,
+    "median_pnl": 0.0,
+    "win_rate": 0.0,
+    "profit_factor": 0.0,
+    "max_dd": 0.0
+  }
+}

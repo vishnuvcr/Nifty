@@ -1,0 +1,22 @@
+{
+  "split": "development",
+  "slippage_points_per_leg": 2.0,
+  "adaptive": {
+    "trades": 0,
+    "total_pnl": 0.0,
+    "mean_pnl": 0.0,
+    "median_pnl": 0.0,
+    "win_rate": 0.0,
+    "profit_factor": 0.0,
+    "max_dd": 0.0
+  },
+  "batman": {
+    "trades": 0,
+    "total_pnl": 0.0,
+    "mean_pnl": 0.0,
+    "median_pnl": 0.0,
+    "win_rate": 0.0,
+    "profit_factor": 0.0,
+    "max_dd": 0.0
+  }
+}
