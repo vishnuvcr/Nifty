@@ -1,0 +1,44 @@
+name: SENSEX S1 Data Audit Dispatcher
+
+on:
+  workflow_dispatch:
+    inputs:
+      phase_branch:
+        description: "SENSEX phase branch"
+        required: true
+        default: "research/sensex-s1-data-audit-v1"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout SENSEX phase branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.phase_branch }}
+
+      - name: Validate S1 scaffolding
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          required = [
+              "docs/sensex_options/RESEARCH_PLAN.md",
+              "docs/sensex_options/PHASE_STATUS.md",
+              "docs/sensex_options/ERROR_LOG.md",
+              "docs/sensex_options/DATA_MANIFEST.md",
+              "docs/sensex_options/FROZEN_PROVENANCE.md",
+              "docs/sensex_options/SOURCE_REGISTER.md",
+              "configs/sensex_batman_v1.json",
+              "configs/sensex_adaptive_v1.json",
+          ]
+          for p in required:
+              if not Path(p).exists():
+                  raise SystemExit(f"Missing required file: {p}")
+          for p in ["configs/sensex_batman_v1.json","configs/sensex_adaptive_v1.json"]:
+              json.loads(Path(p).read_text())
+          print("SENSEX S1 scaffolding and JSON configs validated.")
+          PY
