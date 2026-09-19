@@ -31,8 +31,6 @@ on:
         description: "Monte Carlo seed"
         required: true
         default: "20260919"
-  schedule:
-    - cron: "10 10 * * 1-5"
 
 concurrency:
   group: batman-signal-producer
