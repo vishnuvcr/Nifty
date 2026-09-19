@@ -48,15 +48,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      CAPITAL: \${{ github.event.inputs.capital || '100000' }}
-      RISK_PCT: \${{ github.event.inputs.risk_pct || '0.02' }}
-      LOT_SIZE: \${{ github.event.inputs.lot_size || '65' }}
-      PATHS: \${{ github.event.inputs.paths || '5000' }}
-      COST_PER_CONTRACT: \${{ github.event.inputs.cost_per_contract || '2.0' }}
-      EXPIRY: \${{ github.event.inputs.expiry || '' }}
-      SEED: \${{ github.event.inputs.seed || '20260919' }}
-      TELEGRAM_BOT_TOKEN: \${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: \${{ secrets.TELEGRAM_CHAT_ID }}
+      CAPITAL: ${{ github.event.inputs.capital || '100000' }}
+      RISK_PCT: ${{ github.event.inputs.risk_pct || '0.02' }}
+      LOT_SIZE: ${{ github.event.inputs.lot_size || '65' }}
+      PATHS: ${{ github.event.inputs.paths || '5000' }}
+      COST_PER_CONTRACT: ${{ github.event.inputs.cost_per_contract || '2.0' }}
+      EXPIRY: ${{ github.event.inputs.expiry || '' }}
+      SEED: ${{ github.event.inputs.seed || '20260919' }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
     steps:
       - name: Checkout
@@ -89,7 +89,7 @@ jobs:
           if [ -n "$EXPIRY" ]; then
             CMD+=(--expiry "$EXPIRY")
           fi
-          "\${CMD[@]}"
+          "${CMD[@]}"
 
       - name: Persist paper-trading state
         run: |
@@ -116,8 +116,8 @@ jobs:
           {
             echo "## Batman Signal Producer"
             echo
-            echo "- Workflow run: \${{ github.run_id }}"
-            echo "- Pages: https://\${{ github.repository_owner }}.github.io/\${{ github.event.repository.name }}/"
+            echo "- Workflow run: ${{ github.run_id }}"
+            echo "- Pages: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
             echo
             echo "Latest signal, MC results, signal history and paper-trade ledger are published in Pages."
           } >> "$GITHUB_STEP_SUMMARY"
