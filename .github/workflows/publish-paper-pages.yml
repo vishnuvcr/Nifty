@@ -48,15 +48,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
-      CAPITAL: \${{ github.event.inputs.capital || '100000' }}
-      RISK_PCT: \${{ github.event.inputs.risk_pct || '0.02' }}
-      LOT_SIZE: \${{ github.event.inputs.lot_size || '65' }}
-      PATHS: \${{ github.event.inputs.paths || '5000' }}
-      COST_PER_CONTRACT: \${{ github.event.inputs.cost_per_contract || '2.0' }}
-      EXPIRY: \${{ github.event.inputs.expiry || '' }}
-      SEED: \${{ github.event.inputs.seed || '' }}
-      TELEGRAM_BOT_TOKEN: \${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: \${{ secrets.TELEGRAM_CHAT_ID }}
+      CAPITAL: ${{ github.event.inputs.capital || '100000' }}
+      RISK_PCT: ${{ github.event.inputs.risk_pct || '0.02' }}
+      LOT_SIZE: ${{ github.event.inputs.lot_size || '65' }}
+      PATHS: ${{ github.event.inputs.paths || '5000' }}
+      COST_PER_CONTRACT: ${{ github.event.inputs.cost_per_contract || '2.0' }}
+      EXPIRY: ${{ github.event.inputs.expiry || '' }}
+      SEED: ${{ github.event.inputs.seed || '' }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
     steps:
       - name: Checkout paper-trading branch
@@ -82,14 +82,14 @@ jobs:
           CMD=(python scripts/batman_signal_producer.py --capital "$CAPITAL" --risk-pct "$RISK_PCT" --lot-size "$LOT_SIZE" --paths "$PATHS" --cost-per-contract "$COST_PER_CONTRACT" --decision-date auto --site-dir site/batman)
           if [ -n "$EXPIRY" ]; then CMD+=(--expiry "$EXPIRY"); fi
           if [ -n "$SEED" ]; then CMD+=(--seed "$SEED"); fi
-          "\${CMD[@]}"
+          "${CMD[@]}"
 
       - name: Produce Adaptive page and signal state
         run: |
           CMD=(python scripts/adaptive_paper_signal_producer_v1.py --capital "$CAPITAL" --risk-pct "$RISK_PCT" --lot-size "$LOT_SIZE" --paths "$PATHS" --cost-per-contract "$COST_PER_CONTRACT" --decision-date auto --site-dir site/adaptive)
           if [ -n "$EXPIRY" ]; then CMD+=(--expiry "$EXPIRY"); fi
           if [ -n "$SEED" ]; then CMD+=(--seed "$SEED"); fi
-          "\${CMD[@]}"
+          "${CMD[@]}"
 
       - name: Persist paper-trading state to adaptive branch
         run: |
@@ -117,7 +117,7 @@ jobs:
             echo "## NIFTY Paper Trading Dashboards"
             echo
             echo "- Branch: research/adaptive-paper-signals-v1"
-            echo "- Pages: https://\${{ github.repository_owner }}.github.io/\${{ github.event.repository.name }}/"
+            echo "- Pages: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
             echo "- Batman dashboard: /batman/"
             echo "- Adaptive dashboard: /adaptive/"
             echo
