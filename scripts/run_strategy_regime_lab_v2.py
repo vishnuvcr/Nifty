@@ -214,6 +214,7 @@ def main():
         chain = day[day.expiry == expiry]
         if chain.empty:
             continue
+        next_chain = day[day.expiry == next_expiry] if next_expiry is not None else pd.DataFrame()
         feats = decision_features(idx, decision, terminal, float(spot))
         if feats is None:
             continue
@@ -237,7 +238,11 @@ def main():
                 if leg_expiry is None:
                     ok = False
                     break
-                px = option_price(chain, leg_expiry, leg.option_type, leg.strike)
+                leg_chain = chain if leg.expiry == "front" else next_chain
+                if leg_chain.empty:
+                    ok = False
+                    break
+                px = option_price(leg_chain, leg_expiry, leg.option_type, leg.strike)
                 if px is None:
                     ok = False
                     break
@@ -289,7 +294,7 @@ def main():
                 "mc_risk_p95": risk_p95, "mc_risk_p99": risk_p99,
                 "mc_risk_es95": float(risk_for_ror),
                 "realized_return_on_mc_risk": (realized_pnl / risk_for_ror) if risk_for_ror > 0 else np.nan,
-                "expiry_return": realized_spot / float(spot) - 1,
+                "expiry_return": realized_front_spot / float(spot) - 1,
                 "settlement": "expiry", **feats
             })
 
