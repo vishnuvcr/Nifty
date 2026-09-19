@@ -40,8 +40,11 @@ def add_adaptive_regime(df: pd.DataFrame, lookback: int, qlo: float, qhi: float)
     # raw table would duplicate observations and could let the current decision
     # leak into later strategy rows from the same date. Build ranks on one row
     # per decision_id, then merge the labels back to every strategy row.
+    work = df.copy()
+    if "decision_id" not in work.columns:
+        work["decision_id"] = work["decision_date"].astype(str)
     base = (
-        df.sort_values(["decision_date", "decision_id"])
+        work.sort_values(["decision_date", "decision_id"])
         .drop_duplicates("decision_id", keep="first")
         .copy()
     )
@@ -73,8 +76,8 @@ def add_adaptive_regime(df: pd.DataFrame, lookback: int, qlo: float, qhi: float)
         "p_expand_rank", "trend_score_adaptive", "direction_adaptive",
         "vol_regime", "regime_adaptive",
     ]
-    out = df.drop(
-        columns=[c for c in label_cols if c != "decision_id" and c in df.columns],
+    out = work.drop(
+        columns=[c for c in label_cols if c != "decision_id" and c in work.columns],
         errors="ignore",
     ).merge(base[label_cols], on="decision_id", how="left", validate="many_to_one")
     return out
