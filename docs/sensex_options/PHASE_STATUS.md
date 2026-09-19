@@ -4,8 +4,8 @@ Last updated: 2026-09-20 (Asia/Kolkata)
 
 | Phase | Status | Evidence / next gate |
 |---|---|---|
-| S0 Transfer specification freeze | IN PROGRESS | Frozen NIFTY Phase-10 documents and producer sources inspected. Commit/config provenance still to be recorded. |
-| S1 Data-source and contract audit | NOT STARTED | Validate BSE SENSEX history, option-chain history, expiries, holidays, and historical lot sizes. |
+| S0 Transfer specification freeze | COMPLETE | Frozen parent branch tip and producer/config blob SHAs recorded in FROZEN_PROVENANCE.md. |
+| S1 Data-source and contract audit | IN PROGRESS | BSE provides an equity-derivatives Bhav Copy schema, while historical executable bid/ask/intraday data may require an exchange data product or licensed feed. Contract/expiry history is being audited date-by-date. |
 | S2 Execution-cost model | NOT STARTED | Source Paytm Money, BSE and statutory cost rules with effective dates. |
 | S3 SENSEX Batman implementation | NOT STARTED | Port only instrument/data/calendar/contract mechanics. |
 | S4 SENSEX Adaptive implementation | NOT STARTED | Port frozen candidate router without SENSEX-driven re-selection. |
