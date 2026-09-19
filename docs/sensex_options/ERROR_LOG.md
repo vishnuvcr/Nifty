@@ -120,3 +120,8 @@ Type: methodology extension
 Observation: the ₹1 lakh account-level gate produced zero actual trades because estimated ES risk per SENSEX lot often exceeded the ₹2,000 risk budget. That is a capital-sizing result, not evidence that the strategy has zero per-lot edge.
 Resolution: S6 evaluates the frozen strategy rules on exactly one lot when net MC EV > 0, across 0.25/0.50/1.00/2.00 slippage. These results are reported separately from account-sized trading and are not used to alter the frozen strategy selection rules.
 Prevention: distinguish strategy edge from account-affordability in all SENSEX conclusions.
+\n\n### E016 — Initial S6 robustness workflow was incomplete
+Type: robustness/statistical inference
+Observation: the first S6 workflow only varied slippage, re-downloaded the same historical dataset on each run, and did not quantify Monte Carlo seed instability or dependence-aware uncertainty.
+Resolution: S6 workflow now uses persistent GitHub Actions caching for the source dataset, runs a predeclared five-seed OOS sensitivity at fixed base slippage, and calculates a circular moving-block bootstrap over validation + holdout closed trades.
+Prevention: every robustness phase must include execution-cost sensitivity, model/random-seed sensitivity where stochastic components exist, and dependence-aware uncertainty before a performance conclusion is finalized.
