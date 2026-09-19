@@ -14,9 +14,9 @@ The pre-2026 CPCV robustness phase showed positive pooled selected-strategy perf
 
 These frequencies are descriptive diagnostics from the completed CPCV study. They are not treated as performance scores.
 
-## Entry and gating
+## Entry, gating and automation
 
-The model uses the latest completed session before the entry date. The front expiry must have exactly three future trading sessions remaining. The terminal distribution is generated from the previous 756 daily log returns using 5,000 bootstrap paths.
+The model uses the latest completed session before the entry date. New entry signals are generated at 09:30 IST on NIFTY trading weekdays. A separate 16:00 IST refresh job only settles matured paper trades and republishes the dashboards; it never creates a second entry signal. The front expiry must have exactly three future trading sessions remaining. The terminal distribution is generated from the previous 756 daily log returns using 5,000 bootstrap paths.
 
 For every regime candidate:
 
