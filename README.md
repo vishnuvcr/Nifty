@@ -34,3 +34,6 @@ The SENSEX study is intentionally separate from the NIFTY MC-WFO manuscript.
 - data/ local-only datasets (not committed)
 
 See the active research branch for the relevant experiment protocol.
+
+### SENSEX execution note
+The frozen S5 backtest workflow is `.github/workflows/sensex-s5-wfa-backtest-dispatcher.yml` on `main`; it checks out `research/sensex-s5-wfa-backtest-v1`, downloads the validated public SENSEX 1-minute dataset, and runs development/validation/holdout with the frozen Batman and Adaptive rules. No numerical result is considered valid until a successful run commits `reports/sensex_options/`.
