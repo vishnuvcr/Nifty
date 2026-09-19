@@ -10,7 +10,10 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from src.nifty_mc.strategy_catalog import build_strategy
+from pathlib import Path as _Path
+import sys as _sys
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[1] / 'src'))
+from nifty_mc.strategy_catalog import build_strategy
 
 IST = "Asia/Kolkata"
 CANDIDATES_BY_REGIME = {
