@@ -4,7 +4,7 @@ This is the separate prospective signal-publication workflow for the frozen Batm
 
 ## Frozen protocol
 
-- Entry timing: exactly 3 future NSE trading sessions before the selected expiry.
+- Entry timing: fixed at 09:30 IST on the day with exactly 3 future NSE trading sessions before the selected expiry.
 - Monte Carlo: 5,000 bootstrap paths by default.
 - Return lookback: 756 daily NIFTY 50 closes.
 - Terminal quantiles: P20, P35, P65, P80.
@@ -23,7 +23,7 @@ This is the separate prospective signal-publication workflow for the frozen Batm
 Workflow:
 .github/workflows/batman-signal-producer.yml
 
-It supports manual workflow_dispatch and a weekday schedule at 10:10 UTC (15:40 IST).
+It supports manual workflow_dispatch and a weekday schedule at 04:00 UTC (09:30 IST). The producer refuses to generate an entry-day signal before 09:30 IST.
 
 Manual runs are live/current-day runs, not historical replays.
 
@@ -63,6 +63,6 @@ Without the secrets, the producer still publishes to Pages and logs TELEGRAM_NOT
 
 ## Data source and execution
 
-The producer uses NSE public endpoints for NIFTY 50 historical closes, trading holidays and the live NIFTY option chain. For option execution assumptions it uses ask for buys and bid for sells when available, falling back to last price only when bid/ask is unavailable.
+The producer uses NSE public endpoints for NIFTY 50 historical closes, trading holidays and the live NIFTY option chain. The Monte Carlo model is frozen at the prior completed NIFTY 50 session close; option premiums come from the entry-day NSE snapshot. It uses ask for buys and bid for sells, and missing bid/ask data produces no trade rather than a last-price substitution.
 
 It does not place broker orders. This is a research and paper-trading publication system.
