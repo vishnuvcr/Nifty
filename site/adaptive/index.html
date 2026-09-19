@@ -22,26 +22,26 @@ th,td{padding:8px;border-bottom:1px solid #293547;text-align:left;vertical-align
 <body><main>
 <p><a href="../">← Strategy selector</a> · <a href="../batman/">Batman</a></p>
 <div class="card">
-<span class="badge">ADAPTIVE PAPER TRADING v1</span>
+<span class="badge">ADAPTIVE PAPER TRADING v1 • PHASE 10 COMPLETE</span>
 <h1>Adaptive Regime Signal Producer</h1>
 <p class="note">Candidate-set paper trader derived from the completed pre-2026 CPCV finding. The regime-level evidence and the prospective primary-selection rule are displayed separately.</p>
-<p class="note"><b>Automation:</b> new entry signals are generated at 09:30 IST on trading weekdays. The 16:00 IST job is refresh-only: it settles matured paper trades and republishes the dashboards without creating a second entry signal.</p>
+<p class="note"><b>Automation:</b> new entry signals are generated at 09:30 IST on NIFTY trading weekdays. The 16:00 IST job is refresh-only: it settles matured paper trades and republishes the dashboards without creating a second entry signal.</p>
 </div>
 
 <div class="card">
 <h2>Latest signal</h2>
-<p><span class="badge">NOT_TRADING_DAY / NO_TRADE</span></p>
+<p><span class="badge">READY_FOR_PROSPECTIVE_RUN / NO_TRADE</span></p>
 <div class="grid">
-<div><small>Decision date</small><div class="kpi">2026-09-19</div></div>
-<div><small>Volatility regime</small><div class="kpi">low</div></div>
-<div><small>RV20 rank</small><div class="kpi">0.107</div></div>
+<div><small>Decision date</small><div class="kpi">—</div></div>
+<div><small>Volatility regime</small><div class="kpi">—</div></div>
+<div><small>RV20 rank</small><div class="kpi">—</div></div>
 <div><small>Expiry</small><div class="kpi">—</div></div>
-<div><small>Spot</small><div class="kpi">23,346.40</div></div>
+<div><small>Spot</small><div class="kpi">—</div></div>
 <div><small>Primary</small><div class="kpi">NO_TRADE</div></div>
 <div><small>Primary net MC EV</small><div class="kpi">—</div></div>
 <div><small>Primary lots</small><div class="kpi">0</div></div>
 </div>
-<p class="note">Decision date is not a NIFTY trading session; no option-chain request was made.</p>
+<p class="note">No prospective trading observation has been recorded yet. The first new signal will be generated on the next NIFTY trading weekday at 09:30 IST.</p>
 </div>
 
 <div class="card">
@@ -83,13 +83,13 @@ th,td{padding:8px;border-bottom:1px solid #293547;text-align:left;vertical-align
 <div class="card">
 <h2>Signal history</h2>
 <table><tr><th>Date</th><th>Expiry</th><th>Regime</th><th>Primary</th><th>Signal</th><th>Net EV</th><th>Lots</th></tr>
-<tr><td>2026-09-19</td><td>nan</td><td>low</td><td>nan</td><td>NO_TRADE</td><td>—</td><td>0</td></tr>
+
 </table>
 </div>
 
 <div class="card ok">
 <h2>Research boundary</h2>
-<p class="note">The completed CPCV phase supports the regime-conditioned effect and showed instability in exact strategy identity. The candidate universe above is frozen from that phase. The highest-net-EV primary selection is a new prospective rule and is not historically validated. The 2026 holdout used previously is not reopened.</p>
+<p class="note">The completed CPCV phase supports the regime-conditioned effect and showed instability in exact strategy identity. The candidate universe above is frozen from that phase. The highest-net-EV primary selection is a new prospective rule and is not historically validated. The 2026 holdout used previously is not reopened. Development/test runs are excluded from the prospective ledger.</p>
 </div>
 
 <div class="card">
