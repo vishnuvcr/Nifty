@@ -1,11 +1,32 @@
-run_id=35424337517
+run_id=35424406745
 backfill_rc=1
-timestamp=2026-09-19T05:35:46Z
+timestamp=2026-09-19T05:37:08Z
 ----- LOG -----
+{
+  "cutoff_spot": 23217.599609375,
+  "terminal_quantiles": [
+    22991.36847501439,
+    23129.41426886291,
+    23353.406221474725,
+    23497.993099379495
+  ],
+  "raw_targets": {
+    "p20": 22991.36847501439,
+    "p35": 23129.41426886291,
+    "c65": 23353.406221474725,
+    "c80": 23497.993099379495
+  },
+  "mapped_strikes": {
+    "p20": 23000.0,
+    "p35": 23150.0,
+    "c65": 23350.0,
+    "c80": 23500.0
+  }
+}
 Traceback (most recent call last):
-  File "/home/runner/work/Nifty/Nifty/scripts/backfill_batman_first_trade.py", line 260, in <module>
+  File "/home/runner/work/Nifty/Nifty/scripts/backfill_batman_first_trade.py", line 261, in <module>
     main()
-  File "/home/runner/work/Nifty/Nifty/scripts/backfill_batman_first_trade.py", line 113, in main
+  File "/home/runner/work/Nifty/Nifty/scripts/backfill_batman_first_trade.py", line 114, in main
     px, url = fetch_prev_close(typ, strikes[label])
               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/home/runner/work/Nifty/Nifty/scripts/backfill_batman_first_trade.py", line 88, in fetch_prev_close
