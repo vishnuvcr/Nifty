@@ -1,6 +1,7 @@
 name: Adaptive Paper Signal Producer v1
 
 on:
+  # Scheduled execution is mirrored on main; this branch copy remains manually dispatchable for reproducible runs.
   workflow_dispatch:
     inputs:
       capital:
