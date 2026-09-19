@@ -125,5 +125,5 @@ jobs:
             echo "- Branch: research/adaptive-paper-signals-v1"
             echo "- Pages: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/adaptive/"
             echo
-            echo "Manual adaptive production completed. Daily automatic publication is handled by the central NIFTY Paper Trading Dashboards workflow at 16:00 IST."
+            echo "Manual adaptive production completed. Automatic entry-signal generation runs at 09:30 IST; a separate 16:00 IST refresh settles matured paper trades and republishes the dashboards without creating a second entry signal."
           } >> "$GITHUB_STEP_SUMMARY"
