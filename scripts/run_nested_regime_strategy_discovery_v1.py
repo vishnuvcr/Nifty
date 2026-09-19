@@ -600,7 +600,8 @@ def main() -> None:
     ]
     for _, r in stress.iterrows():
         lines.append(
-            f"- cost={r.cost:.0f}: n={int(r.n)}, mean={r.mean:.2f}, PF={r.pf:.2f}, total={r.total:.2f}"
+            f"- cost={float(r['cost']):.0f}: n={int(r['n'])}, mean={float(r['mean']):.2f}, "
+            f"PF={float(r['pf']):.2f}, total={float(r['total']):.2f}"
         )
 
     lines += [
