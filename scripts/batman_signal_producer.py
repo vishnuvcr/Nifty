@@ -658,7 +658,9 @@ def main() -> None:
         raise SystemExit("lot-size/paths/lookback values are invalid.")
 
     current = now_ist()
-    decision = pd.Timestamp(current).normalize()
+    # Keep the decision date timezone-naive because all NSE/Yahoo daily bars
+    # in this module are normalized to timezone-naive session dates.
+    decision = pd.Timestamp(current.date())
     if args.decision_date != "auto":
         decision = pd.Timestamp(args.decision_date).normalize()
         if decision.date() != current.date():
