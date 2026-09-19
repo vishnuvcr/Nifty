@@ -22,3 +22,15 @@ Prevention: version the execution-cost configuration and log source URLs/dates i
 
 ## Logging rule
 Every failed workflow, data-source exception, schema mismatch, unit-test failure, or methodological correction must be appended here with timestamp, phase, symptom, root cause, corrective action, and prevention/control added. Never delete prior entries.
+
+### E004 — Expiry-calendar source conflict
+Type: contract calendar / data integrity
+Observation: current SENSEX listings show Thursday expiries, while historical BSE methodology documents record multiple changes in expiry conventions across years. A single weekday rule would be unsafe for a long backtest.
+Resolution: S1 will use date-specific contract metadata / actual listed expiry records and treat generalized weekday rules only as a diagnostic cross-check.
+Prevention: every option observation must pass an expiry-consistency audit before entering a walk-forward sample.
+
+### E005 — Current brokerage source conflict
+Type: transaction-cost modelling
+Observation: Paytm Money currently publishes an F&O FAQ with Rs.10 per unique executed order, while older official Paytm Money communications describe Rs.20 for newer accounts and different legacy rates.
+Resolution: S2 will use account/effective-date-aware cost scenarios and clearly label the selected base case; no single brokerage number will be assumed for all historical observations.
+Prevention: version the cost schedule by effective date and source.
