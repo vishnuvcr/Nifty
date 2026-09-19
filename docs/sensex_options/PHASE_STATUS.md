@@ -6,7 +6,7 @@ Last updated: 2026-09-20 (Asia/Kolkata) — S1 step update
 |---|---|---|
 | S0 Transfer specification freeze | COMPLETE | Frozen parent branch tip and producer/config blob SHAs recorded in FROZEN_PROVENANCE.md. |
 | S1 Data-source and contract audit | IN PROGRESS | Source register completed; BSE exchange files/market-data fields and Paytm Money cost sources are documented. Historical executable 09:30 bid/ask availability and date-effective contract metadata still require acquisition/validation before S1 can close. |
-| S2 Execution-cost model | NOT STARTED | Source Paytm Money, BSE and statutory cost rules with effective dates. |
+| S2 Execution-cost model | COMPLETE | Frozen cost model recorded in COST_MODEL.md: brokerage, BSE transaction charges, STT, SEBI, stamp duty, GST and slippage sensitivity. |
 | S3 SENSEX Batman implementation | NOT STARTED | Port only instrument/data/calendar/contract mechanics. |
 | S4 SENSEX Adaptive implementation | NOT STARTED | Port frozen candidate router without SENSEX-driven re-selection. |
 | S5 Historical walk-forward transfer test | NOT STARTED | Untouched final SENSEX holdout required. |
