@@ -1,4 +1,5 @@
 name: strategy-cpcv-gated
+# Explicit push trigger retained so the all-strategy robustness phase can be rerun deterministically.
 
 on:
   workflow_run:
