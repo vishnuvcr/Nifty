@@ -402,7 +402,9 @@ def build_site(site_dir: Path, latest: dict[str, Any], candidates: pd.DataFrame,
         for x in primary_legs
     )
 
-    pf_display = "∞" if math.isinf(float(s["profit_factor"])) else f'{float(s["profit_factor"]):.2f}'\n\n    page = f"""<!doctype html>
+    pf_display = "∞" if math.isinf(float(s["profit_factor"])) else f'{float(s["profit_factor"]):.2f}'
+
+    page = f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
