@@ -26,13 +26,29 @@ jobs:
       - name: Install
         run: python -m pip install --upgrade pip pandas numpy pyarrow huggingface_hub tabulate
 
+      - name: Restore cached warmup SENSEX history
+        uses: actions/cache@v4
+        with:
+          path: data/external/sensex_legacy_2018_2024.csv
+          key: sensex-warmup-2018-2024-v1
+
       - name: Restore cached SENSEX dataset
         uses: actions/cache@v4
         with:
           path: data/raw_sensex
-          key: sensex-options-v1-${{ runner.os }}-${{ hashFiles('docs/sensex_options/DATA_MANIFEST.md') }}
+          key: sensex-options-Linux-2026-09-v4
           restore-keys: |
-            sensex-options-v1-${{ runner.os }}-
+            sensex-options-Linux-
+
+      - name: Fetch warmup history only on cache miss
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -s data/external/sensex_legacy_2018_2024.csv ]]; then
+            mkdir -p data/external
+            curl -L --retry 5 --retry-delay 2 -A "Mozilla/5.0" -o data/external/sensex_legacy_2018_2024.csv https://raw.githubusercontent.com/sandeepkapri/Sensex-Minute-Data/master/sensex_candlestick_data.csv
+          fi
+          test -s data/external/sensex_legacy_2018_2024.csv
 
       - name: Fetch dataset only on cache miss
         shell: bash
@@ -44,6 +60,31 @@ jobs:
           fi
           test -f data/raw_sensex/index/SENSEX.parquet
           test -d data/raw_sensex/options/SENSEX
+
+      - name: Build independent daily MC history
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          legacy = pd.read_csv('data/external/sensex_legacy_2018_2024.csv')
+          legacy['timestamp'] = pd.to_datetime(legacy['Date'].astype(str)+' '+legacy['Time'].astype(str), dayfirst=True, errors='coerce')
+          legacy['close'] = pd.to_numeric(legacy['Close'], errors='coerce')
+          legacy = legacy.dropna(subset=['timestamp','close']).sort_values('timestamp')
+          legacy['trading_day'] = legacy['timestamp'].dt.normalize()
+          legacy_daily = legacy.groupby('trading_day', as_index=False).tail(1)[['timestamp','trading_day','close']]
+          hf = pd.read_parquet('data/raw_sensex/index/SENSEX.parquet')
+          hf['timestamp'] = pd.to_datetime(hf['timestamp'], errors='coerce')
+          if getattr(hf['timestamp'].dt, 'tz', None) is not None:
+              hf['timestamp'] = hf['timestamp'].dt.tz_localize(None)
+          hf['trading_day'] = pd.to_datetime(hf['trading_day'], errors='coerce').dt.normalize()
+          hf['close'] = pd.to_numeric(hf['close'], errors='coerce')
+          hf = hf.dropna(subset=['timestamp','trading_day','close']).sort_values('timestamp')
+          hf_daily = hf.groupby('trading_day', as_index=False).tail(1)[['timestamp','trading_day','close']]
+          daily = pd.concat([legacy_daily, hf_daily], ignore_index=True).sort_values(['trading_day','timestamp'])
+          daily = daily.drop_duplicates('trading_day', keep='last').reset_index(drop=True)
+          daily['open'] = daily['close']; daily['high'] = daily['close']; daily['low'] = daily['close']
+          daily.to_parquet('data/external/sensex_mc_daily.parquet', index=False)
+          print('MC daily rows:', len(daily), 'from', daily.trading_day.min(), 'to', daily.trading_day.max())
+          PY
 
       - name: Run slippage sensitivity at frozen seed
         shell: bash
