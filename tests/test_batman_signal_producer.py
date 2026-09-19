@@ -63,10 +63,43 @@ def test_batman_mc_signal_builds():
     assert result["mc_expected_pnl_points_net"] <= result["mc_expected_pnl_points_gross"]
     assert result["entry_cost_points"] == 12.0
 
+
+
+def test_side_execution_requires_live_bid_ask():
+    from scripts.batman_signal_producer import side_execution_price
+
+    row = pd.Series({
+        "option_type": "PE",
+        "strike": 23000.0,
+        "bid": np.nan,
+        "ask": 30.0,
+        "last_price": 29.0,
+    })
+    assert side_execution_price(row, "BUY") == (30.0, "ask")
+
+    with np.testing.assert_raises(ValueError):
+        side_execution_price(
+            pd.Series({
+                "option_type": "PE",
+                "strike": 23000.0,
+                "bid": np.nan,
+                "ask": np.nan,
+                "last_price": 29.0,
+            }),
+            "BUY",
+        )
+
+
+def test_frozen_entry_protocol_metadata():
+    from scripts.batman_signal_producer import ENTRY_TIME_IST
+
+    assert ENTRY_TIME_IST.hour == 9
+    assert ENTRY_TIME_IST.minute == 30
+
 def test_batman_workflow_is_configured_for_manual_schedule_pages_and_telegram():
     workflow = Path(".github/workflows/batman-signal-producer.yml").read_text(encoding="utf-8")
     assert "workflow_dispatch:" in workflow
-    assert 'cron: "10 10 * * 1-5"' in workflow
+    assert 'cron: "0 4 * * 1-5"' in workflow
     assert "actions/upload-pages-artifact@v3" in workflow
     assert "actions/deploy-pages@v4" in workflow
     assert "TELEGRAM_BOT_TOKEN" in workflow
