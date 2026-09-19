@@ -402,7 +402,7 @@ def build_site(site_dir: Path, latest: dict[str, Any], candidates: pd.DataFrame,
         for x in primary_legs
     )
 
-    page = f"""<!doctype html>
+    pf_display = "∞" if math.isinf(float(s["profit_factor"])) else f'{float(s["profit_factor"]):.2f}'\n\n    page = f"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -469,7 +469,7 @@ th,td{{padding:8px;border-bottom:1px solid #293547;text-align:left;vertical-alig
 <div class="grid">
 <div><small>Closed trades</small><div class="kpi">{s["closed"]}</div></div>
 <div><small>Win rate</small><div class="kpi">{s["win_rate"]:.1%}</div></div>
-<div><small>Profit factor</small><div class="kpi">{"∞" if math.isinf(float(s["profit_factor"])) else f"{float(s["profit_factor"]):.2f}"}</div></div>
+<div><small>Profit factor</small><div class="kpi">{pf_display}</div></div>
 <div><small>Total P&L</small><div class="kpi">₹{float(s["total"]):,.2f}</div></div>
 <div><small>Max drawdown</small><div class="kpi">₹{float(s["max_dd"]):,.2f}</div></div>
 </div>
