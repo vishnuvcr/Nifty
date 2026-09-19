@@ -10,7 +10,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from nifty_mc.strategy_catalog import build_strategy
+from src.nifty_mc.strategy_catalog import build_strategy
 
 IST = "Asia/Kolkata"
 CANDIDATES_BY_REGIME = {
