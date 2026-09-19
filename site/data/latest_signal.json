@@ -1,7 +1,7 @@
 {
   "producer": "Batman Signal Producer \u2014 retrospective first-trade backfill",
   "strategy": "Batman",
-  "run_timestamp_ist": "2026-09-19T11:17:50.379861+05:30",
+  "run_timestamp_ist": "2026-09-19T11:20:38.927748+05:30",
   "decision_date": "2026-09-17",
   "target_expiry": "2026-09-22",
   "status": "BACKFILL_ENTRY_DAY",
