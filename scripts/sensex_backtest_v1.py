@@ -318,9 +318,10 @@ def bootstrap_mean_ci(values: np.ndarray, block: int = 4, n_resamples: int = 200
     return float(np.mean(values)), float(np.quantile(means, 0.025)), float(np.quantile(means, 0.975))
 
 
-def run_backtest(options_dir: Path, index_path: Path, split_name: str, slippage: float, seed_base: int) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
+def run_backtest(options_dir: Path, index_path: Path, split_name: str, slippage: float, seed_base: int, mc_index_path: Path | None = None) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
     idx1m = load_index(index_path)
-    daily = daily_close(idx1m)
+    mc_idx = load_index(mc_index_path) if mc_index_path is not None else idx1m
+    daily = daily_close(mc_idx)
     sessions = pd.DatetimeIndex(daily["date"].unique()).sort_values()
     opt_paths = sorted(options_dir.glob("*.parquet"))
     all_rows: list[dict[str, Any]] = []
@@ -603,11 +604,15 @@ def main() -> None:
     ap.add_argument("--split", choices=list(SPLITS), required=True)
     ap.add_argument("--slippage", type=float, default=0.5)
     ap.add_argument("--seed-base", type=int, default=20260920)
+    ap.add_argument("--mc-index-path", required=False, default=None)
     ap.add_argument("--out-dir", required=True)
     args = ap.parse_args()
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    candidates, adaptive_trades, stats = run_backtest(Path(args.options_dir), Path(args.index_path), args.split, args.slippage, args.seed_base)
+    candidates, adaptive_trades, stats = run_backtest(
+        Path(args.options_dir), Path(args.index_path), args.split, args.slippage, args.seed_base,
+        Path(args.mc_index_path) if args.mc_index_path else None
+    )
     candidates.to_csv(out_dir / f"candidates_{args.split}.csv", index=False)
     if not candidates.empty and "realized_pnl_inr_per_lot" in candidates.columns:
         evaluated = candidates.loc[candidates["realized_pnl_inr_per_lot"].notna()].copy()
