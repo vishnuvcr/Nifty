@@ -25,7 +25,7 @@ def test_regime_classifier_is_past_only():
     })
     a = add_adaptive_regime(d, lookback=30, qlo=1/3, qhi=2/3)
     b = a.copy()
-    b.loc[b.index[:-1], "trend20"] += 1000
+    b.loc[b.index[35:], "trend20"] += 1000
     bb = add_adaptive_regime(b, lookback=30, qlo=1/3, qhi=2/3)
     # The first 30 observations cannot be classified, and a prior rank must
     # not react to a later observation.
