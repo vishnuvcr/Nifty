@@ -1,7 +1,12 @@
+import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
-from scripts.adaptive_regime_signal_producer import regime_class, strategy_for_regime, trailing_rank
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+
+from adaptive_regime_signal_producer import regime_class, strategy_for_regime, trailing_rank
 
 
 def test_volatility_regimes():
