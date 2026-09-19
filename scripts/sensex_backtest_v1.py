@@ -500,6 +500,31 @@ def run_backtest(options_dir: Path, index_path: Path, split_name: str, slippage:
                     "universe": "Batman_standalone",
                 }]
 
+        # Realized expiry P&L is an evaluation output only; it is never used by the MC selector/gate.
+        expiry_idx = idx1m.loc[idx1m["trading_day"].eq(expiry)]
+        if not expiry_idx.empty:
+            expiry_spot = float(expiry_idx.sort_values("timestamp").iloc[-1]["close"])
+            for r in candidate_rows + standalone_batman:
+                if r.get("status") not in ("EVALUATED", "STANDALONE_EVALUATED"):
+                    continue
+                try:
+                    leg_list = json.loads(r["legs_json"])
+                    net_points = float(sum(
+                        int(l["qty"]) * (
+                            max(expiry_spot - float(l["strike"]), 0.0)
+                            if l["option_type"] == "CE"
+                            else max(float(l["strike"]) - expiry_spot, 0.0)
+                        ) for l in leg_list) + float(r["entry_cashflow_points"]))
+                    realized_cost = realized_costs(entry_date, leg_list, 20, expiry_spot)
+                    r["expiry_spot"] = expiry_spot
+                    r["realized_pnl_points_per_unit"] = net_points
+                    r["realized_cost_inr_per_lot"] = realized_cost
+                    r["realized_pnl_inr_per_lot"] = net_points * 20 - realized_cost
+                    r["forced_per_lot_evaluation"] = True
+                except Exception as exc:
+                    r["forced_per_lot_evaluation"] = False
+                    r["realized_pnl_error"] = str(exc)
+
         all_rows.extend(candidate_rows)
         all_rows.extend(standalone_batman)
         eligible_rows = [r for r in candidate_rows if bool(r.get("eligible"))]
@@ -584,6 +609,30 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     candidates, adaptive_trades, stats = run_backtest(Path(args.options_dir), Path(args.index_path), args.split, args.slippage, args.seed_base)
     candidates.to_csv(out_dir / f"candidates_{args.split}.csv", index=False)
+    if not candidates.empty and "realized_pnl_inr_per_lot" in candidates.columns:
+        evaluated = candidates.loc[candidates["realized_pnl_inr_per_lot"].notna()].copy()
+        if not evaluated.empty:
+            summary_rows = []
+            for strategy, g in evaluated.groupby("strategy"):
+                vals = pd.to_numeric(g["realized_pnl_inr_per_lot"], errors="coerce").dropna()
+                if len(vals):
+                    gains = float(vals[vals > 0].sum())
+                    losses = float(-vals[vals < 0].sum())
+                    summary_rows.append({
+                        "split": args.split,
+                        "strategy": strategy,
+                        "observations": int(len(vals)),
+                        "mean_pnl_inr_per_lot": float(vals.mean()),
+                        "median_pnl_inr_per_lot": float(vals.median()),
+                        "total_pnl_inr_per_lot": float(vals.sum()),
+                        "win_rate": float((vals > 0).mean()),
+                        "profit_factor": gains / losses if losses > 0 else float("inf"),
+                        "best_pnl_inr_per_lot": float(vals.max()),
+                        "worst_pnl_inr_per_lot": float(vals.min()),
+                    })
+            pd.DataFrame(summary_rows).sort_values(["mean_pnl_inr_per_lot","strategy"], ascending=[False,True]).to_csv(
+                out_dir / f"strategy_realized_summary_{args.split}.csv", index=False
+            )
     adaptive_trades.to_csv(out_dir / f"adaptive_trades_{args.split}.csv", index=False)
     batman = run_batman_from_candidates(candidates, Path(args.options_dir), Path(args.index_path), args.split, args.slippage, args.seed_base)
     batman.to_csv(out_dir / f"batman_trades_{args.split}.csv", index=False)
