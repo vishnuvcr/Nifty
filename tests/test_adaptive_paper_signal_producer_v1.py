@@ -54,9 +54,9 @@ def test_strategy_targets_use_only_required_terminal_quantiles() -> None:
     }
     assert strategy_targets("Batman", terminal, 102.0) == {
         "p20": 98.0,
-        "p35": 98.5,
-        "c65": 106.5,
-        "c80": 108.0,
+        "p35": 100.25,
+        "c65": 104.75,
+        "c80": 107.0,
     }
 
 
