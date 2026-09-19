@@ -27,7 +27,11 @@ def combined_trades(root: Path, prefix: str) -> pd.DataFrame:
     for split in ("validation","holdout"):
         p=root/"slippage_0.50"/f"{prefix}_trades_{split}.csv"
         if p.exists():
-            x=pd.read_csv(p)
+            try:
+                x=pd.read_csv(p)
+            except pd.errors.EmptyDataError:
+                # Empty output is a valid zero-trade result from the frozen engine.
+                continue
             if "status" in x: x=x.loc[x["status"].eq("CLOSED")].copy()
             if not x.empty:
                 x["split"]=split
