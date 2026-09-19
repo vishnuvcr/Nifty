@@ -1,0 +1,68 @@
+name: regime-router-robustness
+
+on:
+  push:
+    branches: ["research/monte-carlo-wfa-v1"]
+    paths:
+      - scripts/run_regime_robustness_v1.py
+      - tests/test_regime_robustness_v1.py
+      - .github/workflows/regime-router-robustness.yml
+  workflow_dispatch:
+
+env:
+  V2_RUN_ID: "35425922439"
+
+jobs:
+  robustness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Run unit tests
+        run: |
+          pytest -q tests/test_regime_robustness_v1.py
+
+      - name: Download pinned V2 run 9 artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p input
+          gh run download "$V2_RUN_ID" --repo "${{ github.repository }}" --name strategy-regime-lab-v2-results --dir input
+          test -f input/strategy_trades.csv
+
+      - name: Run rolling regime robustness
+        run: |
+          rm -rf results
+          mkdir -p results
+          python scripts/run_regime_robustness_v1.py \
+            --trades input/strategy_trades.csv \
+            --out-dir results \
+            --costs 1 2 3 4 \
+            --lookbacks 63 126 252 \
+            --quantile-pairs 0.25,0.75 0.3333333333,0.6666666667 0.20,0.80 \
+            --test-years 2023 2024 2025 2026
+
+      - name: Publish report
+        run: |
+          cat results/regime_robustness_report.md
+          echo "---- ranked settings ----"
+          cat results/regime_robustness_ranked_settings.csv
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: regime-router-robustness
+          path: results/
+          retention-days: 30
