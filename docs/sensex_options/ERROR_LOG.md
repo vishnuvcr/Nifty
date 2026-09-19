@@ -106,3 +106,10 @@ Type: CI publication
 Observation: the backtest job successfully produced all three split outputs, but the final git push was rejected because the run-start checkpoint had advanced the remote branch.
 Resolution: publication now fetches and rebases onto the current remote phase branch before pushing results.
 Prevention: all workflow jobs that self-commit state must rebase against the remote branch before publication.
+
+
+### E013 — SENSEX affordability gate suppresses all trades at the copied NIFTY paper-capital scale
+Type: transferability / risk sizing
+Observation: with ₹100,000 paper capital and a 2% risk budget, every evaluated SENSEX candidate required more than ₹2,000 estimated ES risk per lot, so the original operational affordability gate yielded zero trades despite positive MC-EV observations.
+Resolution: run a separate pre-registered one-lot transfer-edge analysis using the unchanged MC-EV gate, while retaining the original affordability result as a separate operational diagnostic. One-lot P&L is capital-independent and therefore avoids arbitrary account-size selection.
+Prevention: never conflate instrument-transfer edge evidence with a particular account-capital sizing constraint.
