@@ -10,7 +10,7 @@ Last updated: 2026-09-20 (Asia/Kolkata) — S6 robustness execution gate
 | S3 SENSEX Batman implementation | COMPLETE | Frozen Batman engine implemented and deterministic candidate/expiry evaluation is reproducible. |
 | S4 SENSEX Adaptive implementation | COMPLETE | Frozen regime-conditioned candidate router implemented without SENSEX outcome retuning. |
 | S5 Historical walk-forward transfer test | COMPLETE | Development 2024, validation 2025, and available 2026 holdout through 2026-05-21 were completed in one-lot transfer-edge mode; account-affordability results are separately reported. |
-| S6 Robustness/statistical inference | RUNNING | Slippage grid, Monte Carlo seed sensitivity, and dependence-aware block bootstrap are being executed on the frozen rules. |
+| S6 Robustness/statistical inference | RUNNING | Protocol corrected to reproduce the validated S5 composite MC-history pipeline; base-scenario reproducibility is now a hard gate before sensitivity results are accepted. |
 | S7 Prospective paper trading | NOT STARTED | Allowed only after S6 integrity and interpretation gates pass. |
 | S8 Separate SENSEX report | NOT STARTED | Will summarize the completed transfer study without modifying the NIFTY manuscript. |
 
