@@ -1,4 +1,5 @@
 name: Publish NIFTY Paper Trading Dashboards
+# v1: centrally publishes isolated Batman and Adaptive dashboards from the research branch.
 
 on:
   push:
