@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 from scripts.run_pre2026_cpcv_bootstrap_v1 import add_vol_regime, block_bootstrap, mean_se, pf, trailing_rank
 def test_rank_is_past_only():
-    r=trailing_rank(pd.Series([1.,2.,3.,4.]),3)
-    assert np.isnan(r[0]); assert r[1]==1.0
+    r=trailing_rank(pd.Series(np.arange(1.,32.)),30)
+    assert np.isnan(r[0]); assert np.isnan(r[29]); assert r[30]==1.0
 def test_decision_level_regime():
     rows=[]
     for i in range(40):
