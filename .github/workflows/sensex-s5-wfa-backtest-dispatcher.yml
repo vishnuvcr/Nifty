@@ -65,11 +65,11 @@ jobs:
           test -f data/raw_sensex/index/SENSEX.parquet
           test -d data/raw_sensex/options/SENSEX
       - name: Backtest development
-        run: python scripts/sensex_backtest_v1.py --options-dir data/raw_sensex/options/SENSEX --index-path data/raw_sensex/index/SENSEX.parquet --mc-index-path data/external/sensex_daily_yahoo.parquet --split development --slippage "${{ inputs.slippage || '0.5' }}" --out-dir reports/sensex_options
+        run: python scripts/sensex_backtest_v1.py --options-dir data/raw_sensex/options/SENSEX --index-path data/raw_sensex/index/SENSEX.parquet --split development --slippage "${{ inputs.slippage || '0.5' }}" --out-dir reports/sensex_options
       - name: Backtest validation
-        run: python scripts/sensex_backtest_v1.py --options-dir data/raw_sensex/options/SENSEX --index-path data/raw_sensex/index/SENSEX.parquet --mc-index-path data/external/sensex_daily_yahoo.parquet --split validation --slippage "${{ inputs.slippage || '0.5' }}" --out-dir reports/sensex_options
+        run: python scripts/sensex_backtest_v1.py --options-dir data/raw_sensex/options/SENSEX --index-path data/raw_sensex/index/SENSEX.parquet --split validation --slippage "${{ inputs.slippage || '0.5' }}" --out-dir reports/sensex_options
       - name: Backtest holdout
-        run: python scripts/sensex_backtest_v1.py --options-dir data/raw_sensex/options/SENSEX --index-path data/raw_sensex/index/SENSEX.parquet --mc-index-path data/external/sensex_daily_yahoo.parquet --split holdout --slippage "${{ inputs.slippage || '0.5' }}" --out-dir reports/sensex_options
+        run: python scripts/sensex_backtest_v1.py --options-dir data/raw_sensex/options/SENSEX --index-path data/raw_sensex/index/SENSEX.parquet --split holdout --slippage "${{ inputs.slippage || '0.5' }}" --out-dir reports/sensex_options
       - name: Publish reports
         run: |
           git config user.name "github-actions[bot]"
