@@ -39,3 +39,25 @@ Do not declare live deployment from a single trade or a small sample. The prospe
 - performance by volatility/direction regime
 
 A signal with missing data or invalid option quotes is **NO_TRADE**, not an imputed trade.
+
+## Adaptive regime router — prospective phase
+
+The current research candidate is separate from the frozen Batman protocol.
+
+- High volatility + trailing p_expand rank < 0.50 → **Short Strangle**
+- Medium volatility + trailing trend60 rank > 0.20 → **Sell Put**
+- Low volatility → **NO_TRADE**
+- Rank lookback: 252 decision observations
+- MC: 5,000 bootstrap paths
+- Return lookback: 756 sessions
+- Stress cost: 2 option points per contract
+- Entry: exactly 3 future trading sessions before the selected expiry, with the executable option-chain snapshot taken at/after 09:30 IST
+- Model return cutoff: the prior completed NIFTY 50 session
+- Gate: net MC EV > 0
+- Position sizing: max(ES95, ES99) with the configured 2% paper-account risk budget
+- No discretionary early exit
+- No broker execution
+
+The producer uses the immutable V2 run-9 regime predictions as a historical feature seed and then appends only new prospective entry-day feature observations. New signals are stored in adaptive_regime_signals.csv; open/closed paper positions are stored in adaptive_regime_ledger.csv.
+
+The initial 2026 holdout supporting this candidate contains only 8 gated observations, so the live research objective is to collect a genuinely prospective sequence and test whether the edge persists after real entry-time quotes.
