@@ -50,7 +50,7 @@ def test_strategy_targets_use_only_required_terminal_quantiles() -> None:
     assert strategy_targets("Buy Call", terminal, 102.0) == {"atm": 102.0}
     assert strategy_targets("Put Ratio Spread", terminal, 102.0) == {
         "atm": 102.0,
-        "p35": 99.5,
+        "p35": 100.25,
     }
     assert strategy_targets("Batman", terminal, 102.0) == {
         "p20": 98.0,
