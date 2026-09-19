@@ -1,57 +1,25 @@
 <!doctype html>
-<html lang="en"><head>
+<html lang="en">
+<head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Batman Signal Producer</title>
+<title>NIFTY Paper Trading Research</title>
 <style>
-body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#0d1117;color:#e6edf3}
-main{max-width:1200px;margin:auto;padding:24px} .card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;margin:14px 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px} .kpi{font-size:24px;font-weight:700}
-small{color:#8b949e} table{width:100%;border-collapse:collapse;font-size:14px} th,td{padding:8px;border-bottom:1px solid #30363d;text-align:left}
-.badge{display:inline-block;padding:4px 9px;border-radius:999px;background:#21262d;font-weight:700} a{color:#58a6ff}
-</style></head><body><main>
-<h1>Batman Signal Producer</h1>
-<p><small>Frozen protocol • 3 trading sessions before expiry • 5,000 MC paths • 756-session lookback • net EV gate.</small></p>
-<div class="card"><h2>Latest run</h2>
-<p><span class="badge">BACKFILL_ENTRY_DAY / NO_TRADE</span></p>
-<div class="grid">
-<div><small>Decision date</small><div class="kpi">2026-09-17</div></div>
-<div><small>Expiry</small><div class="kpi">2026-09-22</div></div>
-<div><small>Spot</small><div class="kpi">23,217.60</div></div>
-<div><small>MC EV net</small><div class="kpi">-23.58</div></div>
-<div><small>MC POP</small><div class="kpi">0.434</div></div>
-<div><small>Lots</small><div class="kpi">0</div></div>
-</div><p>RETROACTIVE PAPER-TRADE BACKFILL: model data cutoff 2026-09-16; paper entry date 2026-09-17; expiry 2026-09-22; 3 future trading sessions. Option entry uses NSE UDiFF 2026-09-17 ClsPric; historical bid/ask are unavailable, so this is a reconstructed paper entry and not an executable historical quote.</p></div>
-
-<div class="card"><h2>MC results</h2><table>
-<tr><th>Metric</th><th>Value</th></tr>
-<tr><td>P20 / P35 / P65 / P80 terminal</td><td>22,991.37 / 23,129.41 / 23,353.41 / 23,497.99</td></tr>
-<tr><td>P20 / P35 / C65 / C80 strikes</td><td>23,000.00 / 23,150.00 / 23,350.00 / 23,500.00</td></tr>
-<tr><td>Gross EV / stress cost / net EV</td><td>-11.58 / 12.00 / -23.58</td></tr>
-<tr><td>MC POP</td><td>0.434</td></tr>
-<tr><td>ES95 / ES99</td><td>467.60 / 780.62</td></tr>
-<tr><td>Risk budget / estimated risk per lot</td><td>₹2,000.00 / ₹50,740.21</td></tr>
-<tr><td>Minimum capital for 1 lot</td><td>₹2,537,010.44</td></tr>
-</table></div>
-
-<div class="card"><h2>Suggested Batman structure</h2>
-<table><tr><th>Side</th><th>Type</th><th>Strike</th><th>Qty/lot</th><th>Entry price</th></tr><tr><td>BUY</td><td>PE</td><td>23,150.00</td><td>1</td><td>58.55</td></tr><tr><td>SELL</td><td>PE</td><td>23,000.00</td><td>2</td><td>30.25</td></tr><tr><td>BUY</td><td>CE</td><td>23,350.00</td><td>1</td><td>94.60</td></tr><tr><td>SELL</td><td>CE</td><td>23,500.00</td><td>2</td><td>38.90</td></tr></table></div>
-
-<div class="card"><h2>Paper-trading summary</h2>
-<div class="grid">
-<div><small>Closed trades</small><div class="kpi">0</div></div>
-<div><small>Win rate</small><div class="kpi">0.0%</div></div>
-<div><small>Profit factor</small><div class="kpi">0.00</div></div>
-<div><small>Total P&L</small><div class="kpi">₹0.00</div></div>
-<div><small>Max drawdown</small><div class="kpi">₹0.00</div></div>
-</div></div>
-
-<div class="card"><h2>Recent signals</h2>
-<table><tr><th>Date</th><th>Expiry</th><th>Status</th><th>Signal</th><th>Spot</th><th>Net EV</th><th>POP</th><th>Lots</th></tr><tr><td>2026-09-17</td><td>2026-09-22</td><td>BACKFILL_ENTRY_DAY</td><td>NO_TRADE</td><td>23,217.60</td><td>-23.58</td><td>0.434</td><td>0.0</td></tr><tr><td>2026-09-19</td><td>nan</td><td>NOT_TRADING_DAY</td><td>NO_TRADE</td><td>23,346.40</td><td>nan</td><td>nan</td><td>nan</td></tr></table>
-<p><a href="data/latest_signal.json">Latest JSON</a> · <a href="data/batman_signals.csv">Signals CSV</a> · <a href="data/batman_paper_ledger.csv">Paper ledger CSV</a></p>
-</div>
-
-<div class="card"><h2>Recent paper trades</h2>
-<table><tr><th>Entry</th><th>Expiry</th><th>Signal</th><th>Status</th><th>Lots</th><th>Net EV</th><th>Realized P&L ₹</th></tr><tr><td>2026-09-17</td><td>2026-09-22</td><td>NO_TRADE</td><td>NO_TRADE</td><td>0</td><td>-23.58</td><td>nan</td></tr></table></div>
-
-<div class="card"><small>Option-chain data is obtained from NSE public endpoints; NIFTY history uses NSE when available and Yahoo Finance only as a documented fallback. This is a research/paper-trading publication system and does not place broker orders. Missing/invalid data is not imputed.</small></div>
+:root{color-scheme:dark}body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#0b1220;color:#e8eef6}
+main{max-width:1000px;margin:auto;padding:32px 20px 48px}.hero{padding:24px;border:1px solid #263244;border-radius:18px;background:#111a2a}
+h1{margin:0 0 8px;font-size:32px}.sub{color:#9fb0c5;margin:0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin-top:22px}
+.card{display:block;text-decoration:none;color:inherit;padding:24px;border-radius:16px;border:1px solid #2b3648;background:#151f30;transition:.15s}.card:hover{transform:translateY(-2px);border-color:#5d8dff}
+.tag{display:inline-block;padding:5px 9px;border-radius:999px;background:#22304a;color:#bcd0ff;font-size:12px;font-weight:700}.card h2{margin:14px 0 8px}
+.card p{color:#aebdce;line-height:1.5}.open{display:inline-block;margin-top:8px;font-weight:700;color:#7fb0ff}
+.notice{margin-top:20px;padding:14px 16px;border-radius:12px;background:#141b27;color:#aebdce;font-size:13px;line-height:1.5}footer{margin-top:28px;color:#738195;font-size:12px}
+</style>
+</head>
+<body><main>
+<section class="hero"><div class="tag">NIFTY • PAPER TRADING RESEARCH</div><h1>Choose a strategy dashboard</h1>
+<p class="sub">Two isolated paper-trading systems. Separate signals, ledgers, research rules and pages.</p></section>
+<section class="grid">
+<a class="card" href="batman/"><div class="tag">SYSTEM 01</div><h2>Batman</h2><p>Frozen Batman paper-trading protocol with its own signal history, MC results and ledger.</p><span class="open">Open Batman →</span></a>
+<a class="card" href="adaptive/"><div class="tag">SYSTEM 02</div><h2>Adaptive Regime</h2><p>Prospective regime-conditioned candidate-set router derived from the completed CPCV robustness finding.</p><span class="open">Open Adaptive →</span></a>
+</section>
+<div class="notice">Both systems are research / paper trading only. The Adaptive page distinguishes the validated regime-level finding from its unvalidated prospective primary-selection rule.</div>
+<footer>Branch: research/adaptive-paper-signals-v1 • No broker order execution.</footer>
 </main></body></html>
