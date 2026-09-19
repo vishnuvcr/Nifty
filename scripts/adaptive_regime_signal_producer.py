@@ -305,6 +305,11 @@ def main() -> None:
     ap.add_argument("--ledger", default="paper_trading/adaptive_regime_ledger.csv")
     ap.add_argument("--signals", default="paper_trading/adaptive_regime_signals.csv")
     ap.add_argument("--site-dir", default="site/adaptive")
+    ap.add_argument(
+        "--enable-experimental-routing",
+        action="store_true",
+        help="Enable the currently-unvalidated adaptive router. Disabled by default.",
+    )
     args = ap.parse_args()
 
     client = NSEClient()
@@ -527,6 +532,12 @@ def main() -> None:
                     "signal": metrics["signal"],
                     "legs": metrics["legs"],
                 })
+                if not args.enable_experimental_routing:
+                    base["signal"] = "NO_TRADE"
+                    base["status"] = "RESEARCH_OBSERVATION_ONLY"
+                    base["recommended_lots"] = 0
+                    base["filter_reason"] = "adaptive_router_not_promoted_after_nested_2026_holdout"
+                    base["notes"] += " Experimental routing is disabled; this run records features and candidate metrics only."
             else:
                 base["notes"] += " No strategy passed the regime filter or feature-history requirement; NO_TRADE."
 
