@@ -4,10 +4,13 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
+import pytest
 
 from scripts.adaptive_paper_signal_producer_v1 import (
     CANDIDATES_BY_REGIME,
     candidate_contract_count,
+    compute_volatility_regime,
     select_primary_candidate,
     strategy_targets,
 )
@@ -68,6 +71,25 @@ def test_primary_selection_prefers_highest_net_ev_only_with_eligibility() -> Non
     ]
     selected = select_primary_candidate(rows)
     assert selected["strategy"] == "B"
+
+
+
+
+def test_volatility_regime_rank_is_strictly_past_only() -> None:
+    rng = np.random.default_rng(7)
+    returns = rng.normal(0.0, 0.008, 180)
+    closes = 20000.0 * np.exp(np.cumsum(returns))
+    dates = pd.date_range("2026-01-01", periods=len(closes), freq="D")
+    df = pd.DataFrame({"date": dates, "close": closes})
+    cutoff = pd.Timestamp(dates[-1])
+    result = compute_volatility_regime(df, cutoff, 100)
+
+    logret = np.log(df["close"]).diff()
+    rv = (logret.rolling(20).std(ddof=1) * np.sqrt(252)).dropna()
+    latest = float(rv.iloc[-1])
+    hist = rv.iloc[:-1].tail(100)
+    expected = float(np.mean(hist.to_numpy(float) <= latest))
+    assert result["rv20_rank"] == pytest.approx(expected)
 
 
 def test_config_matches_checked_in_spec() -> None:
