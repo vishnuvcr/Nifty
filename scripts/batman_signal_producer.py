@@ -565,6 +565,8 @@ def main() -> None:
 
     ledger_path = Path(args.ledger)
     ledger = read_csv_or_empty(ledger_path, LEDGER_COLUMNS)
+    ledger_path.parent.mkdir(parents=True, exist_ok=True)
+    ledger.to_csv(ledger_path, index=False)
     closures = calculate_realized_for_open_trades(ledger, index_df, decision)
     if closures:
         ledger = apply_closures(ledger, closures)
