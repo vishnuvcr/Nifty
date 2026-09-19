@@ -1,0 +1,14 @@
+{
+  "producer":"Adaptive Paper Signal Producer v1",
+  "status":"PENDING_FIRST_RUN",
+  "entry_time_ist":"09:30",
+  "entry_sessions_before_expiry":3,
+  "mc_paths":5000,
+  "lookback_sessions":756,
+  "rank_lookback_sessions":252,
+  "stress_cost_points_per_contract":2.0,
+  "risk_pct":0.02,
+  "lot_size":65,
+  "paper_only":true,
+  "primary_selection_validated":false
+}
