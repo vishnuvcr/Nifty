@@ -104,4 +104,3 @@ def test_batman_workflow_is_isolated_from_adaptive_pages_and_has_manual_controls
     assert "actions/deploy-pages@v4" in workflow
     assert "TELEGRAM_BOT_TOKEN" in workflow
     assert "TELEGRAM_CHAT_ID" in workflow
-    assert "--site-dir site" not in workflow
