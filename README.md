@@ -40,3 +40,7 @@ The frozen S5 backtest workflow is `.github/workflows/sensex-s5-wfa-backtest-dis
 
 
 SENSEX results: https://github.com/vishnuvcr/Nifty/blob/research/sensex-s5-wfa-backtest-v1/reports/sensex_options/RESULT_SUMMARY.md
+
+
+### SENSEX backtest result
+See `docs/sensex_options/SENSEX_BACKTEST_RESULT.md` for the frozen-method result, validation/holdout statistics, slippage sensitivity, account-affordability analysis, limitations, and next research phase.
