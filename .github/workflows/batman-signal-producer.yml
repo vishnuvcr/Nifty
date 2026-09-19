@@ -1,0 +1,125 @@
+name: Batman Signal Producer
+
+on:
+  workflow_dispatch:
+    inputs:
+      capital:
+        description: "Paper capital in INR"
+        required: true
+        default: "100000"
+      risk_pct:
+        description: "Risk budget fraction per trade"
+        required: true
+        default: "0.02"
+      lot_size:
+        description: "NIFTY lot size"
+        required: true
+        default: "65"
+      paths:
+        description: "Monte Carlo paths"
+        required: true
+        default: "5000"
+      cost_per_contract:
+        description: "Stress execution cost per contract, in option points"
+        required: true
+        default: "2.0"
+      expiry:
+        description: "Optional explicit expiry YYYY-MM-DD; blank = nearest eligible expiry"
+        required: false
+        default: ""
+      seed:
+        description: "Monte Carlo seed"
+        required: true
+        default: "20260919"
+  schedule:
+    - cron: "10 10 * * 1-5"
+
+concurrency:
+  group: batman-signal-producer
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  produce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CAPITAL: ${{ github.event.inputs.capital || '100000' }}
+      RISK_PCT: ${{ github.event.inputs.risk_pct || '0.02' }}
+      LOT_SIZE: ${{ github.event.inputs.lot_size || '65' }}
+      PATHS: ${{ github.event.inputs.paths || '5000' }}
+      COST_PER_CONTRACT: ${{ github.event.inputs.cost_per_contract || '2.0' }}
+      EXPIRY: ${{ github.event.inputs.expiry || '' }}
+      SEED: ${{ github.event.inputs.seed || '20260919' }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+    steps:
+      - name: Checkout research branch
+        uses: actions/checkout@v4
+        with:
+          ref: research/monte-carlo-wfa-v1
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -e .
+
+      - name: Produce signal
+        run: |
+          CMD=(python scripts/batman_signal_producer.py
+            --capital "$CAPITAL"
+            --risk-pct "$RISK_PCT"
+            --lot-size "$LOT_SIZE"
+            --paths "$PATHS"
+            --cost-per-contract "$COST_PER_CONTRACT"
+            --decision-date auto
+            --seed "$SEED")
+          if [ -n "$EXPIRY" ]; then
+            CMD+=(--expiry "$EXPIRY")
+          fi
+          "${CMD[@]}"
+
+      - name: Persist paper-trading state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add paper_trading/batman_ledger.csv paper_trading/batman_signals.csv
+          if git diff --cached --quiet; then
+            echo "No paper-trading state changes."
+          else
+            git commit -m "chore: update Batman paper-trading state [skip ci]"
+            git push origin HEAD:research/monte-carlo-wfa-v1
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy GitHub Pages
+        uses: actions/deploy-pages@v4
+
+      - name: Publish result summary
+        run: |
+          {
+            echo "## Batman Signal Producer"
+            echo
+            echo "- Workflow run: ${{ github.run_id }}"
+            echo "- Research branch: research/monte-carlo-wfa-v1"
+            echo "- Pages: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+            echo
+            echo "Latest signal, MC results, signal history and paper-trade ledger are published in Pages."
+          } >> "$GITHUB_STEP_SUMMARY"
