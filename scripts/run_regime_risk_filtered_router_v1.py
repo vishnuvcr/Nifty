@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from scripts.run_regime_robustness_v1 import CONTRACTS, add_adaptive_regime, profit_factor, summary
+from run_regime_robustness_v1 import CONTRACTS, add_adaptive_regime, profit_factor, summary
 
 
 BASE_STRATEGIES = {
