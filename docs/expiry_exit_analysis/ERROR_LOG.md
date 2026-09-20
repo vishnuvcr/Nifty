@@ -80,3 +80,16 @@ Type: capital-sizing / external-state dependency
 Observation: Paytm Money's current overnight F&O margin is dynamic and depends on the exact live basket and exchange margin parameters. Historical trade P&L cannot be substituted for broker margin.
 Resolution: calculate a research MC-risk capital reserve from the frozen SENSEX population and explicitly label it as a proxy; do not claim it is Paytm Money's live margin.
 Prevention: before deployment, capture the Paytm Money margin-calculator result for the exact four-leg basket and retain the snapshot with the trade signal.
+
+
+### E012 — Historical NIFTY Batman signal retained an obsolete lot size
+Type: contract specification / capital sizing
+Observation: the frozen NIFTY Batman paper signal records a 65-unit lot.
+Resolution: risk points were normalized to the current 75-unit NIFTY lot before INR sizing.
+Prevention: validate the applicable exchange multiplier before converting option points to INR.
+
+### E013 — NIFTY Batman risk population is incomplete
+Type: methodology / evidence coverage
+Observation: only one frozen NIFTY Batman observation with the required ES sizing fields was available in the inspected branch.
+Resolution: the NIFTY result is labelled provisional rather than a historical maximum.
+Prevention: reconstruct and freeze a multi-trade NIFTY Batman risk population before final capital specification.
