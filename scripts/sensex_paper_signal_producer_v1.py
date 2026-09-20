@@ -127,11 +127,17 @@ def normalize_history(df: pd.DataFrame) -> pd.DataFrame:
     })
     return out.dropna().drop_duplicates("date").sort_values("date").reset_index(drop=True)
 
-def future_session_expiry(history: pd.DataFrame, decision_date: pd.Timestamp) -> pd.Timestamp:
-    sessions = pd.DatetimeIndex(history.loc[history["date"] > decision_date, "date"].sort_values().unique())
-    if len(sessions) < 3:
-        raise RuntimeError("fewer than three future SENSEX trading sessions available")
-    return pd.Timestamp(sessions[2]).normalize()
+def third_future_weekday(decision_date: pd.Timestamp) -> pd.Timestamp:
+    d = decision_date.date()
+    count = 0
+    while count < 3:
+        d += timedelta(days=1)
+        if d.weekday() < 5:
+            count += 1
+    return pd.Timestamp(d).normalize()
+
+class NoEligibleListedExpiry(RuntimeError):
+    pass
 
 def fetch_live_sensex() -> dict[str, Any]:
     errors: list[str] = []
@@ -259,16 +265,20 @@ def fetch_option_chain(expiry: pd.Timestamp) -> pd.DataFrame:
         {"flag": "0", "expirydate": expiry.strftime("%d-%b-%Y").upper(), "scripcode": "16"},
     ]
     errors: list[str] = []
+    parsed_any = False
     for url in urls:
         for params in param_variants:
             try:
                 payload = request_json(url, params=params)
                 chain = canonical_option_rows(payload)
+                parsed_any = True
                 scoped = chain.loc[chain["expiry"].eq(expiry)].copy()
                 if not scoped.empty:
                     return scoped
             except Exception as exc:
                 errors.append(f"{url} {params}: {exc}")
+    if parsed_any:
+        raise NoEligibleListedExpiry(f"no listed SENSEX option expiry matched target date {expiry.date()}")
     raise RuntimeError("no executable BSE option-chain snapshot found; " + " | ".join(errors[-4:]))
 
 def quote_for_leg(chain: pd.DataFrame, option_type: str, strike: float, side: str) -> float:
@@ -436,7 +446,7 @@ def main() -> int:
                 f"BSE live SENSEX quote is not dated {decision_date.date()}; observed {live_date.date()}"
             )
 
-        expiry = future_session_expiry(history, decision_date)
+        expiry = third_future_weekday(decision_date)
         chain = fetch_option_chain(expiry)
         terminal = mc_terminal(returns, spot, 3, MC_PATHS, args.seed)
         regime = compute_regime(history, cutoff, RANK_LOOKBACK)
@@ -499,6 +509,15 @@ def main() -> int:
                 "model_cutoff": str(cutoff.date()),
                 "expiry": str(expiry.date()),
             },
+        }
+        write_json(output, payload)
+        return 0
+    except NoEligibleListedExpiry as exc:
+        payload = {
+            "status": "NO_TRADE",
+            "reason": "no_eligible_listed_expiry",
+            "error": str(exc),
+            "timestamp_ist": ts.isoformat(),
         }
         write_json(output, payload)
         return 0
