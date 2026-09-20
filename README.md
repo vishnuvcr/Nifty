@@ -35,6 +35,7 @@ Schedule:
 - NIFTY entry scanning remains at 09:30 IST on trading weekdays; the existing 16:00 IST publisher is refresh-only.
 - SENSEX Batman + Adaptive entry scanners run automatically at 09:30 IST (04:00 UTC) on weekdays and have manual workflow-dispatch buttons.
 - SENSEX settlement/page refresh runs automatically at 16:00 IST (10:30 UTC) on weekdays and has a manual workflow-dispatch button.
+- After SENSEX scanner/refresh state is pushed, the combined Pages publisher is also triggered immediately; the 16:00 job remains the scheduled settlement/publication backstop.
 - The 16:00 jobs do not create a second entry signal.
 
 The SENSEX scanner is paper-only. Live entry requires executable bid/ask data and applies a 0.50-point adverse slippage stress per option leg; missing or malformed quote data becomes NO_TRADE and is logged. No broker order is submitted.
