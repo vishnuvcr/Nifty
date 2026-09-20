@@ -15,7 +15,7 @@ Last updated: 2026-09-20 (Asia/Kolkata)
 | L8 Fresh untouched holdout | HOLD | Must be outside the previously exposed 2026 period. |
 | L9 Capital/margin/operational feasibility | COMPLETE — STRUCTURAL ONLY | Current Paytm Money assumptions must be re-verified before deployment. |
 | L10 Prospective paper-trading specification | HOLD — NOT ELIGIBLE | Paper-only; no broker order submission. |
-| L11 Final inference and manuscript | COMPLETE — PHASE REPORT | Full manuscript with tables, graphs, appendices and supplements. |
+| L11 Final inference and manuscript | COMPLETE — PHASE MANUSCRIPT | Full manuscript with tables, graphs, appendices and supplements. |
 
 ## Branch
 
