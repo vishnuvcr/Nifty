@@ -141,12 +141,12 @@ The separate branch `research/limited-risk-option-wfo-v1` has completed its hist
 
 ### A. Four frozen finite-loss candidates — NIFTY + SENSEX
 
-The four candidates that passed the limited-risk development-to-validation freeze are now tracked independently, without retrospective strategy selection:
+Two candidates are retained for frozen prospective validation, without retrospective strategy selection:
 
 - Jade Lizard
 - Put Ratio Spread
-- Sell Put
-- Bull Put Spread
+
+Sell Put and Bull Put Spread are retained only as historical limited-risk research candidates and are excluded from the new prospective validation stream.
 
 NIFTY:
 - Branch: https://github.com/vishnuvcr/Nifty/tree/research/prospective-defined-risk-nifty-v1
