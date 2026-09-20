@@ -1,0 +1,55 @@
+research:
+  id: limited-risk-option-wfo-v1
+  parent_branch: research/monte-carlo-wfa-v1
+  entry_offset_sessions: 3
+  mc_paths: 5000
+  return_lookback_sessions: 756
+  random_seed_base: 20260920
+  final_holdout_policy: post_exposure_only
+  no_trade_allowed: true
+
+risk_audit:
+  require_finite_max_loss: true
+  evaluate_two_tails: true
+  dense_grid_points: 20001
+  analytical_crosscheck_when_available: true
+  fail_closed_on_ambiguity: true
+
+strategy_scope:
+  source: src/nifty_mc/strategy_catalog.py
+  core_classes:
+    - R1
+    - R2
+  separate_substudy:
+    - R3
+  excluded:
+    - X
+
+costs:
+  parent_comparability_stress_points_per_contract: 2.0
+  slippage_points_per_leg:
+    - 0.0
+    - 0.5
+    - 1.0
+    - 2.0
+    - 3.0
+  broker_costs:
+    source: src/nifty_mc/costs.py
+    status: research_default_only
+  paytm_money:
+    current_verification_required_before_deployment: true
+
+statistics:
+  moving_block_bootstrap_repetitions: 10000
+  cpcv_enabled: true
+  multiple_testing_control_required: true
+  report_confidence_intervals: true
+  report_yearly_and_regime_breakdowns: true
+
+reproducibility:
+  deterministic_seeds: true
+  cached_data_preferred: true
+  workflow_dispatch_required: true
+  error_log_required: true
+  phase_status_required: true
+  conversation_audit_log_required: true
