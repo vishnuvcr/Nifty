@@ -184,16 +184,16 @@ def main():
     pd.DataFrame(stress).to_csv(out/"candidate_cost_stress.csv",index=False)
 
     lines=["# Limited-Risk Option WFO — Results","","## Risk audit",f"Mechanically core-eligible strategies: {len(eligible)} / {len(STRATEGY_NAMES)}",""]
-    lines.append(rdf[["strategy","risk_class","loss_unbounded","profit_unbounded","core_limited_risk","audit_status"]].sort_values("strategy").to_markdown(index=False))
+    lines.append(rdf[["strategy","risk_class","loss_unbounded","profit_unbounded","core_limited_risk","audit_status"]].sort_values("strategy").to_string(index=False))
     lines += ["","## Validation comparison"]
     top=broad_df[(broad_df.period=="validation")&(broad_df.gated_n>=10)].sort_values("gated_mean",ascending=False).head(15) if not broad_df.empty else pd.DataFrame()
-    lines.append(top.to_markdown(index=False) if not top.empty else "No strategy met the validation reporting floor.")
+    lines.append(top.to_string(index=False) if not top.empty else "No strategy met the validation reporting floor.")
     lines += ["","## Global nested selection"]
-    lines.append("No limited-risk strategy passed the predeclared development-to-validation gate." if frozen.empty else frozen[["strategy","dev_n","dev_mean","dev_pf","validation_n","validation_mean","validation_pf","exposed_final_n","exposed_final_mean","exposed_final_pf"]].to_markdown(index=False))
+    lines.append("No limited-risk strategy passed the predeclared development-to-validation gate." if frozen.empty else frozen[["strategy","dev_n","dev_mean","dev_pf","validation_n","validation_mean","validation_pf","exposed_final_n","exposed_final_mean","exposed_final_pf"]].to_string(index=False))
     lines += ["","## Volatility-regime selection",f"Frozen validation-qualified map: {json.dumps(fmap,sort_keys=True)}"]
-    if rs: lines.append(pd.DataFrame(rs).to_markdown(index=False))
+    if rs: lines.append(pd.DataFrame(rs).to_string(index=False))
     lines += ["","## Pre-2025 CPCV"]
-    lines.append(cpcv.to_markdown(index=False) if not cpcv.empty else "No CPCV selections.")
+    lines.append(cpcv.to_string(index=False) if not cpcv.empty else "No CPCV selections.")
     lines.append(f"Block-bootstrap CI of selected CPCV path means: {ci[0]:.2f} to {ci[1]:.2f}; P(mean<=0)={ci[2]:.3f}.")
     lines += ["","## Multiple-testing diagnostic",json.dumps(rc,indent=2)]
     lines += ["","## Holdout status","The 2025-2026 sample is EXPOSED because the parent NIFTY MC-WFO research already reported this period. It is not a clean fresh holdout for this branch.","Fresh-holdout inference remains HOLD until genuinely new, previously unexposed option data are available."]
