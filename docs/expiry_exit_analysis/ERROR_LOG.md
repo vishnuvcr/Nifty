@@ -56,3 +56,10 @@ Type: execution / data-path
 Observation: the workflow correctly created `data/expiry_exit/sensex_mc_daily.parquet`, but the v2 runner passed `data_root/"sensex_mc_daily.parquet"` (inside the HF data tree) into the frozen SENSEX backtest. The resulting run failed after approximately 20 minutes with FileNotFoundError.
 Resolution: the runner now reads the prepared composite MC history from the authoritative `ROOT/data/expiry_exit/sensex_mc_daily.parquet` path.
 Prevention: use one explicit prepared-data contract between workflow and analysis engine; add a preflight file-existence assertion before entering the long SENSEX backtest.
+
+
+### E009 — SENSEX NO_TRADE rows reached exit JSON parsing
+Type: execution / schema handling
+Observation: frozen S5 trade CSVs deliberately contain NO_TRADE rows with blank `legs_json`; pandas represented those blanks as NaN, and the early-exit runner attempted `json.loads()` on the NaN value.
+Resolution: the runner now skips rows without a string `legs_json` and skips non-CLOSED rows before parsing; malformed JSON is also skipped rather than interpreted as a trade.
+Prevention: treat NO_TRADE/status fields as part of the frozen trade schema and validate them before any leg-level repricing.
