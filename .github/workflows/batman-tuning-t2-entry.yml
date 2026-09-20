@@ -1,0 +1,9 @@
+name: BATMAN Tuning T2 Entry Tuning
+on:
+  workflow_dispatch:
+jobs:
+  t2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "T2 is gated on successful T1 data validation." && exit 1
