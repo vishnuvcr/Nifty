@@ -1,13 +1,11 @@
 name: Refresh NIFTY Paper Trading Dashboards
-# v1: centrally publishes isolated Batman and Adaptive dashboards from the research branch. 16:00 IST is refresh-only. Phase 10 dashboard template is current.
+# v2: centrally publishes NIFTY and SENSEX paper-trading dashboards. 16:00 IST is refresh-only.
 
 on:
-  # Rebuild once when the publisher itself is changed; normal refresh is 16:00 IST.
   push:
     paths:
       - ".github/workflows/publish-paper-pages.yml"
   schedule:
-    # 16:00 IST = 10:30 UTC (India has no daylight-saving change)
     - cron: "30 10 * * 1-5"
   workflow_dispatch:
     inputs:
@@ -32,7 +30,7 @@ on:
         required: true
         default: "2.0"
       expiry:
-        description: "Optional explicit expiry YYYY-MM-DD"
+        description: "Optional explicit NIFTY expiry YYYY-MM-DD"
         required: false
         default: ""
       seed:
@@ -41,7 +39,7 @@ on:
         default: ""
 
 concurrency:
-  group: nifty-paper-refresh
+  group: index-paper-pages
   cancel-in-progress: false
 
 permissions:
@@ -65,7 +63,7 @@ jobs:
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
     steps:
-      - name: Checkout paper-trading branch
+      - name: Checkout NIFTY paper-trading branch
         uses: actions/checkout@v4
         with:
           ref: research/adaptive-paper-signals-v1
@@ -83,11 +81,21 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install -e .
 
-      - name: Refresh ledgers and dashboards only
+      - name: Refresh NIFTY ledgers and dashboards only
         run: |
           python scripts/refresh_paper_pages_v1.py --capital "$CAPITAL" --refresh-cutoff auto
 
-      - name: Persist refresh state
+      - name: Sync SENSEX S7 dashboard state
+        run: |
+          git fetch origin research/sensex-s7-paper-trading-v1
+          rm -rf site/sensex
+          git archive origin/research/sensex-s7-paper-trading-v1 site/sensex | tar -x
+          test -f site/sensex/index.html
+          test -f site/sensex/batman/index.html
+          test -f site/sensex/adaptive/index.html
+          echo "SENSEX dashboard state synchronized from research/sensex-s7-paper-trading-v1"
+
+      - name: Persist combined dashboard state
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -95,9 +103,9 @@ jobs:
           git pull --rebase --autostash origin research/adaptive-paper-signals-v1
           git add paper_trading/batman_ledger.csv paper_trading/adaptive_ledger.csv site
           if git diff --cached --quiet; then
-            echo "No refresh state changes."
+            echo "No dashboard state changes."
           else
-            git commit -m "chore: refresh paper trading dashboards [skip ci]"
+            git commit -m "chore: refresh index paper trading dashboards [skip ci]"
             git push origin HEAD:research/adaptive-paper-signals-v1
           fi
 
@@ -112,13 +120,16 @@ jobs:
       - name: Publish summary
         run: |
           {
-            echo "## NIFTY paper-trading dashboard refresh"
+            echo "## Index options paper-trading dashboard refresh"
             echo
             echo "- Refresh schedule: weekdays at 16:00 IST (10:30 UTC)"
-            echo "- Branch: research/adaptive-paper-signals-v1"
-            echo "- Pages: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
-            echo "- Batman dashboard: /batman/"
-            echo "- Adaptive dashboard: /adaptive/"
+            echo "- Root: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+            echo "- NIFTY: /"
+            echo "- NIFTY Batman: /batman/"
+            echo "- NIFTY Adaptive: /adaptive/"
+            echo "- SENSEX: /sensex/"
+            echo "- SENSEX Batman: /sensex/batman/"
+            echo "- SENSEX Adaptive: /sensex/adaptive/"
             echo
-            echo "Refresh-only: no new entry signal is generated at 16:00 IST. Both systems are paper-only; no broker orders are placed."
+            echo "The 16:00 job settles matured paper trades and republishes both indices. It does not create a second entry signal."
           } >> "$GITHUB_STEP_SUMMARY"
