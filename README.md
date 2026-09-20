@@ -10,6 +10,18 @@ Research framework for Nifty 50 expiry-range forecasting, bull/bear/neutral clas
 - GBM as a baseline, with bootstrap/GARCH/regime-aware extensions
 - Reproducible experiments and fixed random seeds
 
+## Expiry-day early-exit sensitivity analysis
+
+A separate sensitivity branch tests the frozen Batman and Adaptive entry rules for NIFTY and SENSEX under three expiry-day exit scenarios: expiry settlement baseline, 15:00 IST, and 15:10 IST. The early-exit scenarios use the exact 1-minute bar OPEN at the chosen timestamp to avoid same-minute look-ahead.
+
+- Branch: https://github.com/vishnuvcr/Nifty/tree/research/expiry-auction-exit-analysis-v1
+- Research plan: https://github.com/vishnuvcr/Nifty/blob/research/expiry-auction-exit-analysis-v1/docs/expiry_exit_analysis/RESEARCH_PLAN.md
+- Phase status: https://github.com/vishnuvcr/Nifty/blob/research/expiry-auction-exit-analysis-v1/docs/expiry_exit_analysis/PHASE_STATUS.md
+- Error log: https://github.com/vishnuvcr/Nifty/blob/research/expiry-auction-exit-analysis-v1/docs/expiry_exit_analysis/ERROR_LOG.md
+- Conversation/audit log: https://github.com/vishnuvcr/Nifty/blob/research/expiry-auction-exit-analysis-v1/docs/expiry_exit_analysis/CONVERSATION_LOG.md
+
+**Current status (2026-09-20):** E0 specification, E1 engine, and E2 data workflow are complete. E3 CI execution is in progress; E4 result verification and E5 final comparison are pending. No 15:00/15:10 numerical result is claimed until the CI outputs pass verification.
+
 ## Unified paper-trading GitHub Pages
 
 GitHub Pages now uses a two-level selector:
@@ -63,7 +75,6 @@ The SENSEX transfer study completed S6 robustness/statistical inference on branc
 - S6 robustness summary: https://github.com/vishnuvcr/Nifty/blob/research/sensex-s6-robustness-v1/reports/sensex_s6/S6_ROBUSTNESS_SUMMARY.json
 - S6 slippage table: https://github.com/vishnuvcr/Nifty/blob/research/sensex-s6-robustness-v1/reports/sensex_s6/S6_SLIPPAGE_SUMMARY.csv
 - S6 seed table: https://github.com/vishnuvcr/Nifty/blob/research/sensex-s6-robustness-v1/reports/sensex_s6/S6_SEED_SUMMARY.csv
-- S6 bootstrap table: https://github.com/vishnuvcr/Nifty/blob/research/sensex-s6-robustness-v1/reports/sensex_s6/S6_BLOCK_BOOTSTRAP.csv
 
 Final base-slippage combined OOS inference: Adaptive n=64, mean ₹2,612.93, bootstrap 95% CI -₹804.31 to ₹6,133.11; Batman n=44, mean ₹5,742.06, bootstrap 95% CI ₹662.67 to ₹10,341.49. These remain one-lot transfer-edge results; the SENSEX holdout is limited by the available options archive through 2026-05-21.
 
