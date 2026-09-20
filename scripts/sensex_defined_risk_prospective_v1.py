@@ -35,7 +35,7 @@ LEDGER_COLS=["signal_id","decision_date","expiry","strategy","status","signal","
 def target_map(strategy,terminal,spot):
     q10,q35,q65,q90=np.percentile(terminal,[10,35,65,90])
     d={"p10":float(q10),"p35":float(q35),"c65":float(q65),"c90":float(q90),"atm":float(spot)}
-    needed={"Jade Lizard":["p35","c65","c90"],"Put Ratio Spread":["atm","p35"],"Sell Put":["atm"],"Bull Put Spread":["p35","p10"]}
+    needed={"Jade Lizard":["p35","c65","c90"],"Put Ratio Spread":["atm","p35"]}
     return {k:d[k] for k in needed[strategy]}
 
 def load_csv(path,cols):
