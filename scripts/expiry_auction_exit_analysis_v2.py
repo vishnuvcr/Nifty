@@ -356,8 +356,10 @@ def run_sensex(paths:int,seed_base:int,data_root:Path):
                              "split":split,"pnl_inr":base,"mc_ev":float(r.get("mc_ev_net",np.nan)),"regime":r.get("regime")})
                 for mode in ("15:00:00","15:10:00"):
                     try:
-                        p=sensex_exit_pnl(r,expiry_day,mode,20,entry_date,entry_only)
-                    except Exception: continue
+                        entry_obj={"legs": legs, "entry_cashflow": entry_cash}
+                        p=sensex_exit_pnl(entry_obj,expiry_day,mode,20,entry_date,entry_only)
+                    except Exception:
+                        continue
                     rows.append({"index":"SENSEX","strategy":strat,"exit":mode[:5],"entry_date":entry_date.date(),"expiry":expiry.date(),
                                  "split":split,"pnl_inr":p,"mc_ev":float(r.get("mc_ev_net",np.nan)),"regime":r.get("regime")})
     return pd.DataFrame(rows)
