@@ -3,27 +3,17 @@
 | Phase | Status | Evidence |
 |---|---|---|
 | T0 Protocol freeze | COMPLETE | Frozen control, parameter grid, cost/statistical plans |
-| T1 Data and frozen-control reconstruction | **PARTIAL / BLOCKED** | Control specification independently matched to parent candidate; executable historical option-chain dataset is not present in this branch or parent `data/` tree |
+| T1 Data and frozen-control reconstruction | PARTIAL / BLOCKED | Control specification matched; historical executable cache still absent |
 | T2 Entry tuning | BLOCKED on T1 |
 | T3 Exit tuning | BLOCKED on T1 |
 | T4 Nested WFO | BLOCKED on T2/T3 |
 | T5 Robustness and inference | BLOCKED on T4 |
 | T6 Prospective freeze | BLOCKED on T5 |
 
-## T1 finding
+## T1 execution update — 2026-09-21
 
-The parent BATMAN candidate specification is available and matches the frozen control:
+A repository-wide audit was extended to historical BATMAN commits and GitHub Actions backfill runs. The parent branch contains a reconstructed first-trade paper record, but its own note states that historical bid/ask quotes were unavailable. The associated backfill diagnostic runs did not retain downloadable workflow artifacts. Therefore that record cannot serve as the executable historical dataset for D0-D6 and intraday exit tuning.
 
-- D3 entry;
-- 09:30 signal;
-- 756 prior NIFTY sessions;
-- 5,000 MC paths;
-- P20/P35/P65/P80;
-- +1 P35 PE, -2 P20 PE, +1 C65 CE, -2 C80 CE;
-- positive net MC-EV gate.
+A fail-closed cache contract and validator have now been added to this branch. The validator requires manifest.json, sessions.parquet, option_quotes.parquet, and intraday_underlying.parquet, with provenance/hash metadata. T1 remains blocked until those objects are supplied through the approved cache/artifact path.
 
-However, the parent repository explicitly does not commit bulk market data, and its visible `data/` tree contains only the data policy and an expiry-exit directory. The historical executable option-chain dataset needed to test D0-D6 and intraday exits is therefore not available to this branch through the repository contents currently accessible.
-
-**No tuning P&L is fabricated from the parent summary.**
-
-T1 can be completed when the required cached historical option data / artifact is made available to the workflow. The next implementation step is to make the workflow consume that cache rather than repeatedly download bulk data.
+No tuning P&L or parameter winner is claimed.
