@@ -1,57 +1,80 @@
 # Strategy Universe and Risk Rules
 
-## 1. Source universe
+## Source universe
 
-The starting universe is the 36 strategies currently declared in src/nifty_mc/strategy_catalog.py on the parent NIFTY MC-WFO branch.
+The starting universe is the 36 strategies declared in src/nifty_mc/strategy_catalog.py. The first empirical run uses a mechanical audit over the complete catalog; no manual risk label is authoritative.
 
-The declared universe must be versioned at the first L3 run. Any addition/removal after that point requires a new protocol revision.
+## Mechanical risk definition
 
-## 2. Risk classes
+For NIFTY's economically admissible underlying domain S >= 0, the classifier evaluates:
+- exact leg quantities and expiry tags;
+- aggregate call slope as S -> infinity;
+- terminal payoff on a dense S>=0 grid;
+- front-expiry versus multi-expiry structure.
 
-| Class | Definition | Examples from current catalog | Core-study status |
-|---|---|---|---|
-| R1 | Limited max loss + potentially unlimited profit | Buy Call, Buy Put, Long Straddle, Long Strangle, Strip, Strap, Call Ratio Back Spread, Put Ratio Back Spread | Eligible subject to mechanical audit |
-| R2 | Limited max loss + limited max profit | Bull/Bear Call/Put Spreads, Bull/Bear Condors, Bull/Bear Butterflies, Long Iron Butterfly, Long Iron Condor, Iron Butterfly, Short Iron Condor | Eligible subject to mechanical audit |
-| R3 | Limited loss but path-/multi-expiry-dependent | Long Calendar with Calls/Puts | Separate sub-study |
-| X | Unbounded adverse loss under declared structure | Batman, Short Straddle, Short Strangle, Call Ratio Spread, Put Ratio Spread, Jade Lizard, Reverse Jade Lizard, Long Synthetic Future, Short Synthetic Future, Risk Reversal | Excluded from core |
+A negative aggregate call slope implies an unbounded adverse upper-tail loss. A positive aggregate call slope implies an unbounded upper-tail profit. Put exposure remains finite as S approaches zero because the index cannot become negative.
 
-## 3. Mechanical audit requirements
+The classifier is therefore more reliable than a manually curated “defined-risk” list.
 
-For every candidate:
-- build the exact leg list from strategy_catalog.py;
-- calculate net premium cashflow from executable quotes;
-- evaluate payoff on a sufficiently wide grid;
-- evaluate limiting slopes in both tails;
-- identify maximum loss and maximum profit;
-- verify against an analytical formula where available;
-- fail closed if the result is ambiguous.
+## Classes produced by the audit
 
-Required fields:
-strategy, risk_class, audit_status, max_loss_points, max_profit_points, profit_unbounded, loss_unbounded, worst_case_underlying_region, contracts_per_unit, premium_cashflow, entry_cost, stress_slippage.
+- R1: finite maximum loss, potentially unlimited favorable upper-tail profit.
+- R2: finite maximum loss and finite maximum profit on the S>=0 domain.
+- R3: finite-loss but multi-expiry/path-dependent; excluded from the single-expiry core.
+- X: unbounded adverse loss; excluded from the limited-risk core.
 
-## 4. Strategy-specific notes
+## Important corrected classifications
 
-### Buy Call / Buy Put
-Finite maximum loss equal to net premium paid; profit is unbounded on the favorable tail for the appropriate option.
+### R1
+- Buy Call
+- Long Straddle
+- Long Strangle
+- Strip
+- Strap
+- Call Ratio Back Spread
 
-### Long Straddle / Long Strangle
-Finite maximum loss equal to total premium/debit after execution costs; upside is unbounded.
+### R2
+- Buy Put
+- Bull Call Spread
+- Bull Put Spread
+- Put Ratio Back Spread
+- Bull Condor
+- Bull Butterfly
+- Long Iron Butterfly
+- Long Iron Condor
+- Iron Butterfly
+- Short Iron Condor
+- Bear Put Spread
+- Bear Call Spread
+- Bear Condor
+- Bear Butterfly
+- Double Plateau
 
-### Strip / Strap
-Finite loss determined by the net debit under the actual entry convention; upside is unbounded on at least one tail. Exact risk must still be audited.
+### R3
+- Long Calendar with Calls
+- Long Calendar with Puts
 
-### Ratio Backspreads
-Potentially finite maximum loss and unbounded favorable-tail profit, but eligibility depends on actual strike spacing and net premium. The auditor must not infer safety from the strategy name.
+These calendars have finite loss but require a path-/multi-expiry valuation model, so they are not mixed with single-expiry terminal-payoff tests.
 
-### Debit/Credit Spreads, Condors and Butterflies
-Finite loss is expected from the structure, but the actual rupee maximum must include entry costs and exact leg quantities.
+### X
+- Sell Put
+- Range Forward
+- Long Synthetic Future
+- Call Ratio Spread
+- Put Ratio Spread
+- Short Straddle
+- Short Strangle
+- Batman
+- Jade Lizard
+- Reverse Jade Lizard
+- Sell Call
+- Risk Reversal
+- Short Synthetic Future
 
-### Calendars
-Treat as R3 because terminal payoff depends on different expiries and time value. Do not use a single-expiry intrinsic-value approximation.
+Any structure that fails the mechanical audit is excluded regardless of its catalogue label.
 
-## 5. Position-sizing rule
+## Position-sizing rule
 
-For the limited-risk core, the hard per-trade risk budget is:
-maximum verified loss per strategy unit + modeled execution/cost reserve.
+For the limited-risk core, the structural maximum loss is the hard risk bound. MC ES95/ES99 remains a secondary diagnostic and must never replace a known finite maximum-loss calculation.
 
-Never use MC ES95/ES99 as a substitute for a known maximum loss. ES is a secondary diagnostic; the finite structural maximum loss is the primary sizing constraint.
+Historical rupee capital requirements require the actual entry strikes, premiums, lot size and cost model. They cannot be reconstructed honestly from aggregate strategy P&L alone.
