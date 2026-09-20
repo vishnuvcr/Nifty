@@ -23,3 +23,17 @@ The parent options archive supplies EOD close prices rather than verified histor
 Fresh post-exposure data and deployment-grade bid/ask history are required before any strategy can be promoted to paper trading.
 
 See the detailed report in the branch and the CI artifact for complete raw tables.
+
+
+## Per-strategy validation confidence intervals
+
+A post-run statistical appendix was added after the user requested per-strategy intervals. These are recomputed 95% moving-block bootstrap confidence intervals for validation trade-level net P&L, using the same 2-point/contract cost stress and MC net-EV gate. Block length is 5 trades and 10,000 bootstrap repetitions.
+
+| Strategy | n | Mean points | 95% bootstrap CI |
+|---|---:|---:|---:|
+| Jade Lizard | 29 | +98.19 | +42.44 to +147.65 |
+| Put Ratio Spread | 35 | +61.88 | +35.93 to +94.08 |
+| Sell Put | 49 | +22.95 | -18.37 to +84.16 |
+| Bull Put Spread | 28 | +16.23 | -1.45 to +52.04 |
+
+These intervals are an additional statistical appendix; the original L0-L7 branch report's predeclared CPCV uncertainty was for selected CPCV path means (+31.62 to +49.93), not four separate strategy means.
