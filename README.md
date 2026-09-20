@@ -24,6 +24,14 @@ A separate sensitivity branch tests the frozen Batman and Adaptive entry rules f
 
 ## Expiry-day early-exit analysis — VERIFIED RESULTS
 
+### Initial capital sizing — research estimate
+
+A capital-sizing analysis has been added to the expiry-exit branch. For SENSEX, the historical MC-risk proxy is ₹66,971/lot maximum for Batman and ₹89,577/lot maximum for Adaptive. With a 20% operational reserve, the single-account SENSEX research reserve is approximately **₹107,500 per active lot-equivalent**. This is explicitly a risk proxy, not a Paytm Money live-margin quote; the exact four-leg basket must be checked in Paytm Money's current margin calculator before deployment.
+
+See `docs/expiry_exit_analysis/CAPITAL_REQUIREMENT.md`.
+
+
+
 The dedicated branch `research/expiry-auction-exit-analysis-v1` has completed the frozen Batman/Adaptive exit sensitivity study for NIFTY and SENSEX.
 
 Verified GitHub Actions run: 35492648657 (success).
