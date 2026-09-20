@@ -23,8 +23,8 @@ The live adapter uses BSE public index-history/live-quote endpoints and the BSE 
 
 ## Scheduling
 
-- Entry scanner: weekdays 09:30 IST (04:00 UTC), with a manual workflow_dispatch button.
-- Settlement/page refresh: weekdays 16:00 IST (10:30 UTC), with a manual workflow_dispatch button.
+- Entry scanner: weekdays 09:30 IST (04:00 UTC), with a manual workflow_dispatch button. After state is pushed to the S7 branch, it requests an immediate combined Pages publication.
+- Settlement/page refresh: weekdays 16:00 IST (10:30 UTC), with a manual workflow_dispatch button. This remains the scheduled publication backstop and settles matured paper trades.
 - GitHub Pages publication remains a separate publication step; it never creates an additional entry signal.
 
 ## Scientific boundary
