@@ -36,3 +36,8 @@ The SENSEX study is intentionally excluded from the NIFTY MC-WFO manuscript unti
 - Reproducible experiments and fixed random seeds
 
 No live-trading claim is made by this repository research framework.
+
+
+## Frozen defined-risk prospective validation
+
+This branch currently observes two transferred candidates prospectively: **Jade Lizard** and **Put Ratio Spread**. Sell Put and Bull Put Spread were removed before the first eligible observation. See `docs/prospective_defined_risk_sensex_v1/RESEARCH_PLAN.md` and `docs/prospective_defined_risk_sensex_v1/PHASE_STATUS.md`.
