@@ -37,3 +37,9 @@ Research action:
 - Updated the unified Pages selector so the root is Index -> Strategy: NIFTY -> Batman/Adaptive and SENSEX -> Batman/Adaptive.
 - Updated the main Pages publisher to synchronize the SENSEX S7 dashboard state before deployment.
 - S7 is infrastructure-complete but has no prospective performance result yet; the historical S5/S6 holdout remains untouched.
+
+
+### S7 hardening update — 2026-09-20
+- Added a current-session timestamp gate to prevent stale BSE live SENSEX values on holidays/closures from becoming paper entries.
+- Added explicit NO_TRADE handling when the target weekday is not an actually listed SENSEX option expiry, avoiding false scanner-error records for normal no-entry days.
+- Added immediate combined Pages publication after SENSEX scanner/page-state pushes; 16:00 IST remains the scheduled settlement/publication backstop.
