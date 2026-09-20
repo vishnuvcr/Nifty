@@ -98,3 +98,10 @@ Phase: L2-L7 CI
 Observation: successive protocol/data corrections triggered multiple concurrent limited-risk workflow runs.
 Resolution: added workflow concurrency with cancel-in-progress so only the newest research revision can execute the historical analysis.
 Prevention: all long historical research workflows use a single branch-level concurrency group.
+
+## LRW010 — Finite-risk definition corrected for index-domain mathematics
+Phase: L3
+Observation: Initial documentation treated several put-containing structures as unbounded-loss because of common trading-language shorthand.
+Impact: This would have wrongly excluded structures whose terminal loss is finite on the admissible NIFTY domain S >= 0.
+Resolution: The executable audit now classifies risk from the exact call-tail slope and non-negative underlying domain. Net short-call structures retain the unbounded-loss flag; short puts do not.
+Prevention: All risk taxonomy decisions are generated from the mathematical payoff audit and its domain assumptions, not from colloquial strategy labels.
