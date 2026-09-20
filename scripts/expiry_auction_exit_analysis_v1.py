@@ -444,7 +444,7 @@ def run(index_name: str, exit_mode: str, out_dir: Path, paths: int, seed_base: i
                 continue
             try:
                 entry_legs=json.loads(chosen["legs_json"])
-                        baseline_cost = chosen.get("entry_only_cost_inr", chosen["entry_cost_inr"])
+                baseline_cost = chosen.get("entry_only_cost_inr", chosen["entry_cost_inr"])
                 baseline_points=expiry_settlement_points(index_name,expiry_spot,entry_legs,chosen["entry_cashflow"],baseline_cost,lot_sz,chosen["contracts"],entry_date)
                 lots=int(chosen.get("lots", 1))
                 baseline_inr=baseline_points*lot_sz*lots
@@ -456,7 +456,7 @@ def run(index_name: str, exit_mode: str, out_dir: Path, paths: int, seed_base: i
                     exit_cash=-sum(int(l["qty"])*p for l,p in zip(entry_legs,exit_prices))
                     gross_points=chosen["entry_cashflow"]+exit_cash
                     if index_name=="NIFTY":
-                        net_points=gross_points-chosen["entry_cost_inr"]/lot_sz-nse_cost_exit_points(chosen["contracts"])
+                        net_points=gross_points-chosen.get("entry_only_cost_inr",chosen["entry_cost_inr"])/lot_sz-nse_cost_exit_points(chosen["contracts"])
                         exit_cost_inr=nse_cost_exit_points(chosen["contracts"])*lot_sz
                     else:
                         exit_cost_inr=sensex_exit_costs(expiry,entry_legs,exit_prices,lot_sz)
