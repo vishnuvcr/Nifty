@@ -1,0 +1,24 @@
+{
+  "source_run_id": "35473158249",
+  "source_job_id": "105977708087",
+  "source_branch": "research/sensex-s5-wfa-backtest-v1",
+  "command_contract": "--index-path data/raw_sensex/index/SENSEX.parquet --mc-index-path data/external/sensex_mc_daily.parquet --one-lot-edge --slippage 0.5",
+  "development": {
+    "adaptive_trades": 51,
+    "adaptive_total_pnl": 327167.2672692802,
+    "batman_trades": 40,
+    "batman_total_pnl": 60647.60461328027
+  },
+  "validation": {
+    "adaptive_trades": 46,
+    "adaptive_total_pnl": 115473.52301615979,
+    "batman_trades": 18,
+    "batman_total_pnl": 46741.55345872025
+  },
+  "holdout": {
+    "adaptive_trades": 18,
+    "adaptive_total_pnl": 51754.13639311992,
+    "batman_trades": 26,
+    "batman_total_pnl": 205909.3037160798
+  }
+}
