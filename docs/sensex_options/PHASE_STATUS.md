@@ -1,6 +1,6 @@
 # SENSEX Options Research Phase Status
 
-Last updated: 2026-09-20 (Asia/Kolkata) — S6 robustness execution gate
+Last updated: 2026-09-20 (Asia/Kolkata) — S7 paper-trading infrastructure
 
 | Phase | Status | Evidence / next gate |
 |---|---|---|
@@ -9,27 +9,39 @@ Last updated: 2026-09-20 (Asia/Kolkata) — S6 robustness execution gate
 | S2 Execution-cost model | COMPLETE | SENSEX-specific transaction-cost and slippage model implemented and deducted from net P&L. |
 | S3 SENSEX Batman implementation | COMPLETE | Frozen Batman engine implemented and deterministic candidate/expiry evaluation is reproducible. |
 | S4 SENSEX Adaptive implementation | COMPLETE | Frozen regime-conditioned candidate router implemented without SENSEX outcome retuning. |
-| S5 Historical walk-forward transfer test | COMPLETE | Development 2024, validation 2025, and available 2026 holdout through 2026-05-21 were completed in one-lot transfer-edge mode; account-affordability results are separately reported. |
-| S6 Robustness/statistical inference | COMPLETE | Slippage grid (0.25/0.50/1.00/2.00), five fixed MC seeds, base S5 reproducibility gate, and 10,000-repetition circular moving-block bootstrap completed successfully on the frozen rules. |
-| S7 Prospective paper trading | NOT STARTED | No live/prospective inference was started from S6 alone. |
-| S8 Separate SENSEX report | NOT STARTED | Will summarize the completed transfer study without modifying the NIFTY manuscript. |
+| S5 Historical walk-forward transfer test | COMPLETE | Development 2024, validation 2025, and available 2026 holdout through 2026-05-21 completed in one-lot transfer-edge mode. |
+| S6 Robustness/statistical inference | COMPLETE | Slippage grid, five fixed MC seeds, S5 reproducibility gate, and 10,000-repetition circular moving-block bootstrap completed on frozen rules. |
+| S7 Prospective paper trading | INFRASTRUCTURE COMPLETE / OBSERVATIONS PENDING | Dedicated S7 branch, prospective Batman + Adaptive scanners, isolated ledgers, fail-safe live quote handling, 09:30 IST entry schedule, 16:00 IST settlement/page refresh schedule, and manual dispatch buttons are implemented. The first prospective observation will occur on the next eligible BSE trading weekday; no S7 performance inference has been claimed yet. |
+| S8 Separate SENSEX report | NOT STARTED | Will summarize the completed transfer study and any completed prospective evidence without modifying the NIFTY manuscript. |
 
 ## Scientific boundary
 
-The SENSEX study remains strictly separate from the NIFTY MC-WFO manuscript. One-lot results are transfer-edge evidence, not an assertion of deployable capital efficiency at any particular account size. The 2026 holdout is limited by the available SENSEX option dataset to 2026-01-01 through 2026-05-21.
+The SENSEX study remains strictly separate from the NIFTY MC-WFO manuscript. S7 creates a new prospective observation stream and does not reopen, backfill, or retune the historical S5/S6 holdout. One-lot results remain transfer-edge evidence, not an assertion of deployable capital efficiency at any particular account size.
 
-## Current S6 controls
+## S7 controls
 
-- Slippage sensitivity: 0.25, 0.50, 1.00, and 2.00 option points per executed option leg.
-- Monte Carlo seed sensitivity: 101, 202, 303, 404, 505 on validation and holdout at 0.50-point slippage.
-- Dependence-aware inference: circular moving-block bootstrap, block length 3 trades, 10,000 replications on validation + holdout closed trades at base slippage.
-- No quote-source substitution: the underlying archive provides OHLCV/OI, not historical point-in-time bid/ask snapshots.
-- No re-optimization after seeing SENSEX holdout outcomes.
+- Entry scanner: weekdays at 09:30 IST / 04:00 UTC.
+- Page/settlement refresh: weekdays at 16:00 IST / 10:30 UTC.
+- Manual workflow_dispatch is enabled for both workflows.
+- Batman and Adaptive use the frozen S0–S6 strategy definitions.
+- 5,000 Monte Carlo paths and 756 completed daily log-return observations are required.
+- Regime is computed past-only from RV20 ranked over the prior 252 observations.
+- Live entry quotes require bid/ask; missing or malformed quotes become NO_TRADE. No LTP fallback is allowed.
+- 0.50 option-point adverse slippage per executed leg is applied to the prospective paper entry proxy.
+- SENSEX transaction-cost rules remain the frozen S2 model.
+- Paper trading is one-lot transfer-edge mode; no broker order is submitted.
+- Scanner/runtime failures are written to the SENSEX error log and published as NO_TRADE state rather than silently becoming zero-return trades.
+
+## Workflows
+
+- .github/workflows/sensex-paper-signal-producer-v1.yml — 09:30 IST entry scanner; Batman + Adaptive; manual dispatch available.
+- .github/workflows/sensex-paper-pages-refresh-v1.yml — 16:00 IST settlement/page refresh; manual dispatch available.
+- .github/workflows/publish-paper-pages.yml on main — publishes the combined NIFTY + SENSEX GitHub Pages dashboard at 16:00 IST.
 
 ## Branch
 
-research/sensex-s6-robustness-v1
+research/sensex-s7-paper-trading-v1
 
+### S5/S6 historical conclusion
 
-### S5/S6 conclusion
-The SENSEX transfer test is complete for the available public dataset. The ₹1 lakh/2% account gate produced no executable trades; the one-lot edge test produced positive validation/holdout results for the frozen Adaptive router and positive holdout results for the frozen Batman MC-gated subset. Evidence remains limited by data coverage and quote-quality constraints. See `SENSEX_BACKTEST_RESULT.md`.
+The SENSEX transfer test is complete for the available public dataset. The ₹1 lakh/2% account gate produced no executable trades; the one-lot edge test produced positive validation/holdout results for the frozen Adaptive router and positive holdout results for the frozen Batman MC-gated subset. Evidence remains limited by data coverage and quote-quality constraints. S7 is now a separate prospective observation phase; its outcomes must not be mixed into the historical inference until the prospective data stream is complete.
