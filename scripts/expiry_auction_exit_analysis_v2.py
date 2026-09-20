@@ -314,7 +314,7 @@ def run_sensex(paths:int,seed_base:int,data_root:Path):
     rows=[]
     idx_path=data_root/"index"/"SENSEX.parquet"; opts=data_root/"options"/"SENSEX"
     for split in ("development","validation","holdout"):
-        candidates,adaptive_trades,stats=run_backtest(opts,idx_path,split,0.5,seed_base, data_root/"sensex_mc_daily.parquet", True)
+        candidates,adaptive_trades,stats=run_backtest(opts,idx_path,split,0.5,seed_base, ROOT/"data/expiry_exit/sensex_mc_daily.parquet", True)
         from scripts.sensex_backtest_v1 import run_batman_from_candidates, load_option_file, realized_costs as rc
         batman=run_batman_from_candidates(candidates,opts,idx_path,split,0.5,seed_base)
         for strat,trade_df in (("Adaptive",adaptive_trades),("Batman",batman)):
