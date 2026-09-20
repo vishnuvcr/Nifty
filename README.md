@@ -111,3 +111,16 @@ The SENSEX study is intentionally separate from the NIFTY MC-WFO manuscript.
 - data/ local-only datasets (not committed)
 
 See the active research branch for the relevant experiment protocol.
+
+
+## Planned next research phase — limited-risk option WFO
+
+A separate research branch has been created to test option strategies with a finite maximum loss, including limited-loss structures with either limited or potentially unlimited profit. Batman remains outside this risk-bounded universe.
+
+- Branch: https://github.com/vishnuvcr/Nifty/tree/research/limited-risk-option-wfo-v1
+- Research plan: https://github.com/vishnuvcr/Nifty/blob/research/limited-risk-option-wfo-v1/docs/limited_risk_option_wfo/RESEARCH_PLAN.md
+- Phase status: https://github.com/vishnuvcr/Nifty/blob/research/limited-risk-option-wfo-v1/docs/limited_risk_option_wfo/PHASE_STATUS.md
+- Error log: https://github.com/vishnuvcr/Nifty/blob/research/limited-risk-option-wfo-v1/docs/limited_risk_option_wfo/ERROR_LOG.md
+- Strategy/risk rules: https://github.com/vishnuvcr/Nifty/blob/research/limited-risk-option-wfo-v1/docs/limited_risk_option_wfo/STRATEGY_UNIVERSE_AND_RISK_RULES.md
+
+**Current status (2026-09-20):** L0 protocol freeze is complete. No new performance result is claimed. The next phase is literature/data review followed by mechanical payoff-risk auditing before any strategy ranking.
