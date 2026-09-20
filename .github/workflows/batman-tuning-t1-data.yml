@@ -1,0 +1,9 @@
+name: BATMAN Tuning T1 Data Baseline
+on:
+  workflow_dispatch:
+jobs:
+  t1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "T1 requires cached parent BATMAN data and frozen-control reconstruction. No performance result is published by the scaffold."
