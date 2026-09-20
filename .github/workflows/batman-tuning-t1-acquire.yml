@@ -1,6 +1,9 @@
 name: BATMAN Tuning T1 Acquire and Audit
 
 on:
+  push:
+    branches:
+      - research/batman-tuning-v1
   workflow_dispatch:
     inputs:
       rebuild_raw:
