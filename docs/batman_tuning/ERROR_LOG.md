@@ -19,3 +19,5 @@ E007: T1 acquisition run 35537467726 successfully downloaded all four raw archiv
 E008: Run 35537505911 repeated the same missing-pytest defect because the correction had not yet been committed. Correction: installed pytest and added explicit cache persistence in run 35537798592.
 
 E009: The first transfer of the raw-source schema-audit script failed in the connector before repository write because one sequential lookup returned no object. Correction: repository state was checked and the audit script was then created separately; no partial source-audit file was left behind.
+
+E010: Deep raw-data probe run 35538086620 failed because the Zenodo option archive nests ZIPs across multiple levels; the probe attempted to parse a nested ZIP as CSV. Correction: the probe now recursively descends ZIP layers until a CSV member is found. Raw archives remain intact.
