@@ -217,15 +217,18 @@ def sensex_expiry_cost(entry_date, expiry_spot, legs, lot_size):
     return x
 
 def sensex_exit_pnl(entry:dict[str,Any], exit_day:pd.DataFrame, mode:str, lot_size:int, entry_date:pd.Timestamp, entry_only_cost:float) -> float:
+    legs = entry["legs"]
     prices=[]
-    for leg in entry["legs"]:
+    for leg in legs:
         row=timestamp_row(exit_day,mode,leg["option_type"],leg["strike"])
         raw=float(row["open"])
-        side="SELL" if leg["qty"]>0 else "BUY"
+        side="SELL" if int(leg["qty"])>0 else "BUY"
         px=raw-0.5 if side=="SELL" else raw+0.5
+        if px <= 0:
+            raise ValueError("non-positive SENSEX exit price after slippage")
         prices.append(px)
-    cash=-sum(int(l["qty"])*p for l,p in zip(entry["legs"],prices))
-    exit_cost=sensex_exit_costs(exit_day["trading_day"].iloc[0],entry["legs"],prices,lot_size)
+    cash=-sum(int(l["qty"])*p for l,p in zip(legs,prices))
+    exit_cost=sensex_exit_costs(exit_day["trading_day"].iloc[0],legs,prices,lot_size)
     return float((entry["entry_cashflow"]+cash-entry_only_cost/lot_size-exit_cost/lot_size)*lot_size)
 
 def bootstrap(values,n=10000,block=3,seed=20260920):
@@ -333,18 +336,19 @@ def run_sensex(paths:int,seed_base:int,data_root:Path,sensex_mc_daily:Path):
                     full[cc]=pd.to_numeric(full[cc],errors="coerce")
                 full["option_type"]=full["option_type"].astype(str).str.upper()
                 expiry_day=full.loc[full["trading_day"].eq(expiry)].copy()
-                legs=json.loads(r["legs_json"])
-                entry_cash=float(r["entry_cashflow_points"])
+                legs=json.loads(str(r["legs_json"]))
+                entry_cash=float(r.get("entry_cashflow_points",r.get("entry_cashflow_points_per_unit",0.0)))
                 entry_only=float(r.get("entry_cost_inr_entry_only",np.nan))
                 if not np.isfinite(entry_only):
-                    entry_only=float(r.get("realized_cost_inr_per_lot",0.0))
+                    entry_only=float(r.get("entry_cost_inr_expected",r.get("realized_cost_inr_per_lot",0.0)))
+                entry_for_exit={"legs":legs,"entry_cashflow":entry_cash}
                 # baseline uses engine's frozen realized result
                 base=float(r.get("realized_pnl_inr",0.0))
                 rows.append({"index":"SENSEX","strategy":strat,"exit":"expiry_settlement","entry_date":entry_date.date(),"expiry":expiry.date(),
                              "split":split,"pnl_inr":base,"mc_ev":float(r.get("mc_ev_net",np.nan)),"regime":r.get("regime")})
                 for mode in ("15:00:00","15:10:00"):
                     try:
-                        p=sensex_exit_pnl(r,expiry_day,mode,20,entry_date,entry_only)
+                        p=sensex_exit_pnl(entry_for_exit,expiry_day,mode,20,entry_date,entry_only)
                     except Exception: continue
                     rows.append({"index":"SENSEX","strategy":strat,"exit":mode[:5],"entry_date":entry_date.date(),"expiry":expiry.date(),
                                  "split":split,"pnl_inr":p,"mc_ev":float(r.get("mc_ev_net",np.nan)),"regime":r.get("regime")})
