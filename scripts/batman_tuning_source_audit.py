@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 RAW=ROOT/".cache"/"batman_raw"
 OUT=ROOT/"data"/"batman_tuning_cache"/"source_audit.json"
-FILES=["zenodo_nifty_options_2017_2020.zip","zenodo_nifty_spot_futures_2017_2020.zip","ayush_nifty_banknifty_options_2020_2024.zip","rahul_nifty_options_2025_2026.zip"]
+FILES=["zenodo_nifty_options_2017_2020.zip","zenodo_nifty_spot_futures_2017_2020.zip","ayush_nifty_banknifty_options_2020_2024.zip","rahul_nifty_options_2025_2026.zip","nifty_index_2008_2020.zip"]
 
 def sample_csv_header(zf,name):
     with zf.open(name) as fh:
@@ -38,7 +38,7 @@ def inspect_outer(path):
         rec["extensions"]=ext
         names=[i.filename for i in infos]
         if path.name.startswith("ayush_"):
-            chosen=choose_csv_members(names,include=("nifty",),exclude=("banknifty",))
+            chosen=choose_csv_members(names,include=("nifty",),exclude=("banknifty","_fut","spot"))
         elif path.name.startswith("rahul_"):
             chosen=[n for n in names if n.lower().endswith(".csv")][:5]
         else:
@@ -46,6 +46,8 @@ def inspect_outer(path):
         rec["targeted_members"]=chosen
         rec["csv_samples"]=[{"member":n,"header":sample_csv_header(zf,n)} for n in chosen]
         rec["members_sample"]=[{"name":i.filename,"bytes":i.file_size} for i in infos[:20]]
+        if path.name.startswith("nifty_index_"):
+            rec["index_targeted_members"]=choose_csv_members(names,include=("nifty",),exclude=("banknifty",))
         if path.name.startswith("zenodo_"):
             nested=[n for n in names if n.lower().endswith(".zip")]
             rec["nested_archives"]=[]
