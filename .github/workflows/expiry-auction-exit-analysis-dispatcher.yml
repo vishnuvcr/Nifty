@@ -6,6 +6,13 @@ on:
       - ".github/workflows/expiry-auction-exit-analysis-dispatcher.yml"
       - "scripts/expiry_auction_exit_analysis_v2.py"
       - "docs/expiry_exit_analysis/**"
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
   workflow_dispatch:
 
 concurrency:
