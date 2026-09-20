@@ -19,6 +19,8 @@ INDEX_YF = RAW / "nifty_daily_yfinance_2014_2026.csv"
 EXPIRY_CAL = OUT / "ayush_expiry_calendar_2020_2024.csv"
 FILE_MAP = OUT / "ayush_daily_file_map_2020_2024.csv"
 MANIFEST = OUT / "t1_prepared_manifest.json"
+RAW_EXPIRY_CAL = RAW / "prepared_ayush_expiry_calendar_2020_2024.csv"
+RAW_FILE_MAP = RAW / "prepared_ayush_daily_file_map_2020_2024.csv"
 
 SYMBOL_RE = re.compile(r"^NIFTY(\d{2})([A-Z]{3})(\d{2})(\d+)(CE|PE)$", re.I)
 MONTHS = {"JAN":1,"FEB":2,"MAR":3,"APR":4,"MAY":5,"JUN":6,"JUL":7,"AUG":8,"SEP":9,"OCT":10,"NOV":11,"DEC":12}
@@ -55,6 +57,12 @@ def acquire_yfinance():
     out.to_csv(INDEX_YF, index=False)
 
 def build_ayush_manifest():
+    if RAW_EXPIRY_CAL.exists() and RAW_FILE_MAP.exists():
+        EXPIRY_CAL.parent.mkdir(parents=True, exist_ok=True)
+        FILE_MAP.parent.mkdir(parents=True, exist_ok=True)
+        EXPIRY_CAL.write_bytes(RAW_EXPIRY_CAL.read_bytes())
+        FILE_MAP.write_bytes(RAW_FILE_MAP.read_bytes())
+        return
     if EXPIRY_CAL.exists() and FILE_MAP.exists():
         return
     if not AYUSH.exists():
@@ -92,8 +100,12 @@ def build_ayush_manifest():
         for exp in sorted(exps):
             if exp >= td:
                 exp_rows.append({"trade_date": td.isoformat(), "expiry": exp.isoformat()})
-    pd.DataFrame(exp_rows).drop_duplicates().to_csv(EXPIRY_CAL, index=False)
-    pd.DataFrame(file_rows).drop_duplicates().sort_values("trade_date").to_csv(FILE_MAP, index=False)
+    cal_df=pd.DataFrame(exp_rows).drop_duplicates()
+    map_df=pd.DataFrame(file_rows).drop_duplicates().sort_values("trade_date")
+    cal_df.to_csv(EXPIRY_CAL, index=False)
+    map_df.to_csv(FILE_MAP, index=False)
+    cal_df.to_csv(RAW_EXPIRY_CAL, index=False)
+    map_df.to_csv(RAW_FILE_MAP, index=False)
 
 def validate():
     idx = pd.read_csv(INDEX_YF, parse_dates=["date"])
