@@ -49,3 +49,10 @@ Type: CI orchestration
 Observation: rapid corrective commits created multiple queued/overlapping branch analysis runs while the first long historical run was still executing.
 Resolution: branch workflow concurrency was changed to cancel superseded runs so only the newest corrected research revision can proceed.
 Prevention: use `cancel-in-progress: true` for deterministic single-run historical analyses on a dedicated branch.
+
+
+### E008 — SENSEX MC history path mismatch in full v2 runner
+Type: execution / data-path
+Observation: the workflow correctly created `data/expiry_exit/sensex_mc_daily.parquet`, but the v2 runner passed `data_root/"sensex_mc_daily.parquet"` (inside the HF data tree) into the frozen SENSEX backtest. The resulting run failed after approximately 20 minutes with FileNotFoundError.
+Resolution: the runner now reads the prepared composite MC history from the authoritative `ROOT/data/expiry_exit/sensex_mc_daily.parquet` path.
+Prevention: use one explicit prepared-data contract between workflow and analysis engine; add a preflight file-existence assertion before entering the long SENSEX backtest.
