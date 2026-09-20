@@ -2,24 +2,24 @@
   "split": "validation",
   "slippage_points_per_leg": 0.5,
   "adaptive": {
-    "trades": 10,
-    "total_pnl": 43171.183019399934,
-    "mean_pnl": 4317.118301939993,
-    "median_pnl": 6403.816217839913,
-    "win_rate": 0.6,
-    "profit_factor": 2.586212217282601,
-    "max_dd": -27216.524087399906,
-    "bootstrap_mean": 4317.118301939993,
-    "bootstrap_mean_ci_low": -4885.910356367995,
-    "bootstrap_mean_ci_high": 13889.593761271963
+    "trades": 47,
+    "total_pnl": 83682.76204839985,
+    "mean_pnl": 1780.4842989021245,
+    "median_pnl": 4183.059566319999,
+    "win_rate": 0.6170212765957447,
+    "profit_factor": 1.3648618871012628,
+    "max_dd": -53810.13905463994,
+    "bootstrap_mean": 1780.4842989021245,
+    "bootstrap_mean_ci_low": -1718.0148383690382,
+    "bootstrap_mean_ci_high": 5273.878488784729
   },
   "batman": {
-    "trades": 0,
-    "total_pnl": 0.0,
-    "mean_pnl": 0.0,
-    "median_pnl": 0.0,
-    "win_rate": 0.0,
-    "profit_factor": 0.0,
-    "max_dd": 0.0
+    "trades": 18,
+    "total_pnl": 51886.38969384035,
+    "mean_pnl": 2882.5772052133525,
+    "median_pnl": 4183.059566319999,
+    "win_rate": 0.7777777777777778,
+    "profit_factor": 1.98677443660036,
+    "max_dd": -51962.04017715976
   }
 }
