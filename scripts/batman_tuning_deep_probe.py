@@ -6,6 +6,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 RAW=ROOT/".cache"/"batman_raw"
 OUT=ROOT/"data"/"batman_tuning_cache"/"deep_probe.json"
+PROBE_VERSION="2"
 
 def csv_rows_from_bytes(data, n=8):
     text=data.decode("utf-8-sig", errors="replace")
@@ -58,6 +59,7 @@ def main():
     out["zenodo_option_nested"]=probe_nested(zopts,"NiftyOptions 2020.zip")
     zspot=RAW/"zenodo_nifty_spot_futures_2017_2020.zip"
     out["zenodo_spot_nested"]=probe_nested(zspot,"2020.zip", "NIFTY.csv")
+    out["probe_version"]=PROBE_VERSION
     OUT.parent.mkdir(parents=True,exist_ok=True)
     OUT.write_text(json.dumps(out,indent=2,sort_keys=True)+"\n",encoding="utf-8")
     print(json.dumps(out,indent=2,sort_keys=True))
