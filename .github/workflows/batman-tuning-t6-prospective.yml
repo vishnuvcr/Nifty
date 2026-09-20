@@ -1,0 +1,9 @@
+name: BATMAN Tuning T6 Prospective Freeze
+on:
+  workflow_dispatch:
+jobs:
+  t6:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "T6 requires completion of the robustness gate." && exit 1
