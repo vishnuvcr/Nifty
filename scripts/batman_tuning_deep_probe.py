@@ -23,22 +23,27 @@ def probe_plain(zpath, member):
         with zf.open(member) as fh:
             return csv_rows_from_bytes(fh.read(256*1024), 8)
 
-def probe_nested(zpath, outer_member_contains, inner_member_contains=None):
+def probe_nested_until_csv(zpath, outer_member_contains):
     with zipfile.ZipFile(zpath) as outer:
         outer_names=[n for n in outer.namelist() if n.lower().endswith(".zip")]
         outer_pick=next(n for n in outer_names if outer_member_contains.lower() in n.lower())
-        with outer.open(outer_pick) as fh:
-            outer_bytes=fh.read()
-    with zipfile.ZipFile(io.BytesIO(outer_bytes)) as inner:
-        names=[n for n in inner.namelist() if not n.endswith("/")]
-        if inner_member_contains:
-            names2=[n for n in names if inner_member_contains.lower() in n.lower()]
-            pick=names2[0] if names2 else names[0]
-        else:
-            pick=names[0]
-        with inner.open(pick) as fh:
-            rows=csv_rows_from_bytes(fh.read(512*1024), 8)
-        return {"outer_member":outer_pick,"inner_member":pick,"rows":rows}
+        payload=outer.read(outer_pick)
+    chain=[outer_pick]
+    while payload[:4] == b"PK\\x03\\x04":
+        with zipfile.ZipFile(io.BytesIO(payload)) as zf:
+            names=[n for n in zf.namelist() if not n.endswith("/")]
+            csvs=[n for n in names if n.lower().endswith(".csv")]
+            if csvs:
+                pick=csvs[0]
+                with zf.open(pick) as fh:
+                    return {"chain":chain,"csv_member":pick,"rows":csv_rows_from_bytes(fh.read(512*1024),8)}
+            zips=[n for n in names if n.lower().endswith(".zip")]
+            if not zips:
+                raise RuntimeError(f"No CSV or ZIP member at nested level: {chain}")
+            pick=zips[0]
+            payload=zf.read(pick)
+            chain.append(pick)
+    raise RuntimeError(f"Nested payload was not a ZIP: {chain}")
 
 def main():
     out={}
@@ -56,9 +61,9 @@ def main():
         member="NIFTY_data/NIFTY_2008_2020.csv"
         out["long_nifty_index"]={"member":member,"rows":probe_plain(idx,member)}
     zopts=RAW/"zenodo_nifty_options_2017_2020.zip"
-    out["zenodo_option_nested"]=probe_nested(zopts,"NiftyOptions 2020.zip")
+    out["zenodo_option_nested"]=probe_nested_until_csv(zopts,"NiftyOptions 2020.zip")
     zspot=RAW/"zenodo_nifty_spot_futures_2017_2020.zip"
-    out["zenodo_spot_nested"]=probe_nested(zspot,"2020.zip", "NIFTY.csv")
+    out["zenodo_spot_nested"]=probe_nested_until_csv(zspot,"2020.zip")
     out["probe_version"]=PROBE_VERSION
     OUT.parent.mkdir(parents=True,exist_ok=True)
     OUT.write_text(json.dumps(out,indent=2,sort_keys=True)+"\n",encoding="utf-8")
