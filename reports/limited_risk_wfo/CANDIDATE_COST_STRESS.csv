@@ -1,0 +1,6 @@
+strategy,stress_points_per_contract,n,mean_points,profit_factor
+Jade Lizard,0.0,54,46.430556,1.653355
+Jade Lizard,0.5,54,44.930556,1.627100
+Jade Lizard,1.0,51,51.128431,1.737242
+Jade Lizard,2.0,50,45.271000,1.629420
+Jade Lizard,3.0,47,38.013830,1.488657
