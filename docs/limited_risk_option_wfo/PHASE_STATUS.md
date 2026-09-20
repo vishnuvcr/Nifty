@@ -38,3 +38,11 @@ Verified clean CI run: **35496685719**.
 Core result: 27/36 strategies pass the mechanical finite-loss audit. Historical candidates include Jade Lizard and Put Ratio Spread, but the cross-strategy multiple-testing diagnostic is not supportive (Reality-Check-style block-bootstrap p=0.7426).
 
 No strategy is promoted. Fresh post-exposure data and deployment-grade bid/ask execution data are required before paper trading.
+
+
+## Follow-up branches
+
+- NIFTY/SENSEX prospective candidate validation: research/prospective-defined-risk-nifty-v1 and research/prospective-defined-risk-sensex-v1.
+- NIFTY long-premium MC/WFO: research/long-premium-mcwfo-v1.
+
+These are downstream phases and do not change the frozen L0-L11 inference.
