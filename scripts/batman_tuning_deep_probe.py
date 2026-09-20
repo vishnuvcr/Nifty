@@ -29,8 +29,12 @@ def probe_nested_until_csv(zpath, outer_member_contains):
         outer_pick=next(n for n in outer_names if outer_member_contains.lower() in n.lower())
         payload=outer.read(outer_pick)
     chain=[outer_pick]
-    while payload[:4] == b"PK\\x03\\x04":
-        with zipfile.ZipFile(io.BytesIO(payload)) as zf:
+    while True:
+        try:
+            zf = zipfile.ZipFile(io.BytesIO(payload))
+        except zipfile.BadZipFile:
+            return {"chain":chain,"error":"nested payload is not a readable ZIP at this level"}
+        with zf:
             names=[n for n in zf.namelist() if not n.endswith("/")]
             csvs=[n for n in names if n.lower().endswith(".csv")]
             if csvs:
@@ -39,11 +43,10 @@ def probe_nested_until_csv(zpath, outer_member_contains):
                     return {"chain":chain,"csv_member":pick,"rows":csv_rows_from_bytes(fh.read(512*1024),8)}
             zips=[n for n in names if n.lower().endswith(".zip")]
             if not zips:
-                raise RuntimeError(f"No CSV or ZIP member at nested level: {chain}")
+                return {"chain":chain,"error":"no CSV or ZIP member at nested level"}
             pick=zips[0]
             payload=zf.read(pick)
             chain.append(pick)
-    raise RuntimeError(f"Nested payload was not a ZIP: {chain}")
 
 def main():
     out={}
