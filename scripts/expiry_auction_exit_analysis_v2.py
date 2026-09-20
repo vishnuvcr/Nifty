@@ -13,6 +13,10 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
+# Support both `python scripts/expiry_auction_exit_analysis_v2.py` and
+# `python -m scripts.expiry_auction_exit_analysis_v2` invocation styles.
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
