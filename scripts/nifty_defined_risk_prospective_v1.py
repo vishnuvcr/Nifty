@@ -17,7 +17,7 @@ from scripts.batman_signal_producer import (
 from nifty_mc.strategy_catalog import build_strategy
 
 IST_NAME="Asia/Kolkata"
-STRATEGIES=["Jade Lizard","Put Ratio Spread","Sell Put","Bull Put Spread"]
+STRATEGIES=["Jade Lizard","Put Ratio Spread"]
 LOT_SIZE=65
 MC_PATHS=5000
 LOOKBACK=756
@@ -46,8 +46,6 @@ def target_map(strategy,terminal,spot):
     required={
         "Jade Lizard":["p35","c65","c90"],
         "Put Ratio Spread":["atm","p35"],
-        "Sell Put":["atm"],
-        "Bull Put Spread":["p35","p10"],
     }
     return {k:all_targets[k] for k in required[strategy]}
 
@@ -186,12 +184,12 @@ def selector_page(stats,site_dir):
         x=stats.get(s,{})
         folder=s.lower().replace(" ","-")
         cards.append(f'<div class="card"><h2>{html.escape(s)}</h2><p>Closed trades: {x.get("n",0)} &nbsp; Total P&L: ₹{x.get("total",0):,.2f}</p><p><a href="{folder}/index.html">Open dashboard</a></p></div>')
-    (site_dir/"index.html").write_text(f"""<!doctype html><html><head><meta charset="utf-8"><title>NIFTY Defined-Risk Prospective</title><style>body{{font-family:Arial;background:#0d1117;color:#e6edf3;max-width:1100px;margin:auto;padding:24px}}.card{{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;margin:14px 0}}a{{color:#58a6ff}}</style></head><body><h1>NIFTY — Defined-Risk Prospective Validation</h1><p>Four frozen strategies. Each strategy has an independent paper-validation ledger and no post-hoc selection.</p>{''.join(cards)}</body></html>""",encoding="utf-8")
+    (site_dir/"index.html").write_text(f"""<!doctype html><html><head><meta charset="utf-8"><title>NIFTY Defined-Risk Prospective</title><style>body{{font-family:Arial;background:#0d1117;color:#e6edf3;max-width:1100px;margin:auto;padding:24px}}.card{{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;margin:14px 0}}a{{color:#58a6ff}}</style></head><body><h1>NIFTY — Defined-Risk Prospective Validation</h1><p>Two frozen strategies. Each strategy has an independent paper-validation ledger and no post-hoc selection.</p>{''.join(cards)}</body></html>""",encoding="utf-8")
 
 def main():
     ap=argparse.ArgumentParser()
     ap.add_argument("--mode",choices=["scan","settle"],default="scan")
-    ap.add_argument("--strategy",default="all",choices=["all","Jade Lizard","Put Ratio Spread","Sell Put","Bull Put Spread"])
+    ap.add_argument("--strategy",default="all",choices=["all","Jade Lizard","Put Ratio Spread"])
     ap.add_argument("--decision-date",default="auto")
     ap.add_argument("--seed",type=int,default=20260920)
     args=ap.parse_args()
