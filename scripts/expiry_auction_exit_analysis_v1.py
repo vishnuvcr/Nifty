@@ -276,7 +276,8 @@ def expiry_settlement_points(index_name, expiry_spot, legs, entry_cashflow, entr
         )
     gross=entry_cashflow+intrinsic
     if index_name=="NIFTY":
-        net=gross-entry_cost-nse_cost_exit_points(contracts)
+        # Frozen historical baseline: entry stress only; expiry settlement itself has no closing option-order cost.
+        net=gross-entry_cost
     else:
         # Historical S5/S6 expiry settlement charges; retain for baseline.
         sched=sensex_cost_schedule(entry_date)
@@ -445,8 +446,9 @@ def run(index_name: str, exit_mode: str, out_dir: Path, paths: int, seed_base: i
                 entry_legs=json.loads(chosen["legs_json"])
                         baseline_cost = chosen.get("entry_only_cost_inr", chosen["entry_cost_inr"])
                 baseline_points=expiry_settlement_points(index_name,expiry_spot,entry_legs,chosen["entry_cashflow"],baseline_cost,lot_sz,chosen["contracts"],entry_date)
-                baseline_inr=baseline_points*lot_sz
-                row_base={**chosen,"exit":"expiry_settlement","strategy_report":strat,"realized_pnl_inr":baseline_inr,"realized_pnl_points_per_unit":baseline_points}
+                lots=int(chosen.get("lots", 1))
+                baseline_inr=baseline_points*lot_sz*lots
+                row_base={**chosen,"exit":"expiry_settlement","strategy_report":strat,"lots":lots,"realized_pnl_inr":baseline_inr,"realized_pnl_points_per_unit":baseline_points}
                 rows.append(row_base)
                 if exit_time:
                     # Reprice only once the trade is already fixed by the entry gate.
@@ -459,7 +461,7 @@ def run(index_name: str, exit_mode: str, out_dir: Path, paths: int, seed_base: i
                     else:
                         exit_cost_inr=sensex_exit_costs(expiry,entry_legs,exit_prices,lot_sz)
                         net_points=gross_points-chosen.get("entry_only_cost_inr",chosen["entry_cost_inr"])/lot_sz-exit_cost_inr/lot_sz
-                    rr={**chosen,"exit":exit_time[:5],"strategy_report":strat,"exit_prices_json":json.dumps(exit_prices),"realized_pnl_points_per_unit":net_points,"realized_pnl_inr":net_points*lot_sz,"exit_cost_inr":exit_cost_inr}
+                    rr={**chosen,"exit":exit_time[:5],"strategy_report":strat,"lots":lots,"exit_prices_json":json.dumps(exit_prices),"realized_pnl_points_per_unit":net_points,"realized_pnl_inr":net_points*lot_sz*lots,"exit_cost_inr":exit_cost_inr*lots}
                     rows.append(rr)
                     if "baseline_points" not in chosen:
                         pass
