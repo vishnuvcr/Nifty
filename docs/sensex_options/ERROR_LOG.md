@@ -152,3 +152,8 @@ Type: methodology / provenance
 Observation: the initial S6 implementation passed the raw 1-minute SENSEX index parquet directly as the Monte Carlo/regime history. The completed S5 transfer run used an independently constructed daily history combining cached pre-2024 SENSEX warmup data with the daily closes from the primary SENSEX index parquet.
 Resolution: S6 now reproduces the S5 composite daily MC history exactly, passes it through --mc-index-path for every slippage and seed scenario, and adds an explicit S5 baseline reproduction gate before sensitivity results are interpreted.
 Prevention: robustness phases must reuse the exact validated baseline data-engine contract and include an automated reproducibility checksum before alternative scenarios are accepted.
+\n\n### E021 — S6 report publication failed on add/add rebase conflicts
+Type: CI publication
+Observation: numerical S6 analysis completed, but publication failed because generated report files existed on the remote branch and the workflow attempted to rebase a new report commit onto them, creating add/add conflicts.
+Resolution: publication now snapshots the current run's reports outside the repository, hard-resets to the current remote branch tip, restores only the current run's S6 reports, commits, and pushes.
+Prevention: generated-report publication must be conflict-safe and must treat the current successful run's reports as authoritative only after all numerical gates pass.
