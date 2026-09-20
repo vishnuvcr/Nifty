@@ -199,7 +199,8 @@ def sensex_entry_costs(entry_date, priced_legs, lot_size, entry_cashflow, termin
     expected_exercise_cost = stt_exercise * expected_exercise
     gst = sched["gst_rate"] * (brokerage + bse_txn + sebi)
     total = brokerage+bse_txn+sebi+stamp+stt_short+gst+expected_exercise_cost
-    return float(total), float(brokerage+bse_txn+sebi+stamp+stt_short+gst)
+    entry_only = brokerage+bse_txn+sebi+stamp+stt_short+gst
+    return float(total), float(entry_only)
 
 def sensex_exit_costs(exit_date, open_positions, exit_prices, lot_size):
     sched=sensex_cost_schedule(exit_date)
@@ -401,23 +402,28 @@ def run(index_name: str, exit_mode: str, out_dir: Path, paths: int, seed_base: i
                     entry_cost_inr=entry_cost_points*lot_sz
                 else:
                     entry_cost_inr,entry_entry_only=sensex_entry_costs(entry_date,entry_legs,lot_sz,entry_cash,terminal)
-                    net=gross-entry_cost_inr/lot_sz
+                    net=gross-entry_inr/lot_sz
                 ev=float(np.mean(net)); pop=float(np.mean(net>0))
                 q05=float(np.quantile(net,0.05));q01=float(np.quantile(net,0.01))
                 es95=float(max(0,-np.mean(net[net<=q05])));es99=float(max(0,-np.mean(net[net<=q01])))
                 risk=max(es95,es99)
+                        risk_budget_inr = 2000.0
+                risk_points = max(es95, es99)
+                risk_inr_per_lot = risk_points * lot_sz
                 if index_name=="NIFTY":
-                    lots=1 if ev>0 else 0
+                    lots = int(math.floor(risk_budget_inr / risk_inr_per_lot)) if risk_inr_per_lot > 0 else 0
+                    eligible = ev > 0 and lots >= 1
                 else:
-                    lots=1 if ev>0 else 0
-                eligible=ev>0 and lots>=1
+                    lots = 1 if ev > 0 else 0
+                    eligible = ev > 0
                 evaluated.append({
                     "strategy":strategy,"eligible":eligible,"mc_ev_points_net":ev,"mc_pop":pop,
                     "es95_points":es95,"es99_points":es99,"risk_points":risk,
                     "strikes_json":json.dumps(strikes,sort_keys=True),
                     "legs_json":json.dumps(entry_legs,sort_keys=True),
                     "entry_cashflow":entry_cash,"contracts":contracts,
-                    "entry_cost_inr":entry_cost_inr,"lot_size":lot_sz,
+                    "entry_cost_inr":entry_cost_inr,"entry_only_cost_inr":(entry_entry_only if index_name=="SENSEX" else entry_cost_inr),"lot_size":lot_sz,
+                    "risk_budget_inr":2000.0,"risk_inr_per_lot":risk_inr_per_lot,
                     "regime":regime["vol_regime"],"rv20_rank":regime["rv20_rank"],
                     "entry_date":str(entry_date.date()),"expiry":str(expiry.date()),"split":split,
                 })
@@ -437,7 +443,8 @@ def run(index_name: str, exit_mode: str, out_dir: Path, paths: int, seed_base: i
                 continue
             try:
                 entry_legs=json.loads(chosen["legs_json"])
-                baseline_points=expiry_settlement_points(index_name,expiry_spot,entry_legs,chosen["entry_cashflow"],chosen["entry_cost_inr"],lot_sz,chosen["contracts"],entry_date)
+                        baseline_cost = chosen.get("entry_only_cost_inr", chosen["entry_cost_inr"])
+                baseline_points=expiry_settlement_points(index_name,expiry_spot,entry_legs,chosen["entry_cashflow"],baseline_cost,lot_sz,chosen["contracts"],entry_date)
                 baseline_inr=baseline_points*lot_sz
                 row_base={**chosen,"exit":"expiry_settlement","strategy_report":strat,"realized_pnl_inr":baseline_inr,"realized_pnl_points_per_unit":baseline_points}
                 rows.append(row_base)
@@ -451,7 +458,7 @@ def run(index_name: str, exit_mode: str, out_dir: Path, paths: int, seed_base: i
                         exit_cost_inr=nse_cost_exit_points(chosen["contracts"])*lot_sz
                     else:
                         exit_cost_inr=sensex_exit_costs(expiry,entry_legs,exit_prices,lot_sz)
-                        net_points=gross_points-chosen["entry_cost_inr"]/lot_sz-exit_cost_inr/lot_sz
+                        net_points=gross_points-chosen.get("entry_only_cost_inr",chosen["entry_cost_inr"])/lot_sz-exit_cost_inr/lot_sz
                     rr={**chosen,"exit":exit_time[:5],"strategy_report":strat,"exit_prices_json":json.dumps(exit_prices),"realized_pnl_points_per_unit":net_points,"realized_pnl_inr":net_points*lot_sz,"exit_cost_inr":exit_cost_inr}
                     rows.append(rr)
                     if "baseline_points" not in chosen:
