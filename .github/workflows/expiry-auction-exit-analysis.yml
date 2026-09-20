@@ -1,0 +1,173 @@
+name: Expiry Auction Exit Analysis — NIFTY + SENSEX (Branch Runner)
+
+on:
+  push:
+    branches:
+      - research/expiry-auction-exit-analysis-v1
+    paths:
+      - ".github/workflows/expiry-auction-exit-analysis.yml"
+      - "scripts/expiry_auction_exit_analysis_v2.py"
+      - "scripts/sensex_backtest_v1.py"
+      - "docs/expiry_exit_analysis/**"
+      - "data/expiry_exit/nifty50_source.csv"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: expiry-auction-exit-analysis-branch
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - name: Checkout analysis branch
+        uses: actions/checkout@v4
+        with:
+          ref: research/expiry-auction-exit-analysis-v1
+          fetch-depth: 0
+
+      - name: Record analysis start
+        run: |
+          echo "started_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)" > RUN_STARTED_UTC.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add RUN_STARTED_UTC.txt
+          git commit -m "ci: start expiry-day exit analysis [skip ci]" || true
+          git push origin HEAD:research/expiry-auction-exit-analysis-v1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas pyarrow huggingface_hub
+          python -m pip install -e .
+
+      - name: Restore cached 1-minute dataset
+        uses: actions/cache@v4
+        with:
+          path: data/hf_index_options
+          key: india-index-options-1m-expiry-exit-v2
+          restore-keys: |
+            india-index-options-1m-expiry-exit-
+
+      - name: Download 1-minute dataset on cache miss
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -f data/hf_index_options/index/NIFTY.parquet || ! -f data/hf_index_options/index/SENSEX.parquet ]]; then
+            rm -rf data/hf_index_options
+            python - <<'PY'
+          from huggingface_hub import snapshot_download
+          snapshot_download(
+              repo_id="thetrademarkk/india-index-options-1m",
+              repo_type="dataset",
+              local_dir="data/hf_index_options",
+              allow_patterns=[
+                  "index/NIFTY.parquet","options/NIFTY/*.parquet",
+                  "index/SENSEX.parquet","options/SENSEX/*.parquet",
+              ],
+          )
+          PY
+          fi
+          test -f data/hf_index_options/index/NIFTY.parquet
+          test -f data/hf_index_options/index/SENSEX.parquet
+
+      - name: Build exact S5 composite SENSEX MC history
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p data/external data/expiry_exit
+          if [[ ! -s data/external/sensex_legacy_2018_2024.csv ]]; then
+            curl -L --retry 5 --retry-delay 2 -A "Mozilla/5.0"               -o data/external/sensex_legacy_2018_2024.csv               https://raw.githubusercontent.com/sandeepkapri/Sensex-Minute-Data/master/sensex_candlestick_data.csv
+          fi
+          python - <<'PY'
+          import pandas as pd
+          legacy = pd.read_csv("data/external/sensex_legacy_2018_2024.csv")
+          legacy["timestamp"] = pd.to_datetime(legacy["Date"].astype(str)+" "+legacy["Time"].astype(str), dayfirst=True, errors="coerce")
+          legacy["close"] = pd.to_numeric(legacy["Close"], errors="coerce")
+          legacy = legacy.dropna(subset=["timestamp","close"]).sort_values("timestamp")
+          legacy["trading_day"] = legacy["timestamp"].dt.normalize()
+          legacy_daily = legacy.groupby("trading_day", as_index=False).tail(1)[["timestamp","trading_day","close"]]
+          hf = pd.read_parquet("data/hf_index_options/index/SENSEX.parquet")
+          hf["timestamp"] = pd.to_datetime(hf["timestamp"], errors="coerce")
+          if getattr(hf["timestamp"].dt, "tz", None) is not None:
+              hf["timestamp"] = hf["timestamp"].dt.tz_localize(None)
+          hf["trading_day"] = pd.to_datetime(hf["trading_day"], errors="coerce").dt.normalize()
+          hf["close"] = pd.to_numeric(hf["close"], errors="coerce")
+          hf = hf.dropna(subset=["timestamp","trading_day","close"]).sort_values("timestamp")
+          hf_daily = hf.groupby("trading_day", as_index=False).tail(1)[["timestamp","trading_day","close"]]
+          daily = pd.concat([legacy_daily, hf_daily], ignore_index=True).sort_values(["trading_day","timestamp"])
+          daily = daily.drop_duplicates("trading_day", keep="last").reset_index(drop=True)
+          daily["open"] = daily["close"]; daily["high"] = daily["close"]; daily["low"] = daily["close"]
+          daily.to_parquet("data/expiry_exit/sensex_mc_daily.parquet", index=False)
+          print("SENSEX composite rows:", len(daily), daily["trading_day"].min(), daily["trading_day"].max())
+          PY
+          test -s data/expiry_exit/sensex_mc_daily.parquet
+
+      - name: Compile
+        run: python -m py_compile scripts/expiry_auction_exit_analysis_v2.py scripts/sensex_backtest_v1.py
+
+      - name: Run complete exit comparison
+        run: |
+          python scripts/expiry_auction_exit_analysis_v2.py             --data-root data/hf_index_options             --out-dir reports/expiry_exit             --paths 5000             --seed-base 20260920
+
+      - name: Verify required results
+        run: |
+          set -euo pipefail
+          test -s reports/expiry_exit/RESULTS.md
+          test -s reports/expiry_exit/TRADE_LEVEL_RESULTS.csv
+          test -s reports/expiry_exit/EXIT_SUMMARY_BY_SPLIT.csv
+          test -s reports/expiry_exit/COMBINED_OOS_SUMMARY.csv
+          python - <<'PY'
+          import pandas as pd
+          p="reports/expiry_exit/COMBINED_OOS_SUMMARY.csv"
+          df=pd.read_csv(p)
+          required={("NIFTY","Batman","15:00"),("NIFTY","Batman","15:10"),
+                    ("NIFTY","Adaptive","15:00"),("NIFTY","Adaptive","15:10"),
+                    ("SENSEX","Batman","15:00"),("SENSEX","Batman","15:10"),
+                    ("SENSEX","Adaptive","15:00"),("SENSEX","Adaptive","15:10")}
+          got=set(map(tuple,df[["index","strategy","exit"]].itertuples(index=False,name=None)))
+          missing=required-got
+          if missing:
+              raise SystemExit(f"missing required exit scenarios: {sorted(missing)}")
+          print("All required scenarios present.")
+          PY
+
+      - name: Publish results and phase status
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin research/expiry-auction-exit-analysis-v1
+          git reset --hard origin/research/expiry-auction-exit-analysis-v1
+          git add reports/expiry_exit
+          git commit -m "research: publish expiry-day exit analysis [skip ci]" || true
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("docs/expiry_exit_analysis/PHASE_STATUS.md")
+          t=p.read_text()
+          t=t.replace("| E3 CI execution | IN PROGRESS |","| E3 CI execution | COMPLETE |")
+          t=t.replace("| E4 Results verification | NOT STARTED |","| E4 Results verification | COMPLETE |")
+          t=t.replace("| E5 Final comparison report | NOT STARTED |","| E5 Final comparison report | COMPLETE |")
+          t=t.replace("No exit result is used to change entry rules.","No exit result is used to change entry rules. Results are published under reports/expiry_exit/.")
+          p.write_text(t)
+          e=Path("docs/expiry_exit_analysis/ERROR_LOG.md")
+          et=e.read_text()
+          et += "\n## E003 — Authoritative branch-push rerun\nThe interrupted PR execution path was bypassed because repository Codex code-review quota was exhausted. The same frozen analysis is executed by the repository branch-push workflow; no entry rule was changed.\n"
+          e.write_text(et)
+          PY
+          git add docs/expiry_exit_analysis
+          git commit -m "docs: close expiry-day exit analysis phase [skip ci]" || true
+          git push origin HEAD:research/expiry-auction-exit-analysis-v1
+
+      - name: Print results
+        run: |
+          cat reports/expiry_exit/COMBINED_OOS_SUMMARY.csv
