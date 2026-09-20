@@ -1,6 +1,6 @@
 # Expiry-Day Exit Analysis — Phase Status
 
-Last updated: 2026-09-20 (Asia/Kolkata) — CI rerun after import-path and concurrency corrections
+Last updated: 2026-09-20 (Asia/Kolkata) — CI rerun after SENSEX MC path correction
 
 | Phase | Status |
 |---|---|
