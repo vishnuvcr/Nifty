@@ -1,0 +1,119 @@
+name: Expiry Auction Exit Analysis — NIFTY + SENSEX
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: expiry-auction-exit-analysis
+  cancel-in-progress: false
+
+jobs:
+  analysis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      HF_DATASET: thetrademarkk/india-index-options-1m
+      HF_DIR: data/hf_index_options
+    steps:
+      - name: Checkout analysis branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install analysis dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas pyarrow huggingface_hub
+
+      - name: Restore cached index-options dataset
+        uses: actions/cache@v4
+        with:
+          path: data/hf_index_options
+          key: india-index-options-1m-expiry-exit-v1
+          restore-keys: |
+            india-index-options-1m-expiry-exit-
+
+      - name: Download source data on cache miss
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -f "$HF_DIR/index/NIFTY.parquet" || ! -f "$HF_DIR/index/SENSEX.parquet" ]]; then
+            rm -rf "$HF_DIR"
+            python - <<'PY'
+          from huggingface_hub import snapshot_download
+          snapshot_download(
+              repo_id="thetrademarkk/india-index-options-1m",
+              repo_type="dataset",
+              local_dir="data/hf_index_options",
+              allow_patterns=[
+                  "index/NIFTY.parquet",
+                  "options/NIFTY/*.parquet",
+                  "index/SENSEX.parquet",
+                  "options/SENSEX/*.parquet",
+              ],
+          )
+          PY
+          fi
+          test -f "$HF_DIR/index/NIFTY.parquet"
+          test -f "$HF_DIR/index/SENSEX.parquet"
+          test -d "$HF_DIR/options/NIFTY"
+          test -d "$HF_DIR/options/SENSEX"
+
+      - name: Prepare stable analysis data paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf data/expiry_exit
+          mkdir -p data/expiry_exit/options_NIFTY data/expiry_exit/options_SENSEX
+          cp data/hf_index_options/index/NIFTY.parquet data/expiry_exit/index_NIFTY.parquet
+          cp data/hf_index_options/index/SENSEX.parquet data/expiry_exit/index_SENSEX.parquet
+          cp data/hf_index_options/options/NIFTY/*.parquet data/expiry_exit/options_NIFTY/
+          cp data/hf_index_options/options/SENSEX/*.parquet data/expiry_exit/options_SENSEX/
+          echo "NIFTY option files: $(find data/expiry_exit/options_NIFTY -name '*.parquet' | wc -l)"
+          echo "SENSEX option files: $(find data/expiry_exit/options_SENSEX -name '*.parquet' | wc -l)"
+
+      - name: Compile analysis engine
+        run: python -m py_compile scripts/expiry_auction_exit_analysis_v1.py
+
+      - name: Run expiry-settlement / 15:00 / 15:10 analysis
+        run: |
+          python scripts/expiry_auction_exit_analysis_v1.py             --paths 5000             --seed-base 20260920             --out-dir reports/expiry_exit
+
+      - name: Publish analysis reports to branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin ${{ github.event.pull_request.head.ref || github.ref_name }}
+          git checkout ${{ github.event.pull_request.head.ref || github.ref_name }}
+          git add reports/expiry_exit
+          git commit -m "research: publish expiry-day exit analysis [skip ci]" || true
+          git push origin HEAD:${{ github.event.pull_request.head.ref || github.ref_name }}
+
+      - name: Summary
+        run: |
+          {
+            echo "## Expiry-day exit analysis"
+            echo
+            echo "- Indices: NIFTY + SENSEX"
+            echo "- Strategies: Batman + Adaptive"
+            echo "- Exits: frozen expiry settlement, 15:00 IST, 15:10 IST"
+            echo "- Entry rules: unchanged frozen MC/regime gates"
+            echo "- NIFTY lot sizes: 75 through 2025-12-30 expiry, 65 thereafter"
+            echo "- SENSEX: one-lot transfer-edge mode, as used in S5/S6"
+            echo "- Exit timestamp proxy: exact 1-minute bar OPEN, avoiding look-ahead within the exit minute"
+            echo "- Monte Carlo: 5,000 bootstrap paths, 756 completed daily returns"
+          } >> "$GITHUB_STEP_SUMMARY"
