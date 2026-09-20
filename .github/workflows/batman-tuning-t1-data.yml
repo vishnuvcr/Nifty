@@ -6,4 +6,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "T1 requires cached parent BATMAN data and frozen-control reconstruction. No performance result is published by the scaffold."
+        with:
+          fetch-depth: 1
+      - name: Validate immutable historical cache
+        run: python scripts/batman_tuning_t1_data_check.py
+      - name: Run protocol tests
+        run: python -m pytest -q tests/test_batman_tuning_protocol.py
