@@ -1,0 +1,5 @@
+strategy,dev_n,dev_mean,validation_n,validation_mean,validation_pf,exposed_final_n,exposed_final_mean,exposed_final_pf,validation_pass
+Jade Lizard,98,26.566327,29,98.194828,4.023304,50,45.271000,1.629420,true
+Put Ratio Spread,97,43.836082,35,61.877143,3.159330,56,26.823214,1.381307,true
+Sell Put,113,53.303097,49,22.952041,1.291738,61,9.281148,1.095775,true
+Bull Put Spread,123,14.678862,28,16.225000,1.364958,45,9.096667,1.160564,true
