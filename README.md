@@ -197,3 +197,15 @@ T1 has been audited against historical BATMAN backfill commits and GitHub Action
 - Phase status: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-v1/docs/batman_tuning/PHASE_STATUS.md
 
 No tuning P&L or parameter winner is claimed until the immutable historical cache passes validation.
+
+
+### BATMAN Tuning V1 — T1 source acquisition
+
+T1 now has a reproducible historical-source acquisition layer covering the original 2020-01-01 to 2026-03-30 study horizon. The workflow uses a persistent GitHub Actions cache for large raw archives and writes SHA-256 provenance manifests. Public historical option archives are treated as bar-level data, not historical bid/ask feeds.
+
+- Source decision: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-v1/docs/batman_tuning/DATA_SOURCE_DECISION.md
+- Acquisition workflow: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-v1/.github/workflows/batman-tuning-t1-acquire.yml
+- Source manifest schema: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-v1/data/batman_tuning_cache/source_manifest.schema.json
+- T1 audit: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-v1/docs/batman_tuning/T1_DATA_AUDIT.md
+
+T1 remains gated until the raw archives are normalized and the compact BATMAN-specific derived cache passes coverage, contract, timestamp, zero-volume, and expiry-resolution checks. No tuning result is claimed before that gate.
