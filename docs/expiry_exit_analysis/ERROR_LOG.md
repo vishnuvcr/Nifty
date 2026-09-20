@@ -35,3 +35,10 @@ Type: repository-state verification
 Observation: a prior continuation note said that the authoritative dispatcher lived on main. Repository inspection showed that the expiry-analysis workflow is present on research/expiry-auction-exit-analysis-v1 and its current trigger includes both push and workflow_dispatch; the main branch does not contain that workflow at the inspected path.
 Resolution: corrected PHASE_STATUS, CONVERSATION_LOG, and this error log; execution is being initiated by a controlled branch push.
 Prevention: always re-read the target branch and main branch workflow files before stating where an analysis dispatcher resides.
+
+
+### E006 — CI import-path failure in v2 SENSEX path
+Type: execution / packaging
+Observation: the first full branch rerun reached the analysis stage and ran the NIFTY portion, then failed in `run_sensex()` with `ModuleNotFoundError: No module named 'scripts'` because the script was invoked as `python scripts/expiry_auction_exit_analysis_v2.py`, which places the scripts directory rather than the repository root first on `sys.path`.
+Resolution: the v2 engine now explicitly inserts the repository root and `src` into `sys.path`, supporting both script-path and module execution.
+Prevention: keep research runners importable under both supported invocation styles and test the SENSEX import path in CI before the long historical run.
