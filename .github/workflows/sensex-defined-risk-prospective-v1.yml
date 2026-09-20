@@ -13,14 +13,6 @@ on:
           - all
           - Jade Lizard
           - Put Ratio Spread
-          - Sell Put
-          - Bull Put Spread
-  push:
-    branches: ["research/prospective-defined-risk-sensex-v1"]
-    paths:
-      - "scripts/sensex_defined_risk_prospective_v1.py"
-      - "docs/prospective_defined_risk_sensex_v1/**"
-      - ".github/workflows/sensex-defined-risk-prospective-v1.yml"
 concurrency:
   group: sensex-defined-risk-prospective
   cancel-in-progress: false
