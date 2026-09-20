@@ -1,0 +1,9 @@
+name: BATMAN Tuning T5 Robustness
+on:
+  workflow_dispatch:
+jobs:
+  t5:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "T5 requires a frozen nested-WFO candidate." && exit 1
