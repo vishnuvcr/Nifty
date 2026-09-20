@@ -13,7 +13,6 @@ on:
           - all
           - Jade Lizard
           - Put Ratio Spread
-          - Put Ratio Spread
 concurrency:
   group: nifty-defined-risk-prospective
   cancel-in-progress: false
