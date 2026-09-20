@@ -23,3 +23,7 @@ User requested a separate-branch rerun of frozen NIFTY and SENSEX Batman and Ada
 
 ### 2026-09-20 — Continuation after conversation limit
 The repository state was rechecked from the surviving project context. A prior log incorrectly described a main-branch dispatcher as the execution path. The current repository was verified to contain the expiry-analysis workflow on research/expiry-auction-exit-analysis-v1 itself, with both push and workflow_dispatch triggers. To remove the dependency on an unavailable workflow_dispatch API, a controlled docs push is being used to trigger the branch workflow. Numerical results remain unclaimed until CI verification succeeds.
+
+
+### 2026-09-20 — Verified completion
+The final corrected CI run 35492648657 completed successfully. The required NIFTY and SENSEX early-exit scenarios were present and passed verification. Results were published to `reports/expiry_exit/`. The SENSEX calculation was corrected to reprice the cached frozen S5 Adaptive/Batman trade population rather than rerunning entry selection, preserving the frozen-entry requirement.
