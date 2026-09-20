@@ -1,0 +1,11 @@
+{
+  "strategies": 2,
+  "thresholds_per_strategy": 11,
+  "rules_tested": 22,
+  "dates": 480,
+  "block_length": 5,
+  "repetitions": 5000,
+  "observed_best_mean_per_decision": 4.843669871794895,
+  "reality_check_style_p_value": 0.886,
+  "note": "Cross-rule max-statistic block bootstrap; not a full Hansen SPA implementation."
+}
