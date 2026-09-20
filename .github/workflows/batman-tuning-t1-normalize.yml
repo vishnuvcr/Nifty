@@ -18,15 +18,23 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Restore v2 raw cache
+      - name: Restore v3 prepared raw cache
+        id: v3cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/batman_raw
+          key: batman-tuning-raw-v3-2026-09-21
+
+      - name: Restore v2 raw cache fallback
+        if: steps.v3cache.outputs.cache-hit != 'true'
         id: v2cache
         uses: actions/cache/restore@v4
         with:
           path: .cache/batman_raw
-          key: batman-tuning-raw-v2-2026-09-21
+          key: batman-tuning-raw-v3-2026-09-21
 
       - name: Restore v1 raw cache fallback
-        if: steps.v2cache.outputs.cache-hit != 'true'
+        if: steps.v3cache.outputs.cache-hit != 'true' && steps.v2cache.outputs.cache-hit != 'true'
         uses: actions/cache/restore@v4
         with:
           path: .cache/batman_raw
@@ -35,7 +43,7 @@ jobs:
       - name: Install tooling
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pandas pyarrow pytest
+          python -m pip install pandas pyarrow pytest yfinance
 
       - name: Acquire long NIFTY index fallback if absent
         run: |
@@ -49,6 +57,9 @@ jobs:
 
       - name: Deep raw-data row probe
         run: python scripts/batman_tuning_deep_probe.py
+
+      - name: Prepare T1 daily index and Ayush expiry maps
+        run: python scripts/batman_tuning_prepare_t1.py
 
       - name: Generate v2 raw manifest
         run: |
@@ -69,8 +80,8 @@ jobs:
           PY
           cat data/batman_tuning_cache/source_manifest_v2.json
 
-      - name: Persist v2 raw cache
-        if: steps.v2cache.outputs.cache-hit != 'true'
+      - name: Persist v3 prepared raw cache
+        if: steps.v3cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: .cache/batman_raw
@@ -87,6 +98,9 @@ jobs:
             data/batman_tuning_cache/source_manifest_v2.json
             data/batman_tuning_cache/source_audit.json
             data/batman_tuning_cache/deep_probe.json
+            data/batman_tuning_cache/ayush_expiry_calendar_2020_2024.csv
+            data/batman_tuning_cache/ayush_daily_file_map_2020_2024.csv
+            data/batman_tuning_cache/t1_prepared_manifest.json
           if-no-files-found: error
 
       - name: Summary
