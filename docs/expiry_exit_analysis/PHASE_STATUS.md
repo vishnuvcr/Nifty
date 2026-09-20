@@ -15,7 +15,7 @@ Last updated: 2026-09-20 (Asia/Kolkata)
 
 research/expiry-auction-exit-analysis-v1
 
-CI trigger: main-branch pull_request workflow; analysis code remains isolated on this branch.
+CI trigger: main-branch pull_request + branch-push workflow; analysis code remains isolated on this branch.
 
 ## Frozen scenario set
 
