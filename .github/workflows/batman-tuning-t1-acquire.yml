@@ -26,9 +26,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pandas pyarrow
 
-      - name: Restore raw-source cache
+      - name: Restore or save raw-source cache
         if: ${{ !inputs.rebuild_raw }}
-        uses: actions/cache/restore@v4
+        uses: actions/cache@v4
         with:
           path: .cache/batman_raw
           key: batman-tuning-raw-v1-2026-09-21
@@ -84,11 +84,6 @@ jobs:
       - name: Protocol and cache-contract tests
         run: python -m pytest -q tests/test_batman_tuning_protocol.py
 
-      - name: Persist raw archive cache for subsequent runs
-        uses: actions/cache/save@v4
-        with:
-          path: .cache/batman_raw
-          key: batman-tuning-raw-v1-2026-09-21
 
       - name: Upload acquisition manifest
         uses: actions/upload-artifact@v4
