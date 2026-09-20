@@ -105,3 +105,9 @@ Observation: Initial documentation treated several put-containing structures as 
 Impact: This would have wrongly excluded structures whose terminal loss is finite on the admissible NIFTY domain S >= 0.
 Resolution: The executable audit now classifies risk from the exact call-tail slope and non-negative underlying domain. Net short-call structures retain the unbounded-loss flag; short puts do not.
 Prevention: All risk taxonomy decisions are generated from the mathematical payoff audit and its domain assumptions, not from colloquial strategy labels.
+
+## LRW011 — Moving parent workflow lookup failed
+Phase: L2
+Observation: CI tests passed, but gh run list did not resolve the already verified parent strategy-regime-lab-v2 artifact from the branch context.
+Resolution: pinned verified parent run 35425922439, whose strategy-regime-lab-v2-results artifact is known to contain the research trade population.
+Prevention: historical analyses use immutable acquisition/run identifiers once the source artifact is frozen.
