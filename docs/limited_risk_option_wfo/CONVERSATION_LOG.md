@@ -39,3 +39,21 @@ The repository vishnuvcr/Nifty was inspected, including:
 
 ### Implementation note
 This log records user-visible decisions and repository-observable evidence. It is an audit record, not a reproduction of private hidden reasoning.
+
+## 2026-09-20 — Phase result
+
+Verified CI run: **35496685719** using pinned parent strategy-regime-lab-v2 run **35425922439**.
+
+Results:
+- 27/36 strategies pass the mechanical finite-loss core audit.
+- Batman is excluded because its aggregate call-tail slope is negative, giving an unbounded adverse upper-tail loss on S>=0.
+- Validation leaders at 2 points/contract stress include Jade Lizard (+98.19 points/trade, PF 4.02, n=29) and Put Ratio Spread (+61.88, PF 3.16, n=35).
+- Four strategies pass the frozen global development-to-validation gate: Jade Lizard, Put Ratio Spread, Sell Put, Bull Put Spread.
+- Medium-volatility -> Jade Lizard is the only volatility-regime mapping passing the selection gate.
+- Pre-2025 CPCV selected-path bootstrap 95% CI for mean: +31.62 to +49.93.
+- Cross-strategy max-statistic block bootstrap p=0.7426 across 27 strategies; this is not a full Hansen SPA implementation.
+- 2025-2026 is exposed, not a fresh holdout.
+- The parent option archive is EOD close, not verified historical bid/ask.
+
+Research decision:
+**No strategy promotion. L8 HOLD.**
