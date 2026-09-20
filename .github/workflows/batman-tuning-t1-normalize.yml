@@ -31,7 +31,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: .cache/batman_raw
-          key: batman-tuning-raw-v3-2026-09-21
+          key: batman-tuning-raw-v2-2026-09-21
 
       - name: Restore v1 raw cache fallback
         if: steps.v3cache.outputs.cache-hit != 'true' && steps.v2cache.outputs.cache-hit != 'true'
@@ -67,7 +67,7 @@ jobs:
           import hashlib, json
           from pathlib import Path
           root=Path('.cache/batman_raw')
-          out=Path('data/batman_tuning_cache/source_manifest_v2.json')
+          out=Path('data/batman_tuning_cache/source_manifest_v3.json')
           files={}
           for p in sorted(root.glob('*.zip')):
               h=hashlib.sha256()
@@ -76,16 +76,16 @@ jobs:
                       h.update(chunk)
               files[p.name]={'bytes':p.stat().st_size,'sha256':h.hexdigest()}
           out.parent.mkdir(parents=True,exist_ok=True)
-          out.write_text(json.dumps({'schema_version':'BATMAN-T1-SOURCE-2','study_start':'2020-01-01','study_end':'2026-03-30','sources':files},indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          out.write_text(json.dumps({'schema_version':'BATMAN-T1-SOURCE-3','study_start':'2020-01-01','study_end':'2026-03-30','sources':files},indent=2,sort_keys=True)+'\n',encoding='utf-8')
           PY
-          cat data/batman_tuning_cache/source_manifest_v2.json
+          cat data/batman_tuning_cache/source_manifest_v3.json
 
       - name: Persist v3 prepared raw cache
         if: steps.v3cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: .cache/batman_raw
-          key: batman-tuning-raw-v2-2026-09-21
+          key: batman-tuning-raw-v3-2026-09-21
 
       - name: Run protocol tests
         run: python -m pytest -q tests/test_batman_tuning_protocol.py
@@ -95,7 +95,7 @@ jobs:
         with:
           name: batman-tuning-t1-normalize-audit
           path: |
-            data/batman_tuning_cache/source_manifest_v2.json
+            data/batman_tuning_cache/source_manifest_v3.json
             data/batman_tuning_cache/source_audit.json
             data/batman_tuning_cache/deep_probe.json
             data/batman_tuning_cache/ayush_expiry_calendar_2020_2024.csv
