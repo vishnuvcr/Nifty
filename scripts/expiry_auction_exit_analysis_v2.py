@@ -318,8 +318,19 @@ def run_sensex(paths:int,seed_base:int,data_root:Path):
                 expiry=pd.Timestamp(r["expiry"]).normalize(); entry_date=pd.Timestamp(r["entry_date"]).normalize()
                 path=opts/f"{expiry.date()}.parquet"
                 if not path.exists(): continue
-                opt=load_option_file(path,entry_date)
-                expiry_day=opt.loc[opt["trading_day"].eq(expiry)].copy()
+                # Load the full expiry file so both the entry-day quote snapshot and
+                # expiry-day 15:00/15:10 bars are available.
+                opt=load_option_file(path, entry_date)
+                full=pd.read_parquet(path)
+                full["timestamp"]=pd.to_datetime(full["timestamp"],errors="coerce")
+                if getattr(full["timestamp"].dt,"tz",None) is not None:
+                    full["timestamp"]=full["timestamp"].dt.tz_localize(None)
+                full["trading_day"]=pd.to_datetime(full["trading_day"],errors="coerce").dt.normalize()
+                full["expiry"]=pd.to_datetime(full["expiry"],errors="coerce").dt.normalize()
+                for cc in ("strike","open","close"):
+                    full[cc]=pd.to_numeric(full[cc],errors="coerce")
+                full["option_type"]=full["option_type"].astype(str).str.upper()
+                expiry_day=full.loc[full["trading_day"].eq(expiry)].copy()
                 legs=json.loads(r["legs_json"])
                 entry_cash=float(r["entry_cashflow_points"])
                 entry_only=float(r.get("entry_cost_inr_entry_only",np.nan))
