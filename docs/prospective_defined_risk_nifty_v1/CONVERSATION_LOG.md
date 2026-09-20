@@ -23,3 +23,12 @@ Action:
 - Removed the superseded strategy dashboards from the prospective branch.
 - Updated protocol, phase status, candidate provenance, report, error log and audit log before the prospective stream begins.
 - Removed maintenance-push scanning so code changes cannot generate prospective observations.
+
+## 2026-09-20 — Pages dashboard styling
+
+User requested the prospective strategy pages to use the same mobile-friendly paper-trading dashboard presentation as the SENSEX Batman page: badge header, Latest Signal, paper-trading summary, recent signals and scientific boundary cards.
+
+Action:
+- Restyled NIFTY Jade Lizard and Put Ratio Spread pages.
+- Updated the NIFTY generator so future scanner runs preserve the same layout.
+- Sell Put and Bull Put Spread remain excluded.
