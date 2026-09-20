@@ -14,6 +14,7 @@ S7 is a prospective paper-trading implementation of the frozen SENSEX Batman and
 - Adaptive: frozen regime-conditioned candidate set; primary = highest net MC EV among eligible candidates.
 - SENSEX transfer-edge sizing: exactly one lot when the frozen net-MC-EV gate passes. The previously tested ₹1 lakh / 2% affordability gate remains a separate research boundary and is not reintroduced silently.
 - Live executable proxy: BUY uses ask + 0.50 point slippage; SELL uses bid − 0.50 point slippage. Missing bid/ask is a hard NO_TRADE.
+- The live SENSEX quote must carry a parseable timestamp dated the current decision date; stale prior-session quotes are a hard NO_TRADE.
 - Costs: SENSEX-specific transaction-cost schedule from S2 is deducted.
 - Paper only: no broker order is submitted.
 
