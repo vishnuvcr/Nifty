@@ -2,24 +2,50 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NIFTY Paper Trading Research</title>
+<title>Index Options Paper Trading Research</title>
 <style>
-:root{color-scheme:dark}body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#0b1220;color:#e8eef6}
-main{max-width:1000px;margin:auto;padding:32px 20px 48px}.hero{padding:24px;border:1px solid #263244;border-radius:18px;background:#111a2a}
-h1{margin:0 0 8px;font-size:32px}.sub{color:#9fb0c5;margin:0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin-top:22px}
-.card{display:block;text-decoration:none;color:inherit;padding:24px;border-radius:16px;border:1px solid #2b3648;background:#151f30;transition:.15s}.card:hover{transform:translateY(-2px);border-color:#5d8dff}
-.tag{display:inline-block;padding:5px 9px;border-radius:999px;background:#22304a;color:#bcd0ff;font-size:12px;font-weight:700}.card h2{margin:14px 0 8px}
-.card p{color:#aebdce;line-height:1.5}.open{display:inline-block;margin-top:8px;font-weight:700;color:#7fb0ff}
-.notice{margin-top:20px;padding:14px 16px;border-radius:12px;background:#141b27;color:#aebdce;font-size:13px;line-height:1.5}footer{margin-top:28px;color:#738195;font-size:12px}
+:root{color-scheme:dark}
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#0b1220;color:#e8eef6}
+main{max-width:1100px;margin:auto;padding:32px 20px 48px}
+.hero{padding:26px;border:1px solid #263244;border-radius:18px;background:#111a2a}
+h1{margin:0 0 8px;font-size:32px}.sub{color:#9fb0c5;margin:0;line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;margin-top:22px}
+.card{display:block;text-decoration:none;color:inherit;padding:24px;border-radius:16px;border:1px solid #2b3648;background:#151f30}
+.card:hover{border-color:#5d8dff}.tag{display:inline-block;padding:5px 9px;border-radius:999px;background:#22304a;color:#bcd0ff;font-size:12px;font-weight:700}
+.card h2{margin:14px 0 8px}.card p{color:#aebdce;line-height:1.5}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.links a{display:inline-block;padding:9px 12px;border-radius:10px;background:#1b2739;color:#7fb0ff;font-weight:700}
+.notice{margin-top:20px;padding:15px 17px;border-radius:12px;background:#141b27;color:#aebdce;font-size:13px;line-height:1.6}
+footer{margin-top:28px;color:#738195;font-size:12px}
 </style>
 </head>
 <body><main>
-<section class="hero"><div class="tag">NIFTY • PAPER TRADING RESEARCH</div><h1>Choose a strategy dashboard</h1>
-<p class="sub">Two isolated paper-trading systems. Separate signals, ledgers, research rules and pages.</p></section>
-<section class="grid">
-<a class="card" href="batman/"><div class="tag">SYSTEM 01</div><h2>Batman</h2><p>Frozen Batman paper-trading protocol with its own signal history, MC results and ledger.</p><span class="open">Open Batman →</span></a>
-<a class="card" href="adaptive/"><div class="tag">SYSTEM 02</div><h2>Adaptive Regime</h2><p>Prospective regime-conditioned candidate-set router derived from the completed CPCV robustness finding.</p><span class="open">Open Adaptive →</span></a>
+<section class="hero">
+<div class="tag">INDEX OPTIONS • PAPER TRADING</div>
+<h1>Choose an index</h1>
+<p class="sub">NIFTY and SENSEX are published as separate paper-trading systems. Each index has independent BATMAN and ADAPTIVE strategy dashboards.</p>
 </section>
-<div class="notice">Both systems are research / paper trading only. New entry signals are generated at 09:30 IST on NIFTY trading weekdays. A separate 16:00 IST refresh settles matured paper trades and republishes the pages without generating a second entry signal. The Adaptive page distinguishes the validated regime-level finding from its unvalidated prospective primary-selection rule.</div>
-<footer>Branch: research/adaptive-paper-signals-v1 • No broker order execution.</footer>
+<section class="grid">
+<article class="card">
+<div class="tag">INDEX 01</div>
+<h2>NIFTY 50</h2>
+<p>Prospective NIFTY paper-trading dashboards on the Phase-10 research branch.</p>
+<div class="links">
+<a href="batman/">BATMAN →</a>
+<a href="adaptive/">ADAPTIVE STRATEGY →</a>
+</div>
+</article>
+<article class="card">
+<div class="tag">INDEX 02</div>
+<h2>BSE SENSEX</h2>
+<p>Separate SENSEX transfer-validation paper-trading stream using the frozen S0–S6 Batman and Adaptive specifications.</p>
+<div class="links">
+<a href="sensex/batman/">BATMAN →</a>
+<a href="sensex/adaptive/">ADAPTIVE STRATEGY →</a>
+</div>
+</article>
+</section>
+<div class="notice">
+NIFTY entry scanning runs at 09:30 IST on trading weekdays; its existing 16:00 IST job is refresh-only. SENSEX entry scanners run at 09:30 IST and its separate settlement/page refresh runs at 16:00 IST. Both are paper-only and do not place broker orders.
+</div>
+<footer>Published from the research repository. Strategy dashboards remain isolated by index and strategy.</footer>
 </main></body></html>
