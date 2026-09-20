@@ -99,35 +99,36 @@ No manual risk label is authoritative.
 
 ### Family A — Limited loss + potentially unlimited profit
 
-Initial candidates from the existing catalog include:
+Expected examples, subject to the executable mathematical audit:
 - Buy Call
-- Buy Put
 - Long Straddle
 - Long Strangle
 - Strip
 - Strap
 - Call Ratio Back Spread
-- Put Ratio Back Spread
-
-These require exact debit/credit and payoff verification. A ratio backspread is eligible only if the realized structure has finite maximum loss under the selected strikes/prices.
+- Range Forward
+- Long Synthetic Future
+- Risk Reversal
 
 ### Family B — Limited loss + limited profit
 
-Initial candidates include:
+Expected examples, subject to the executable mathematical audit:
+- Sell Put
+- Buy Put
 - Bull Call Spread
 - Bear Put Spread
 - Bull Put Spread
 - Bear Call Spread
-- Bull Condor
-- Bear Condor
-- Bull Butterfly
-- Bear Butterfly
+- Put Ratio Spread
+- Put Ratio Back Spread
+- Bull/Bear Condors
+- Bull/Bear Butterflies
 - Long Iron Butterfly
 - Long Iron Condor
 - Iron Butterfly
 - Short Iron Condor
-
-A strategy must still pass the mechanical risk audit; the catalog name alone is not sufficient.
+- Double Plateau
+- Jade Lizard
 
 ### Family C — Path-/expiry-dependent limited-risk structures
 
@@ -136,24 +137,20 @@ Initial candidates:
 - Long Calendar with Puts
 - any other catalog structure whose risk cannot be established from a single terminal payoff.
 
-These are a separate sub-study and must not be mixed with single-expiry terminal-payoff statistics unless the multi-expiry valuation and path assumptions are explicitly specified.
+These remain a separate sub-study and must not be mixed with single-expiry terminal-payoff statistics unless the multi-expiry valuation and path assumptions are explicitly specified.
 
-### Explicitly excluded from the limited-risk core
+### Core exclusions
 
-The following are not eligible for the core phase because they have an unbounded adverse tail under their stated structure:
-- Batman
+The mechanical audit excludes any structure with an unbounded adverse upper tail caused by net short-call exposure. Expected examples include:
+- Call Ratio Spread
+- Short Call
 - Short Straddle
 - Short Strangle
-- Call Ratio Spread
-- Put Ratio Spread
-- Jade Lizard
+- Batman
 - Reverse Jade Lizard
-- Long Synthetic Future
 - Short Synthetic Future
-- Risk Reversal
-- any other strategy that fails the mechanical risk audit.
 
-An exclusion can be revisited only if the structure itself is changed so that maximum loss becomes finite.
+The machine-generated risk-audit table is authoritative if a catalogue label or this expected list conflicts with the executable payoff analysis.
 
 ---
 
