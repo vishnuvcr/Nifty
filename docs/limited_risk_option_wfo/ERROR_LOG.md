@@ -123,3 +123,15 @@ Phase: L5-L7
 Observation: The historical computation completed through risk/WFO analysis but failed while rendering pandas to_markdown because tabulate was not installed.
 Resolution: Result rendering now uses pandas to_string and requires no extra reporting package.
 Prevention: Avoid optional formatting dependencies inside the numerical research engine.
+
+## LRW015 — Clean limited-risk WFO completion
+Phase: L2-L7
+Observation: Successful end-to-end workflow run 35496685719 completed tests, pinned parent-artifact download, limited-risk WFO, result publication, and artifact upload.
+Resolution: Published structured results under reports/limited_risk_wfo/.
+Prevention: Treat 35496685719 and parent source run 35425922439 as the immutable provenance for this phase.
+
+## LRW016 — Fresh holdout not available
+Phase: L8
+Observation: The currently available 2025-2026 NIFTY period was already exposed by the parent research.
+Resolution: L8 is HOLD; no exposed-period statistic is treated as fresh confirmation.
+Prevention: Use only post-exposure observations for any future confirmation run.
