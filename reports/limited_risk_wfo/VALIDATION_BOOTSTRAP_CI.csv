@@ -1,0 +1,5 @@
+strategy,validation_n,mean_points,pf,bootstrap_method,block_length,repetitions,ci95_low_points,ci95_high_points,p_bootstrap_mean_le_zero
+Jade Lizard,29,98.194828,4.023304,moving_block_bootstrap,5,10000,42.435259,147.650647,0.0009
+Put Ratio Spread,35,61.877143,3.159330,moving_block_bootstrap,5,10000,35.928429,94.083964,0.0000
+Sell Put,49,22.952041,1.291738,moving_block_bootstrap,5,10000,-18.370995,84.156709,0.0898
+Bull Put Spread,28,16.225000,1.364958,moving_block_bootstrap,5,10000,-1.447991,52.043080,0.0307
