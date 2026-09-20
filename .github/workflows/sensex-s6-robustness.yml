@@ -139,10 +139,15 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -rf /tmp/sensex_s6_publish
+          mkdir -p /tmp/sensex_s6_publish
+          cp -a reports/sensex_s6 /tmp/sensex_s6_publish/
+          git fetch origin research/sensex-s6-robustness-v1
+          git reset --hard origin/research/sensex-s6-robustness-v1
+          rm -rf reports/sensex_s6
+          cp -a /tmp/sensex_s6_publish/sensex_s6 reports/
           git add reports/sensex_s6
           git commit -m "research: publish SENSEX S6 robustness results [skip ci]" || true
-          git fetch origin research/sensex-s6-robustness-v1
-          git rebase origin/research/sensex-s6-robustness-v1
           git push origin HEAD:research/sensex-s6-robustness-v1
 
       - name: Upload results
