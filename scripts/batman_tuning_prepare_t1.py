@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import csv
+import io
 import json
 import re
 import zipfile
@@ -83,16 +84,13 @@ def build_ayush_manifest():
             trade_date = date(yyyy, mm, dd)
             file_rows.append({"trade_date": trade_date.isoformat(), "member": name})
             with zf.open(name) as raw:
-                text = raw.read().decode("utf-8-sig", errors="replace").splitlines()
-            if not text:
-                continue
-            reader = csv.DictReader(text)
-            seen = set()
-            for row in reader:
-                exp = parse_symbol(row.get("symbol", ""))
-                if exp is not None and exp not in seen:
-                    expiries[trade_date].add(exp)
-                    seen.add(exp)
+                reader = csv.DictReader(io.TextIOWrapper(raw, encoding="utf-8-sig", newline=""))
+                seen = set()
+                for row in reader:
+                    exp = parse_symbol(row.get("symbol", ""))
+                    if exp is not None and exp >= trade_date and exp not in seen:
+                        expiries[trade_date].add(exp)
+                        seen.add(exp)
             if i % 250 == 0:
                 print(f"scanned {i}/{len(members)} Ayush option files")
     exp_rows = []
