@@ -424,7 +424,7 @@ def run(index_name: str, exit_mode: str, out_dir: Path, paths: int, seed_base: i
                     "legs_json":json.dumps(entry_legs,sort_keys=True),
                     "entry_cashflow":entry_cash,"contracts":contracts,
                     "entry_cost_inr":entry_cost_inr,"entry_only_cost_inr":(entry_entry_only if index_name=="SENSEX" else entry_cost_inr),"lot_size":lot_sz,
-                    "risk_budget_inr":2000.0,"risk_inr_per_lot":risk_inr_per_lot,
+                    "risk_budget_inr":2000.0,"risk_inr_per_lot":risk_inr_per_lot,"lots":lots,
                     "regime":regime["vol_regime"],"rv20_rank":regime["rv20_rank"],
                     "entry_date":str(entry_date.date()),"expiry":str(expiry.date()),"split":split,
                 })
