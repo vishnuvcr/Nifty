@@ -13,6 +13,8 @@ on:
       - opened
       - synchronize
       - reopened
+  issues:
+    types: [opened]
   workflow_dispatch:
 
 concurrency:
