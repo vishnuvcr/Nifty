@@ -329,7 +329,7 @@ def run_sensex(paths:int,seed_base:int,data_root:Path,sensex_mc_daily:Path):
                 full=pd.read_parquet(path)
                 full["timestamp"]=pd.to_datetime(full["timestamp"],errors="coerce")
                 if getattr(full["timestamp"].dt,"tz",None) is not None:
-                    full["timestamp"]=full["timestamp"].dt.tz_localize(None)
+                    full["timestamp"]=full["timestamp"].dt.tz_convert("Asia/Kolkata").dt.tz_localize(None)
                 full["trading_day"]=pd.to_datetime(full["trading_day"],errors="coerce").dt.normalize()
                 full["expiry"]=pd.to_datetime(full["expiry"],errors="coerce").dt.normalize()
                 for cc in ("strike","open","close"):
@@ -357,13 +357,14 @@ def run_sensex(paths:int,seed_base:int,data_root:Path,sensex_mc_daily:Path):
 def main():
     ap=argparse.ArgumentParser()
     ap.add_argument("--data-root",required=True)
+    ap.add_argument("--sensex-mc-daily",required=True)
     ap.add_argument("--out-dir",default="reports/expiry_exit")
     ap.add_argument("--paths",type=int,default=5000)
     ap.add_argument("--seed-base",type=int,default=20260920)
     args=ap.parse_args()
     data_root=Path(args.data_root)
     out=Path(args.out_dir); out.mkdir(parents=True,exist_ok=True)
-    frames=[run_nifty(args.paths,args.seed_base,data_root),run_sensex(args.paths,args.seed_base,data_root)]
+    frames=[run_nifty(args.paths,args.seed_base,data_root),run_sensex(args.paths,args.seed_base,data_root,Path(args.sensex_mc_daily))]
     trades=pd.concat(frames,ignore_index=True)
     trades.to_csv(out/"TRADE_LEVEL_RESULTS.csv",index=False)
     summaries=[]
