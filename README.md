@@ -124,3 +124,14 @@ A separate research branch has been created to test option strategies with a fin
 - Strategy/risk rules: https://github.com/vishnuvcr/Nifty/blob/research/limited-risk-option-wfo-v1/docs/limited_risk_option_wfo/STRATEGY_UNIVERSE_AND_RISK_RULES.md
 
 **Current status (2026-09-20):** L0 protocol freeze is complete. No new performance result is claimed. The next phase is literature/data review followed by mechanical payoff-risk auditing before any strategy ranking.
+
+
+## Limited-risk option WFO — current result
+
+The separate branch `research/limited-risk-option-wfo-v1` has completed its historical L0-L7 analysis. It mechanically identified 27/36 finite-loss core strategies, with Jade Lizard and Put Ratio Spread among the strongest development-to-validation candidates. However, the cross-strategy multiple-testing diagnostic was not supportive (Reality-Check-style block-bootstrap p=0.7426), and the available 2025-2026 period is already exposed by the parent research.
+
+- Branch: https://github.com/vishnuvcr/Nifty/tree/research/limited-risk-option-wfo-v1
+- Final phase report: https://github.com/vishnuvcr/Nifty/blob/research/limited-risk-option-wfo-v1/reports/limited_risk_wfo/FINAL_PHASE_REPORT.md
+- Phase status: https://github.com/vishnuvcr/Nifty/blob/research/limited-risk-option-wfo-v1/docs/limited_risk_option_wfo/PHASE_STATUS.md
+
+**Current decision (2026-09-20):** no strategy promoted. Fresh-holdout confirmation is HOLD until genuinely new post-exposure data and deployment-grade execution data are available.
