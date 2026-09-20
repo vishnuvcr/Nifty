@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Transfer the four frozen NIFTY finite-loss candidates to SENSEX and observe them prospectively without selecting among them from future outcomes.
+Transfer the two retained NIFTY finite-loss candidates to SENSEX and observe them prospectively without selecting among them from future outcomes. The prospective scope was narrowed before the first eligible observation.
 
-Frozen candidates:
+Current frozen candidates:
 - Jade Lizard
 - Put Ratio Spread
-- Sell Put
-- Bull Put Spread
+
+Superseded pre-observation candidates: Sell Put and Bull Put Spread. They are not part of the SENSEX prospective stream.
 
 ## Frozen transfer rules
 
@@ -25,6 +25,10 @@ Frozen candidates:
 
 ## Scientific boundary
 
-This is a transfer/prospective observation phase, not a SENSEX retuning phase. The four candidate definitions cannot be replaced, reordered, or optimized using SENSEX future outcomes.
+This is a transfer/prospective observation phase, not a SENSEX retuning phase. The two retained candidate definitions cannot be replaced, reordered, or optimized using SENSEX future outcomes.
 
 Any parameter change requires a new branch and a new validation boundary.
+
+## Scope-change record — 2026-09-20
+
+The prospective SENSEX scope was narrowed to Jade Lizard and Put Ratio Spread before any prospective observation. Sell Put and Bull Put Spread are excluded from future scans, ledgers and Pages dashboards. No prospective outcome was used to make this change.
