@@ -14,14 +14,7 @@ on:
           - Jade Lizard
           - Put Ratio Spread
           - Sell Put
-          - Bull Put Spread
-  push:
-    branches: ["research/prospective-defined-risk-nifty-v1"]
-    paths:
-      - "scripts/nifty_defined_risk_prospective_v1.py"
-      - "docs/prospective_defined_risk_nifty_v1/**"
-      - ".github/workflows/nifty-defined-risk-prospective-v1.yml"
-concurrency:
+          - Bull Put Spreadconcurrency:
   group: nifty-defined-risk-prospective
   cancel-in-progress: false
 permissions:
