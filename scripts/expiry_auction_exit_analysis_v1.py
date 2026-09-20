@@ -325,8 +325,96 @@ def block_bootstrap(values,n=10000,block=3,seed=20260920):
         means[i]=np.mean(sample)
     return {"n":len(values),"observed_mean":float(values.mean()),"ci_low":float(np.quantile(means,0.025)),"ci_high":float(np.quantile(means,0.975)),"p_mean_gt_zero":float(np.mean(means>0))}
 
+def write_exit_outputs(index_name: str, exit_mode: str, trades: pd.DataFrame, out_dir: Path):
+    out_dir.mkdir(parents=True, exist_ok=True)
+    trades.to_csv(out_dir / f"{index_name}_{exit_mode.replace(':','')}.csv", index=False)
+    if trades.empty:
+        return {"index": index_name, "exit": exit_mode, "trades": 0}
+    exit_label = exit_mode[:5] if exit_mode != "expiry_settlement" else "expiry_settlement"
+    valid = trades.get("status", pd.Series(index=trades.index, dtype=object)).ne("EXIT_UNAVAILABLE")
+    summary = []
+    for strat in ("Batman", "Adaptive"):
+        g = trades.loc[
+            (trades["strategy_report"] == strat)
+            & (trades["exit"] == exit_label)
+            & valid
+        ].copy()
+        s = summarize(g)
+        s.update({
+            "index": index_name,
+            "strategy": strat,
+            "exit": exit_mode,
+            "first_entry": g["entry_date"].min() if not g.empty else None,
+            "last_entry": g["entry_date"].max() if not g.empty else None,
+        })
+        summary.append(s)
+    pd.DataFrame(summary).to_csv(
+        out_dir / f"{index_name}_{exit_mode.replace(':','')}_SUMMARY.csv",
+        index=False,
+    )
+    for strat in ("Batman", "Adaptive"):
+        g = trades.loc[
+            (trades["strategy_report"] == strat)
+            & (trades["split"].isin(["validation", "holdout"]))
+            & (trades["exit"] == exit_label)
+            & valid
+        ]
+        if not g.empty:
+            bs = block_bootstrap(
+                pd.to_numeric(g["realized_pnl_inr"], errors="coerce").dropna().to_numpy(float)
+            )
+            (out_dir / f"{index_name}_{strat}_{exit_mode.replace(':','')}_BOOTSTRAP.json").write_text(
+                json.dumps(bs, indent=2), encoding="utf-8"
+            )
+    return {"index": index_name, "exit": exit_mode, "summaries": summary}
+
 def run(index_name: str, exit_mode: str, out_dir: Path, paths: int, seed_base: int):
     cfg=CONFIG[index_name]
+    cache_path = ROOT / "reports" / "expiry_exit" / f"_selection_cache_{index_name}.csv"
+    if exit_mode in {"15:00:00", "15:10:00"} and cache_path.exists():
+        idx = load_index(ROOT / cfg["index_path"])
+        cached = pd.read_csv(cache_path)
+        rows = []
+        for _, chosen in cached.iterrows():
+            expiry = pd.Timestamp(chosen["expiry"]).normalize()
+            entry_date = pd.Timestamp(chosen["entry_date"]).normalize()
+            try:
+                entry_legs = json.loads(str(chosen["legs_json"]))
+                snapshot = load_option_file(ROOT / cfg["options_dir"] / f"{expiry.date()}.parquet")
+                exit_prices = price_at_timestamp(snapshot, expiry, entry_legs, exit_mode, index_name)
+                exit_cash = -sum(int(l["qty"]) * p for l, p in zip(entry_legs, exit_prices))
+                gross_points = float(chosen["entry_cashflow"]) + exit_cash
+                lots = int(chosen.get("lots", 1))
+                lot_sz = int(chosen["lot_size"])
+                if index_name == "NIFTY":
+                    entry_cost_points = float(chosen.get("entry_only_cost_inr", chosen["entry_cost_inr"])) / lot_sz
+                    exit_cost_points = nse_cost_exit_points(int(chosen["contracts"]))
+                    net_points = gross_points - entry_cost_points - exit_cost_points
+                    exit_cost_inr = exit_cost_points * lot_sz
+                else:
+                    exit_cost_inr = sensex_exit_costs(expiry, entry_legs, exit_prices, lot_sz)
+                    entry_only = float(chosen.get("entry_only_cost_inr", chosen["entry_cost_inr"]))
+                    net_points = gross_points - entry_only / lot_sz - exit_cost_inr / lot_sz
+                rows.append({
+                    **chosen.to_dict(),
+                    "exit": exit_mode[:5],
+                    "strategy_report": str(chosen["strategy_report"]),
+                    "exit_prices_json": json.dumps(exit_prices),
+                    "realized_pnl_points_per_unit": float(net_points),
+                    "realized_pnl_inr": float(net_points) * lot_sz * lots,
+                    "exit_cost_inr": float(exit_cost_inr) * lots,
+                })
+            except Exception as exc:
+                rows.append({
+                    **chosen.to_dict(),
+                    "exit": exit_mode[:5],
+                    "strategy_report": str(chosen["strategy_report"]),
+                    "status": "EXIT_UNAVAILABLE",
+                    "error": str(exc),
+                })
+        trades = pd.DataFrame(rows)
+        return write_exit_outputs(index_name, exit_mode, trades, out_dir)
+
     idx=load_index(ROOT/cfg["index_path"])
     daily=daily_close(idx)
     sessions=pd.DatetimeIndex(daily["date"].unique()).sort_values()
@@ -482,10 +570,12 @@ def run(index_name: str, exit_mode: str, out_dir: Path, paths: int, seed_base: i
     # Combined OOS bootstrap on validation + holdout only.
     for strat in ("Batman","Adaptive"):
         g=trades.loc[(trades["strategy_report"]==strat)&(trades["split"].isin(["validation","holdout"]))&(trades["exit"]==(exit_mode[:5] if exit_mode!="expiry_settlement" else "expiry_settlement"))&(trades.get("status","").ne("EXIT_UNAVAILABLE"))]
-        if not g.empty:
-            bs=block_bootstrap(pd.to_numeric(g["realized_pnl_inr"],errors="coerce").dropna().to_numpy(float))
-            (out_dir/f"{index_name}_{strat}_{exit_mode.replace(':','')}_BOOTSTRAP.json").write_text(json.dumps(bs,indent=2),encoding="utf-8")
-    return {"index":index_name,"exit":exit_mode,"summaries":summary}
+        if exit_mode == "expiry_settlement":
+        selected_cache = trades.loc[trades["exit"].eq("expiry_settlement")].copy()
+        if not selected_cache.empty:
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            selected_cache.to_csv(cache_path, index=False)
+    return write_exit_outputs(index_name, exit_mode, trades, out_dir)
 
 def main():
     ap=argparse.ArgumentParser()
