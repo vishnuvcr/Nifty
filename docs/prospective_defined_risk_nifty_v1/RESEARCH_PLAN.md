@@ -2,19 +2,19 @@
 
 ## Purpose
 
-Freeze four strategies that already passed the limited-risk development-to-validation screen and observe them prospectively without changing their rules after seeing future outcomes.
+Observe the two strategies retained for the prospective phase from the limited-risk research without changing their rules after seeing future outcomes. The prospective scope was narrowed before the first eligible observation; no prospective outcome was used for this change.
 
-Frozen candidates:
+Current frozen candidates:
 1. Jade Lizard
 2. Put Ratio Spread
-3. Sell Put
-4. Bull Put Spread
+
+Superseded pre-observation candidates: Sell Put and Bull Put Spread. They remain historical limited-risk research results only and are not part of this prospective validation.
 
 They are evaluated independently. There is no further selection between the four in the prospective phase.
 
 ## Research question
 
-Do the four frozen finite-loss NIFTY strategies retain positive net performance prospectively when the MC/WFO rule, strike mapping, costs, and entry timing are frozen in advance?
+Do the two frozen finite-loss NIFTY strategies retain positive net performance prospectively when the MC/WFO rule, strike mapping, costs, and entry timing are frozen in advance?
 
 ## Frozen entry protocol
 
@@ -24,9 +24,7 @@ Do the four frozen finite-loss NIFTY strategies retain positive net performance 
 - Strike mapping:
   - Jade Lizard: P35, C65, C90.
   - Put Ratio Spread: ATM, P35.
-  - Sell Put: ATM.
-  - Bull Put Spread: P35, P10.
-- Each strategy is evaluated independently; a positive MC EV does not cause any other strategy to be dropped.
+- Each retained strategy is evaluated independently; a positive MC EV does not cause the other retained strategy to be dropped.
 - Signal: ENTER when net MC EV > 0 and all required executable quotes are present.
 - One-lot paper observation per candidate.
 - Exit: expiry settlement only for the common prospective benchmark.
@@ -65,3 +63,7 @@ No prospective strategy can be promoted from a small sample or because it is out
 ## Scientific boundary
 
 This is prospective validation, not a new optimization phase. Any parameter change requires a new frozen branch and a new validation boundary.
+
+## Scope-change record — 2026-09-20
+
+The prospective scope was narrowed from four candidates to two — Jade Lizard and Put Ratio Spread — before the first eligible prospective observation. Sell Put and Bull Put Spread are excluded from all future prospective scans, ledgers and Pages dashboards. This is a protocol/configuration change made before observing prospective outcomes, not a result-driven selection.
