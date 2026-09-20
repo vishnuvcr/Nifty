@@ -57,3 +57,8 @@ Verified CI run: **35496685719** using parent run **35425922439**.
 - [Regime router summary](reports/limited_risk_wfo/REGIME_ROUTER_SUMMARY.csv)
 
 **Decision:** no strategy promoted. The 2025-2026 sample is already exposed; L8 remains HOLD pending genuinely new post-exposure data and deployment-grade bid/ask history.
+
+
+## Frozen defined-risk prospective validation
+
+This branch currently observes two candidates prospectively: **Jade Lizard** and **Put Ratio Spread**. Sell Put and Bull Put Spread were removed before the first eligible observation. See `docs/prospective_defined_risk_nifty_v1/RESEARCH_PLAN.md` and `docs/prospective_defined_risk_nifty_v1/PHASE_STATUS.md`.
