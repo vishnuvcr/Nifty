@@ -18,6 +18,7 @@ jobs:
       contents: read
     env:
       PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}
+      PARENT_RUN_ID: "35425922439"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -29,28 +30,22 @@ jobs:
           pip install numpy pandas pytest
       - name: Tests
         run: pytest -q tests/test_limited_risk_wfo.py
-      - name: Resolve parent run
-        id: parent
-        env:
-          GH_TOKEN: \${{ github.token }}
+      - name: Verify pinned parent run
         run: |
-          run_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "strategy-regime-lab-v2" --branch research/monte-carlo-wfa-v1 --status success --limit 1 --json databaseId --jq '.[0].databaseId')"
-          test -n "$run_id"
-          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "Using pinned parent strategy-regime-lab-v2 run: $PARENT_RUN_ID"
       - name: Download parent artifact
         env:
-          GH_TOKEN: \${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p input
-          gh run download "\${{ steps.parent.outputs.run_id }}" --repo "\${{ github.repository }}" --name strategy-regime-lab-v2-results --dir input
+          gh run download "$PARENT_RUN_ID" --repo "$GITHUB_REPOSITORY" --name strategy-regime-lab-v2-results --dir input
           test -s input/strategy_trades.csv
       - name: Run limited-risk WFO
         run: |
           rm -rf limited_risk_results
           python scripts/run_limited_risk_wfo.py --trades input/strategy_trades.csv --out-dir limited_risk_results --cost-per-contract 2 --lot-size 65 --bootstrap 10000
       - name: Print results
-        run: |
-          cat limited_risk_results/LIMITED_RISK_WFO_RESULTS.md
+        run: cat limited_risk_results/LIMITED_RISK_WFO_RESULTS.md
       - uses: actions/upload-artifact@v4
         with:
           name: limited-risk-option-wfo-v1-results
