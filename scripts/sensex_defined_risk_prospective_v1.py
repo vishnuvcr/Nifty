@@ -166,5 +166,90 @@ def main():
         stats[strategy]={"n":len(pnl),"total":float(pnl.sum()) if len(pnl) else 0.0}
     selector(stats,site_root)
 
+
+def page(strategy,signals,ledger,site_dir):
+    site_dir.mkdir(parents=True,exist_ok=True)
+    closed=ledger[ledger.status.eq("CLOSED")].copy() if not ledger.empty else ledger.copy()
+    pnl=pd.to_numeric(closed.realized_pnl_inr,errors="coerce").dropna() if not closed.empty else pd.Series(dtype=float)
+    total=float(pnl.sum()) if len(pnl) else 0.0
+    win=float((pnl>0).mean()) if len(pnl) else float("nan")
+    gains=float(pnl[pnl>0].sum()) if len(pnl) else 0.0
+    losses=float(-pnl[pnl<0].sum()) if len(pnl) else 0.0
+    pf=gains/losses if losses else float("inf")
+    eq=pnl.cumsum() if len(pnl) else pd.Series(dtype=float)
+    dd=float((eq-eq.cummax()).min()) if len(eq) else 0.0
+    latest=signals.tail(1).iloc[0].to_dict() if len(signals) else {"signal":"NO DATA YET","decision_date":"—","strategy":strategy}
+    def fmt(key):
+        x=latest.get(key,"—")
+        if x is None or (isinstance(x,float) and np.isnan(x)): return "—"
+        return str(x)
+    ev="" if fmt("mc_ev_points_net")=="—" else f'{float(latest.get("mc_ev_points_net")):.2f}'
+    pop="" if fmt("mc_pop")=="—" else f'{float(latest.get("mc_pop")):.1%}'
+    spot="" if fmt("spot")=="—" else f'{float(latest.get("spot")):,.2f}'
+    rows=[]
+    for _,r in signals.tail(12).iloc[::-1].iterrows():
+        rv="—" if pd.isna(r.get("mc_ev_points_net")) else f'{float(r.get("mc_ev_points_net")):.2f}'
+        rp="—" if pd.isna(r.get("realized_pnl_inr")) else f'₹{float(r.get("realized_pnl_inr")):,.2f}'
+        rows.append(f'<tr><td>{html.escape(str(r.get("decision_date","—")))}</td><td>{html.escape(str(r.get("expiry","—")))}</td><td>{html.escape(str(r.get("status","—")))}</td><td>{html.escape(str(r.get("signal","—")))}</td><td>{rv}</td><td>{rp}</td></tr>')
+    recent="".join(rows) if rows else '<tr><td colspan="6">No prospective observations yet.</td></tr>'
+    title=html.escape(strategy)
+    body=f"""<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SENSEX {title} Paper Trading</title>
+<style>
+body{{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#0d1117;color:#e6edf3}}
+main{{max-width:1180px;margin:auto;padding:24px}}
+.card{{background:#161b22;border:1px solid #30363d;border-radius:14px;padding:18px;margin:14px 0}}
+.grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}}
+.kpi{{font-size:23px;font-weight:750}}small{{color:#8b949e}}a{{color:#58a6ff}}
+table{{width:100%;border-collapse:collapse;font-size:13px}}th,td{{padding:8px;border-bottom:1px solid #30363d;text-align:left;vertical-align:top}}
+.badge{{display:inline-block;padding:5px 9px;border-radius:999px;background:#21262d;font-weight:700}}
+.note{{color:#aebdce;line-height:1.5}}
+</style></head><body><main>
+<p><a href="../index.html">← SENSEX defined-risk selector</a></p>
+<div class="card"><span class="badge">SENSEX • {title.upper()} • PAPER ONLY</span>
+<h1>{title} Paper-Trading Scanner</h1>
+<p class="note">Frozen SENSEX transfer/prospective validation. Entry at 09:30 IST; 5,000 Monte Carlo paths; 756-session lookback; existing SENSEX transaction-cost model; 0.50 adverse option-point execution stress; expiry settlement benchmark. No cross-candidate selection or retuning.</p></div>
+<div class="card"><h2>Latest signal</h2>
+<p><span class="badge">{html.escape(fmt("signal"))}</span></p>
+<div class="grid">
+<div><small>Decision date</small><div class="kpi">{html.escape(fmt("decision_date"))}</div></div>
+<div><small>Fixed entry time</small><div class="kpi">09:30 IST</div></div>
+<div><small>Model cutoff</small><div class="kpi">{html.escape(fmt("model_data_cutoff"))}</div></div>
+<div><small>Quote snapshot</small><div class="kpi">{html.escape(fmt("quote_retrieved_at_ist"))}</div></div>
+<div><small>Expiry</small><div class="kpi">{html.escape(fmt("expiry"))}</div></div>
+<div><small>Spot</small><div class="kpi">{spot or "—"}</div></div>
+<div><small>Net MC EV</small><div class="kpi">{ev or "—"}</div></div>
+<div><small>MC POP</small><div class="kpi">{pop or "—"}</div></div>
+<div><small>Lots</small><div class="kpi">{"1" if str(latest.get("signal",""))=="ENTER" else "0"}</div></div>
+</div>
+<p class="note">The page is populated automatically from the frozen SENSEX prospective scanner. Missing or malformed executable quote/data fields produce NO_TRADE.</p></div>
+<div class="card"><h2>Monte Carlo / execution specification</h2><table>
+<tr><th>Metric</th><th>Frozen setting</th></tr>
+<tr><td>Monte Carlo paths</td><td>5,000</td></tr>
+<tr><td>Historical lookback</td><td>756 completed sessions</td></tr>
+<tr><td>Entry gate</td><td>Net MC expected value &gt; 0</td></tr>
+<tr><td>Execution stress</td><td>0.50 adverse option points per executed contract</td></tr>
+<tr><td>Observation size</td><td>1 lot, paper only</td></tr>
+<tr><td>Exit benchmark</td><td>Expiry settlement</td></tr>
+</table></div>
+<div class="card"><h2>Paper-trading summary</h2><div class="grid">
+<div><small>Prospective observations</small><div class="kpi">{len(signals)}</div></div>
+<div><small>Closed trades</small><div class="kpi">{len(pnl)}</div></div>
+<div><small>Win rate</small><div class="kpi">{"—" if not len(pnl) else f"{win:.1%}"}</div></div>
+<div><small>Profit factor</small><div class="kpi">{"—" if not len(pnl) else ("∞" if math.isinf(pf) else f"{pf:.2f}")}</div></div>
+<div><small>Total P&amp;L</small><div class="kpi">₹{total:,.2f}</div></div>
+<div><small>Max drawdown</small><div class="kpi">₹{dd:,.2f}</div></div>
+</div></div>
+<div class="card"><h2>Recent signals</h2><table>
+<tr><th>Date</th><th>Expiry</th><th>Status</th><th>Signal</th><th>Net EV</th><th>Realized P&amp;L</th></tr>{recent}
+</table></div>
+<div class="card"><h2>Scientific boundary</h2>
+<p class="note">Prospective transfer validation only. Historical SENSEX results are not backfilled into this ledger. No future outcome changes the frozen strategy definition. Sell Put and Bull Put Spread are outside the active prospective universe.</p></div>
+<div class="card"><small>Branch: research/prospective-defined-risk-sensex-v1. Paper-only publication; no broker order is submitted.</small></div>
+</main></body></html>"""
+    (site_dir/"index.html").write_text(body,encoding="utf-8")
+
 if __name__=="__main__":
     main()
