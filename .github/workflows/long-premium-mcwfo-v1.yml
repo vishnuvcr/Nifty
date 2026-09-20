@@ -1,0 +1,75 @@
+name: Long-Premium MC-WFO v1
+on:
+  push:
+    branches: ["research/long-premium-mcwfo-v1"]
+    paths:
+      - "scripts/run_long_premium_mcwfo_v1.py"
+      - "docs/long_premium_mcwfo_v1/**"
+      - "data/long_premium_mcwfo_v1/**"
+      - ".github/workflows/long-premium-mcwfo-v1.yml"
+  workflow_dispatch:
+    inputs:
+      parent_run_id:
+        description: "Verified parent strategy-regime-lab-v2 run id"
+        required: true
+        default: "35425922439"
+concurrency:
+  group: long-premium-mcwfo-v1
+  cancel-in-progress: false
+permissions:
+  actions: read
+  contents: write
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas
+      - name: Resolve source data
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PARENT_RUN: ${{ github.event.inputs.parent_run_id || '35425922439' }}
+        run: |
+          mkdir -p input results
+          if test -s data/long_premium_mcwfo_v1/strategy_trades_buycall_buyput.csv; then
+            cp data/long_premium_mcwfo_v1/strategy_trades_buycall_buyput.csv input/strategy_trades.csv
+            echo "Using cached repository data."
+          else
+            gh run download "$PARENT_RUN" --repo "$GITHUB_REPOSITORY" --name strategy-regime-lab-v2-results --dir input
+            python - <<'PY'
+            import pandas as pd
+            p="input/strategy_trades.csv"
+            df=pd.read_csv(p)
+            keep=df[df.strategy.isin(["Buy Call","Buy Put"])].copy()
+            keep.to_csv("input/strategy_trades.csv",index=False)
+            PY
+          fi
+      - name: Run frozen analysis
+        run: |
+          python scripts/run_long_premium_mcwfo_v1.py             --trades input/strategy_trades.csv             --out-dir results             --lot-size 65             --slippage-points-per-contract 2.0             --brokerage-per-order-inr 10.0
+      - name: Persist derived cache and report
+        run: |
+          mkdir -p data/long_premium_mcwfo_v1
+          cp input/strategy_trades.csv data/long_premium_mcwfo_v1/strategy_trades_buycall_buyput.csv
+          cp results/FINAL_PHASE_REPORT.md reports/long_premium_mcwfo_v1/FINAL_PHASE_REPORT.md
+          cp results/SELECTED_RULE.json reports/long_premium_mcwfo_v1/SELECTED_RULE.json
+          cp results/MULTIPLE_TESTING.json reports/long_premium_mcwfo_v1/MULTIPLE_TESTING.json
+          cp results/DEVELOPMENT_SELECTION_GRID.csv reports/long_premium_mcwfo_v1/DEVELOPMENT_SELECTION_GRID.csv
+          cp results/VALIDATION_DIAGNOSTIC_TOP20.csv reports/long_premium_mcwfo_v1/VALIDATION_DIAGNOSTIC_TOP20.csv
+          cp results/COST_SENSITIVITY.csv reports/long_premium_mcwfo_v1/COST_SENSITIVITY.csv
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/long_premium_mcwfo_v1 reports/long_premium_mcwfo_v1
+          if git diff --cached --quiet; then echo "No generated changes."; else git commit -m "research: run long-premium MC-WFO v1 [skip ci]"; git push; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: long-premium-mcwfo-v1-results
+          path: results/
+          retention-days: 30
