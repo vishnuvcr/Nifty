@@ -1,14 +1,8 @@
 name: limited-risk-option-wfo-v1
-
 on:
   push:
-    branches: ["research/limited-risk-option-wfo-v1"]
-    paths:
-      - scripts/run_limited_risk_wfo.py
-      - tests/test_limited_risk_wfo.py
-      - docs/limited_risk_option_wfo/**
-      - configs/limited_risk_option_wfo_v1.yaml
-      - .github/workflows/limited-risk-option-wfo-v1.yml
+    branches:
+      - research/limited-risk-option-wfo-v1
   workflow_dispatch:
 
 jobs:
@@ -17,7 +11,7 @@ jobs:
     timeout-minutes: 60
     permissions:
       actions: read
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -30,63 +24,30 @@ jobs:
           pip install -e .
       - name: Tests
         run: pytest -q tests/test_limited_risk_wfo.py
-      - name: Resolve latest successful parent strategy run
-        id: parent_run
+      - name: Resolve parent run
+        id: parent
         env:
           GH_TOKEN: \${{ github.token }}
         run: |
           run_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "strategy-regime-lab-v2" --branch research/monte-carlo-wfa-v1 --status success --limit 1 --json databaseId --jq '.[0].databaseId')"
           test -n "$run_id"
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
-          echo "Parent strategy-regime-lab-v2 run: $run_id"
-      - name: Download parent strategy artifact
+      - name: Download parent artifact
         env:
           GH_TOKEN: \${{ github.token }}
         run: |
           mkdir -p input
-          gh run download "\${{ steps.parent_run.outputs.run_id }}" --repo "\${{ github.repository }}" --name strategy-regime-lab-v2-results --dir input
-          test -f input/strategy_trades.csv
-          wc -l input/strategy_trades.csv
-      - name: Run limited-risk WFO and robustness analysis
+          gh run download "\${{ steps.parent.outputs.run_id }}" --repo "\${{ github.repository }}" --name strategy-regime-lab-v2-results --dir input
+          test -s input/strategy_trades.csv
+      - name: Run limited-risk WFO
         run: |
           rm -rf limited_risk_results
           python scripts/run_limited_risk_wfo.py --trades input/strategy_trades.csv --out-dir limited_risk_results --cost-per-contract 2 --lot-size 65 --bootstrap 10000
-      - name: Publish result summary
-        run: cat limited_risk_results/LIMITED_RISK_WFO_RESULTS.md
+      - name: Print results
+        run: |
+          cat limited_risk_results/LIMITED_RISK_WFO_RESULTS.md
       - uses: actions/upload-artifact@v4
         with:
           name: limited-risk-option-wfo-v1-results
           path: limited_risk_results/
           retention-days: 90
-      - name: Update phase status and error log
-        if: always()
-        run: |
-          status_file="docs/limited_risk_option_wfo/PHASE_STATUS.md"
-          err_file="docs/limited_risk_option_wfo/ERROR_LOG.md"
-          now="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
-          if [ "\${{ job.status }}" = "success" ]; then
-            python - <<'PY'
-from pathlib import Path
-p=Path("docs/limited_risk_option_wfo/PHASE_STATUS.md")
-s=p.read_text()
-repl={
-"| L2 Data audit and executable market-data layer | IN PROGRESS |":"| L2 Data audit and executable market-data layer | COMPLETE | Pinned parent strategy artifact passed schema and coverage checks. EOD close-only execution data limitation recorded. |",
-"| L3 Strategy risk-audit engine | PLANNED | Mechanical finite-loss classification is mandatory. |":"| L3 Strategy risk-audit engine | COMPLETE | Full catalog mechanically classified by adverse-tail slope and expiry structure. |",
-"| L4 WFO strategy-construction engine | PLANNED |":"| L4 WFO strategy-construction engine | COMPLETE | Limited-risk historical WFO evaluated against the frozen parent strategy artifact. |",
-"| L5 Broad strategy WFO | PLANNED |":"| L5 Broad strategy WFO | COMPLETE | All core limited-risk strategies compared after the frozen stress cost. |",
-"| L6 Nested strategy/regime selection | PLANNED |":"| L6 Nested strategy/regime selection | COMPLETE | Development-only selection and validation gates executed. |",
-"| L7 Robustness and statistical inference | PLANNED |":"| L7 Robustness and statistical inference | COMPLETE | Pre-2025 CPCV, block bootstrap and max-statistic multiple-testing diagnostic executed. |",
-"| L8 Fresh untouched holdout | PLANNED |":"| L8 Fresh untouched holdout | HOLD | Parent research has already exposed 2025-2026; no clean post-exposure holdout is claimed. |"
-}
-for a,b in repl.items(): s=s.replace(a,b)
-p.write_text(s)
-PY
-            printf '\n## CI execution %s\n- Limited-risk WFO completed successfully.\n- Result artifact: limited-risk-option-wfo-v1-results\n' "$now" >> "$err_file"
-          else
-            printf '\n## CI execution %s\n- Workflow failed; inspect logs and append correction details before rerun.\n' "$now" >> "$err_file"
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/limited_risk_option_wfo/PHASE_STATUS.md docs/limited_risk_option_wfo/ERROR_LOG.md
-          git commit -m "ci: update limited-risk WFO phase status [skip ci]" || true
-          git push || true
