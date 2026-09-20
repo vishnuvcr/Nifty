@@ -15,7 +15,7 @@ permissions:
 
 concurrency:
   group: expiry-auction-exit-analysis
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   analysis:
