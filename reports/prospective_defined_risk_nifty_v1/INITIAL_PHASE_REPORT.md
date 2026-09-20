@@ -2,14 +2,14 @@
 
 ## Status
 
-The four strategies are frozen and the prospective observation infrastructure is active:
+The prospective observation infrastructure is active for two retained strategies:
 
 - Jade Lizard
 - Put Ratio Spread
-- Sell Put
-- Bull Put Spread
 
-Each has a separate paper ledger and GitHub Pages dashboard.
+Sell Put and Bull Put Spread were removed from prospective validation before the first eligible observation.
+
+Each retained strategy has a separate paper ledger and GitHub Pages dashboard.
 
 ## Frozen model
 
@@ -33,3 +33,8 @@ This is deliberate: using the already-exposed historical period as if it were a 
 **ACTIVE PROSPECTIVE VALIDATION / NO PROMOTION YET.**
 
 The first future eligible observations will be assessed under the frozen rules without re-selection.
+
+
+## Scope-change record
+
+The candidate set was narrowed to Jade Lizard and Put Ratio Spread before any prospective trade observation. No future performance outcome was used to make this change.
