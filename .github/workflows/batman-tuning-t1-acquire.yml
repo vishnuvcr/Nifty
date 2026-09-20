@@ -1,0 +1,101 @@
+name: BATMAN Tuning T1 Acquire and Audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      rebuild_raw:
+        description: Ignore existing Actions cache and reacquire raw archives
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pandas pyarrow
+
+      - name: Restore raw-source cache
+        if: ${{ !inputs.rebuild_raw }}
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/batman_raw
+          key: batman-tuning-raw-v1-2026-09-21
+
+      - name: Prepare cache directory
+        run: mkdir -p .cache/batman_raw
+
+      - name: Acquire Zenodo 2017-2020 archives
+        run: |
+          set -euo pipefail
+          cd .cache/batman_raw
+          test -f zenodo_nifty_options_2017_2020.zip || curl -fL --retry 3 --retry-all-errors "https://zenodo.org/records/10899828/files/Nifty%20Options%20Data.zip?download=1" -o zenodo_nifty_options_2017_2020.zip
+          test -f zenodo_nifty_spot_futures_2017_2020.zip || curl -fL --retry 3 --retry-all-errors "https://zenodo.org/records/10899828/files/Nifty%20spot%20and%20futures%20data.zip?download=1" -o zenodo_nifty_spot_futures_2017_2020.zip
+
+      - name: Acquire 2020-2024 NIFTY/BankNIFTY options archive
+        run: |
+          set -euo pipefail
+          cd .cache/batman_raw
+          test -f ayush_nifty_banknifty_options_2020_2024.zip || curl -fL --retry 3 --retry-all-errors "https://www.kaggle.com/api/v1/datasets/download/ayushsacri/indian-nifty-and-banknifty-options-data-2020-2024" -o ayush_nifty_banknifty_options_2020_2024.zip
+
+      - name: Acquire 2025-2026 NIFTY options archive
+        run: |
+          set -euo pipefail
+          cd .cache/batman_raw
+          test -f rahul_nifty_options_2025_2026.zip || curl -fL --retry 3 --retry-all-errors "https://www.kaggle.com/api/v1/datasets/download/rahultr1/nifty-options-weekly-1min-2025-01-01-to-2026-07-25" -o rahul_nifty_options_2025_2026.zip
+
+      - name: Generate source manifest
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root = Path('.cache/batman_raw')
+          out = Path('data/batman_tuning_cache/source_manifest.json')
+          out.parent.mkdir(parents=True, exist_ok=True)
+          files = {}
+          for p in sorted(root.glob('*.zip')):
+              h = hashlib.sha256()
+              with p.open('rb') as fh:
+                  for chunk in iter(lambda: fh.read(1024 * 1024), b''):
+                      h.update(chunk)
+              files[p.name] = {'bytes': p.stat().st_size, 'sha256': h.hexdigest()}
+          manifest = {
+              'schema_version': 'BATMAN-T1-SOURCE-1',
+              'study_start': '2020-01-01',
+              'study_end': '2026-03-30',
+              'sources': files,
+              'source_policy': 'raw archives are acquisition-only; derived BATMAN cache requires separate provenance and rights audit'
+          }
+          out.write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\\n', encoding='utf-8')
+          PY
+          cat data/batman_tuning_cache/source_manifest.json
+
+      - name: Protocol and cache-contract tests
+        run: python -m pytest -q tests/test_batman_tuning_protocol.py
+
+      - name: Persist raw archive cache for subsequent runs
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/batman_raw
+          key: batman-tuning-raw-v1-2026-09-21
+
+      - name: Upload acquisition manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: batman-tuning-t1-source-manifest
+          path: data/batman_tuning_cache/source_manifest.json
+          if-no-files-found: error
+
+      - name: T1 summary
+        run: echo "Raw-source acquisition/audit completed; derived BATMAN cache construction remains gated on schema and coverage validation." >> "$GITHUB_STEP_SUMMARY"
