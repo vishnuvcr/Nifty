@@ -1,0 +1,89 @@
+name: BATMAN Tuning T1 Normalize and Probe
+
+on:
+  push:
+    branches:
+      - research/batman-tuning-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Restore v2 raw cache
+        id: v2cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/batman_raw
+          key: batman-tuning-raw-v2-2026-09-21
+
+      - name: Restore v1 raw cache fallback
+        if: steps.v2cache.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/batman_raw
+          key: batman-tuning-raw-v1-2026-09-21
+
+      - name: Install tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pandas pyarrow pytest
+
+      - name: Acquire long NIFTY index fallback if absent
+        run: |
+          set -euo pipefail
+          mkdir -p .cache/batman_raw
+          cd .cache/batman_raw
+          test -f nifty_index_2008_2020.zip || curl -fL --retry 3 --retry-all-errors "https://www.kaggle.com/api/v1/datasets/download/nishanthsalian/indian-stock-index-1minute-data-2008-2020" -o nifty_index_2008_2020.zip
+
+      - name: Source schema audit
+        run: python scripts/batman_tuning_source_audit.py
+
+      - name: Generate v2 raw manifest
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root=Path('.cache/batman_raw')
+          out=Path('data/batman_tuning_cache/source_manifest_v2.json')
+          files={}
+          for p in sorted(root.glob('*.zip')):
+              h=hashlib.sha256()
+              with p.open('rb') as fh:
+                  for chunk in iter(lambda: fh.read(1024*1024), b''):
+                      h.update(chunk)
+              files[p.name]={'bytes':p.stat().st_size,'sha256':h.hexdigest()}
+          out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_text(json.dumps({'schema_version':'BATMAN-T1-SOURCE-2','study_start':'2020-01-01','study_end':'2026-03-30','sources':files},indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          PY
+          cat data/batman_tuning_cache/source_manifest_v2.json
+
+      - name: Persist v2 raw cache
+        if: steps.v2cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/batman_raw
+          key: batman-tuning-raw-v2-2026-09-21
+
+      - name: Run protocol tests
+        run: python -m pytest -q tests/test_batman_tuning_protocol.py
+
+      - name: Upload T1 source audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: batman-tuning-t1-normalize-audit
+          path: |
+            data/batman_tuning_cache/source_manifest_v2.json
+            data/batman_tuning_cache/source_audit.json
+          if-no-files-found: error
+
+      - name: Summary
+        run: echo "T1 normalization/probe completed; compact BATMAN cache construction is the next gate." >> "$GITHUB_STEP_SUMMARY"
