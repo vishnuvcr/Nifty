@@ -1,0 +1,44 @@
+name: limited-risk-option-wfo-v1
+
+on:
+  push:
+    branches: ["research/limited-risk-option-wfo-v1"]
+    paths:
+      - docs/limited_risk_option_wfo/**
+      - configs/limited_risk_option_wfo_v1.yaml
+      - .github/workflows/limited-risk-option-wfo-v1.yml
+  workflow_dispatch:
+
+jobs:
+  protocol-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install -e .
+      - name: Protocol checks
+        run: |
+          test -f docs/limited_risk_option_wfo/RESEARCH_PLAN.md
+          test -f docs/limited_risk_option_wfo/PHASE_STATUS.md
+          test -f docs/limited_risk_option_wfo/ERROR_LOG.md
+          test -f docs/limited_risk_option_wfo/CONVERSATION_LOG.md
+          test -f docs/limited_risk_option_wfo/STRATEGY_UNIVERSE_AND_RISK_RULES.md
+          test -f docs/limited_risk_option_wfo/COST_AND_EXECUTION_POLICY.md
+          test -f configs/limited_risk_option_wfo_v1.yaml
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("configs/limited_risk_option_wfo_v1.yaml").read_text()
+          assert "final_holdout_policy: post_exposure_only" in p
+          assert "require_finite_max_loss: true" in p
+          assert "deterministic_seeds: true" in p
+          print("Protocol configuration OK")
+          PY
