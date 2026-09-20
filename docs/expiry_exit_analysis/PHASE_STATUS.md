@@ -1,13 +1,13 @@
 # Expiry-Day Exit Analysis — Phase Status
 
-Last updated: 2026-09-20 (Asia/Kolkata) — authoritative PR dispatcher
+Last updated: 2026-09-20 (Asia/Kolkata) — branch-push execution initiated
 
 | Phase | Status |
 |---|---|
 | E0 Exit-method specification | COMPLETE |
 | E1 Analysis engine | COMPLETE |
 | E2 Data preparation workflow | COMPLETE |
-| E3 CI execution | BLOCKED — explicit manual GitHub Actions dispatch required |
+| E3 CI execution | IN PROGRESS |
 | E4 Results verification | NOT STARTED |
 | E5 Final comparison report | NOT STARTED |
 
@@ -15,7 +15,7 @@ Last updated: 2026-09-20 (Asia/Kolkata) — authoritative PR dispatcher
 
 research/expiry-auction-exit-analysis-v1
 
-CI runner: explicit manual dispatch from the main-branch dispatcher; analysis code and outputs remain isolated on this branch. The connected GitHub toolset cannot invoke workflow_dispatch itself.
+CI runner: the analysis branch contains a push-triggered workflow and also declares workflow_dispatch. The connected GitHub toolset cannot call workflow_dispatch directly, so this run is being initiated by a controlled documentation push to the analysis branch. Analysis code and outputs remain isolated on this branch.
 
 ## Frozen scenario set
 
@@ -24,3 +24,5 @@ CI runner: explicit manual dispatch from the main-branch dispatcher; analysis co
 - 15:10 IST
 
 No exit result is used to change entry rules.
+
+Numerical results remain unclaimed until the CI run completes and the required output files pass verification.
