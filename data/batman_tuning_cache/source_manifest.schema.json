@@ -1,0 +1,5 @@
+{
+  "schema_version": "BATMAN-T1-SOURCE-1",
+  "required": ["schema_version", "study_start", "study_end", "sources"],
+  "source_record": {"required": ["bytes", "sha256"]}
+}
