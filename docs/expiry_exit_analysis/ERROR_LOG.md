@@ -42,3 +42,10 @@ Type: execution / packaging
 Observation: the first full branch rerun reached the analysis stage and ran the NIFTY portion, then failed in `run_sensex()` with `ModuleNotFoundError: No module named 'scripts'` because the script was invoked as `python scripts/expiry_auction_exit_analysis_v2.py`, which places the scripts directory rather than the repository root first on `sys.path`.
 Resolution: the v2 engine now explicitly inserts the repository root and `src` into `sys.path`, supporting both script-path and module execution.
 Prevention: keep research runners importable under both supported invocation styles and test the SENSEX import path in CI before the long historical run.
+
+
+### E007 — Superseded CI runs competing for the same analysis branch
+Type: CI orchestration
+Observation: rapid corrective commits created multiple queued/overlapping branch analysis runs while the first long historical run was still executing.
+Resolution: branch workflow concurrency was changed to cancel superseded runs so only the newest corrected research revision can proceed.
+Prevention: use `cancel-in-progress: true` for deterministic single-run historical analyses on a dedicated branch.
