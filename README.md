@@ -57,3 +57,17 @@ Verified CI run: **35496685719** using parent run **35425922439**.
 - [Regime router summary](reports/limited_risk_wfo/REGIME_ROUTER_SUMMARY.csv)
 
 **Decision:** no strategy promoted. The 2025-2026 sample is already exposed; L8 remains HOLD pending genuinely new post-exposure data and deployment-grade bid/ask history.
+
+
+## Verified historical result
+
+The frozen development selector chose **Buy Call at premium <=0.55% of spot**:
+
+- Development: n=33, mean +64.89 points, PF 3.218.
+- Validation: n=70, mean **-1.68 points**, PF **0.968**, win rate 37.1%.
+- Validation block-bootstrap 95% CI: **-24.92 to +29.70 points**.
+- P(mean <= 0): **0.439**.
+- 22-rule cross-rule Reality-Check-style max-statistic p-value: **0.886**.
+- Exposed 2025-2026 selected-rule result: n=31, mean **-30.40**, PF **0.618**.
+
+**Decision: HOLD / no long-premium rule promoted.**
