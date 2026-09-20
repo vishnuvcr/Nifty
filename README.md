@@ -25,3 +25,19 @@ Historical option-chain data will be added as a separate layer. It must contain 
 
 ## Important
 This repository currently contains the research scaffold; no live-trading claim is made. The next stage is historical data ingestion and a full option-chain walk-forward experiment.
+
+
+## Limited-risk option WFO extension
+
+This branch is the protocol-only starting point for testing option strategies with a finite maximum loss, including both capped-profit and potentially unlimited-profit structures.
+
+- Research plan: docs/limited_risk_option_wfo/RESEARCH_PLAN.md
+- Phase status: docs/limited_risk_option_wfo/PHASE_STATUS.md
+- Error log: docs/limited_risk_option_wfo/ERROR_LOG.md
+- Conversation/audit log: docs/limited_risk_option_wfo/CONVERSATION_LOG.md
+- Risk rules: docs/limited_risk_option_wfo/STRATEGY_UNIVERSE_AND_RISK_RULES.md
+- Cost/execution policy: docs/limited_risk_option_wfo/COST_AND_EXECUTION_POLICY.md
+- Configuration: configs/limited_risk_option_wfo_v1.yaml
+- Manual/automatic protocol CI: .github/workflows/limited-risk-option-wfo-v1.yml
+
+Current status: L0 complete. No new performance result is claimed.
