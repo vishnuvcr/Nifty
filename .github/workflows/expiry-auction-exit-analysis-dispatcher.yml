@@ -1,0 +1,137 @@
+name: Run Expiry-Day Exit Analysis — NIFTY + SENSEX
+
+on:
+  push:
+    paths:
+      - ".github/workflows/expiry-auction-exit-analysis-dispatcher.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: expiry-auction-exit-analysis-dispatcher
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - name: Checkout analysis branch
+        uses: actions/checkout@v4
+        with:
+          ref: research/expiry-auction-exit-analysis-v1
+          fetch-depth: 0
+
+      - name: Record analysis start
+        run: |
+          echo "started_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)" > RUN_STARTED_UTC.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add RUN_STARTED_UTC.txt
+          git commit -m "ci: start expiry-day exit analysis [skip ci]"
+          git push origin HEAD:research/expiry-auction-exit-analysis-v1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install analysis dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas pyarrow huggingface_hub scipy
+
+      - name: Restore cached 1-minute index-options dataset
+        uses: actions/cache@v4
+        with:
+          path: data/hf_index_options
+          key: india-index-options-1m-expiry-exit-v2
+          restore-keys: |
+            india-index-options-1m-expiry-exit-
+
+      - name: Download 1-minute dataset on cache miss
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -f data/hf_index_options/index/NIFTY.parquet || ! -f data/hf_index_options/index/SENSEX.parquet ]]; then
+            rm -rf data/hf_index_options
+            python - <<'PY'
+          from huggingface_hub import snapshot_download
+          snapshot_download(
+              repo_id="thetrademarkk/india-index-options-1m",
+              repo_type="dataset",
+              local_dir="data/hf_index_options",
+              allow_patterns=[
+                  "index/NIFTY.parquet",
+                  "options/NIFTY/*.parquet",
+                  "index/SENSEX.parquet",
+                  "options/SENSEX/*.parquet",
+              ],
+          )
+          PY
+          fi
+          test -f data/hf_index_options/index/NIFTY.parquet
+          test -f data/hf_index_options/index/SENSEX.parquet
+          test -d data/hf_index_options/options/NIFTY
+          test -d data/hf_index_options/options/SENSEX
+
+      - name: Compile
+        run: python -m py_compile scripts/expiry_auction_exit_analysis_v2.py
+
+      - name: Run frozen-entry / early-exit comparison
+        run: |
+          python scripts/expiry_auction_exit_analysis_v2.py             --data-root data/hf_index_options             --out-dir reports/expiry_exit             --paths 5000             --seed-base 20260920
+
+      - name: Verify outputs
+        run: |
+          test -s reports/expiry_exit/RESULTS.md
+          test -s reports/expiry_exit/TRADE_LEVEL_RESULTS.csv
+          test -s reports/expiry_exit/EXIT_SUMMARY_BY_SPLIT.csv
+          test -s reports/expiry_exit/COMBINED_OOS_SUMMARY.csv
+          echo "=== COMBINED OOS ==="
+          cat reports/expiry_exit/COMBINED_OOS_SUMMARY.csv
+          echo
+          echo "=== SPLITS ==="
+          head -50 reports/expiry_exit/EXIT_SUMMARY_BY_SPLIT.csv
+
+      - name: Publish reports to analysis branch
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/expiry_exit_publish
+          mkdir -p /tmp/expiry_exit_publish
+          cp -a reports/expiry_exit /tmp/expiry_exit_publish/
+          git fetch origin research/expiry-auction-exit-analysis-v1
+          git reset --hard origin/research/expiry-auction-exit-analysis-v1
+          rm -rf reports/expiry_exit
+          cp -a /tmp/expiry_exit_publish/expiry_exit reports/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/expiry_exit
+          git commit -m "research: publish expiry-day exit analysis [skip ci]" || true
+          git push origin HEAD:research/expiry-auction-exit-analysis-v1
+
+      - name: Finish phase status
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("docs/expiry_exit_analysis/PHASE_STATUS.md")
+          text=p.read_text()
+          text=text.replace("| E3 CI execution | IN PROGRESS |","| E3 CI execution | COMPLETE |")
+          text=text.replace("| E4 Results verification | NOT STARTED |","| E4 Results verification | COMPLETE |")
+          text=text.replace("| E5 Final comparison report | NOT STARTED |","| E5 Final comparison report | COMPLETE |")
+          text=text.replace("No exit result is used to change entry rules.","No exit result is used to change entry rules. Results are published under reports/expiry_exit/.")
+          p.write_text(text)
+          e=Path("docs/expiry_exit_analysis/ERROR_LOG.md")
+          et=e.read_text()
+          et += "\n## 2026-09-20 — E003 CI rerun\nThe analysis was re-executed with cached/public 1-minute NIFTY/SENSEX options data so 15:00/15:10 exit bars were directly observable. The historical daily NIFTY source is pinned on the branch for reproducibility.\n"
+          e.write_text(et)
+          PY
+          git add docs/expiry_exit_analysis
+          git commit -m "docs: close expiry-day exit analysis phase [skip ci]" || true
+          git push origin HEAD:research/expiry-auction-exit-analysis-v1
+
+      - name: Summary
+        run: |
+          echo "Expiry-day exit analysis completed."
