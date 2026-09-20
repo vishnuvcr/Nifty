@@ -70,3 +70,6 @@ Type: execution / function contract
 Observation: the runner decoded `legs_json` successfully, but then passed the original pandas Series into `sensex_exit_pnl()`. That function expects an entry object containing a decoded `legs` collection, so every SENSEX early-exit attempt raised a KeyError and was silently skipped. This caused the verification stage to report all four SENSEX 15:00/15:10 scenarios missing even though expiry-settlement results were produced.
 Resolution: the decoded legs and entry cashflow are now passed explicitly as the pricer entry object.
 Prevention: align caller/callee data contracts and add a test that requires at least one SENSEX early-exit row before allowing the verification stage to pass.
+
+## E003 — Authoritative branch-push rerun
+The interrupted PR execution path was bypassed because repository Codex code-review quota was exhausted. The same frozen analysis is executed by the repository branch-push workflow; no entry rule was changed.

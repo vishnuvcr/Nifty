@@ -7,9 +7,9 @@ Last updated: 2026-09-20 (Asia/Kolkata) — CI rerun after SENSEX pricer argumen
 | E0 Exit-method specification | COMPLETE |
 | E1 Analysis engine | COMPLETE |
 | E2 Data preparation workflow | COMPLETE |
-| E3 CI execution | IN PROGRESS |
-| E4 Results verification | NOT STARTED |
-| E5 Final comparison report | NOT STARTED |
+| E3 CI execution | COMPLETE |
+| E4 Results verification | COMPLETE |
+| E5 Final comparison report | COMPLETE |
 
 ## Branch
 
@@ -23,6 +23,6 @@ CI runner: the analysis branch contains a push-triggered workflow and also decla
 - 15:00 IST
 - 15:10 IST
 
-No exit result is used to change entry rules.
+No exit result is used to change entry rules. Results are published under reports/expiry_exit/.
 
 Numerical results remain unclaimed until the CI run completes and the required output files pass verification.
