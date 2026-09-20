@@ -2,79 +2,52 @@
 
 ## Source universe
 
-The starting universe is the 36 strategies declared in src/nifty_mc/strategy_catalog.py. The first empirical run uses a mechanical audit over the complete catalog; no manual risk label is authoritative.
+The starting universe is the 36 strategies declared in src/nifty_mc/strategy_catalog.py. The complete catalog is audited mechanically; no manual label is authoritative.
 
-## Mechanical risk definition
+## Mathematical risk domain
 
-For NIFTY's economically admissible underlying domain S >= 0, the classifier evaluates:
-- exact leg quantities and expiry tags;
+For index-option expiry payoff analysis, the underlying domain is **S >= 0**.
+
+This matters for puts: a short put can lose heavily if the index approaches zero, but its terminal loss is still finite because the index cannot become less than zero. By contrast, net short-call exposure has an unbounded adverse upper tail as S -> infinity.
+
+## Mechanical audit
+
+For every catalog strategy the auditor evaluates:
+- exact leg quantities;
+- option type;
+- front versus next expiry;
 - aggregate call slope as S -> infinity;
 - terminal payoff on a dense S>=0 grid;
-- front-expiry versus multi-expiry structure.
+- whether loss is unbounded, profit is unbounded, or both are bounded.
 
-A negative aggregate call slope implies an unbounded adverse upper-tail loss. A positive aggregate call slope implies an unbounded upper-tail profit. Put exposure remains finite as S approaches zero because the index cannot become negative.
+Risk classes:
+- R1 = finite maximum loss + potentially unlimited favorable upper-tail profit.
+- R2 = finite maximum loss + finite maximum profit on S>=0.
+- R3 = finite-loss but multi-expiry/path-dependent.
+- X = unbounded adverse loss; excluded from the limited-risk core.
 
-The classifier is therefore more reliable than a manually curated “defined-risk” list.
-
-## Classes produced by the audit
-
-- R1: finite maximum loss, potentially unlimited favorable upper-tail profit.
-- R2: finite maximum loss and finite maximum profit on the S>=0 domain.
-- R3: finite-loss but multi-expiry/path-dependent; excluded from the single-expiry core.
-- X: unbounded adverse loss; excluded from the limited-risk core.
-
-## Important corrected classifications
+## Expected core classifications, subject to the executable audit
 
 ### R1
-- Buy Call
-- Long Straddle
-- Long Strangle
-- Strip
-- Strap
-- Call Ratio Back Spread
+Buy Call; Call Ratio Back Spread; Long Straddle; Long Strangle; Strip; Strap; Range Forward; Long Synthetic Future; Risk Reversal.
 
 ### R2
-- Buy Put
-- Bull Call Spread
-- Bull Put Spread
-- Put Ratio Back Spread
-- Bull Condor
-- Bull Butterfly
-- Long Iron Butterfly
-- Long Iron Condor
-- Iron Butterfly
-- Short Iron Condor
-- Bear Put Spread
-- Bear Call Spread
-- Bear Condor
-- Bear Butterfly
-- Double Plateau
+Sell Put; Bull Call Spread; Bull Put Spread; Put Ratio Spread; Long Iron Butterfly; Long Iron Condor; Iron Butterfly; Short Iron Condor; Double Plateau; Buy Put; Bear Put Spread; Bear Call Spread; Bull/Bear Condors; Bull/Bear Butterflies; Jade Lizard; Put Ratio Back Spread.
 
 ### R3
-- Long Calendar with Calls
-- Long Calendar with Puts
+Long Calendar with Calls; Long Calendar with Puts.
 
-These calendars have finite loss but require a path-/multi-expiry valuation model, so they are not mixed with single-expiry terminal-payoff tests.
+### Expected X examples
+Call Ratio Spread; Short Call; Short Straddle; Short Strangle; Batman; Reverse Jade Lizard; Short Synthetic Future.
 
-### X
-- Sell Put
-- Range Forward
-- Long Synthetic Future
-- Call Ratio Spread
-- Put Ratio Spread
-- Short Straddle
-- Short Strangle
-- Batman
-- Jade Lizard
-- Reverse Jade Lizard
-- Sell Call
-- Risk Reversal
-- Short Synthetic Future
+The executable audit remains authoritative if any strategy behaves differently because its actual leg definition differs from this expectation.
 
-Any structure that fails the mechanical audit is excluded regardless of its catalogue label.
+## Important distinction from common trading-language labels
 
-## Position-sizing rule
+Terms such as “defined risk” are not accepted as evidence by themselves. The classification here is mathematical and domain-specific. A structure may be colloquially described as “risky” while still having a finite terminal loss under S>=0, or may have apparently hedged legs while retaining an unbounded short-call tail.
 
-For the limited-risk core, the structural maximum loss is the hard risk bound. MC ES95/ES99 remains a secondary diagnostic and must never replace a known finite maximum-loss calculation.
+## Position sizing
 
-Historical rupee capital requirements require the actual entry strikes, premiums, lot size and cost model. They cannot be reconstructed honestly from aggregate strategy P&L alone.
+For a core candidate, the structural maximum loss is the hard risk bound. MC ES95/ES99 is a secondary diagnostic, never a replacement for a known finite structural maximum.
+
+Historical rupee capital requirements require the actual trade's strikes, premiums, lot size and cost model. They cannot be inferred from aggregate P&L alone.
