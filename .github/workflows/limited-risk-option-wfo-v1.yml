@@ -5,6 +5,10 @@ on:
       - research/limited-risk-option-wfo-v1
   workflow_dispatch:
 
+concurrency:
+  group: limited-risk-option-wfo-v1
+  cancel-in-progress: true
+
 jobs:
   limited-risk-research:
     runs-on: ubuntu-latest
