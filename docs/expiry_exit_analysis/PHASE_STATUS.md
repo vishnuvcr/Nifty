@@ -1,6 +1,6 @@
 # Expiry-Day Exit Analysis — Phase Status
 
-Last updated: 2026-09-20 (Asia/Kolkata)
+Last updated: 2026-09-20 (Asia/Kolkata) — CI retry after network interruption
 
 | Phase | Status |
 |---|---|
