@@ -2,6 +2,11 @@ name: Run Expiry-Day Exit Analysis — NIFTY + SENSEX
 
 on:
   workflow_dispatch:
+  # Programmatic fallback for environments where workflow_dispatch is not exposed.
+  # The trigger file is deliberately narrow so normal report/doc commits do not retrigger this workflow.
+  push:
+    paths:
+      - "ci/expiry_exit_analysis_trigger.txt"
 
 concurrency:
   group: expiry-auction-exit-analysis-dispatcher
