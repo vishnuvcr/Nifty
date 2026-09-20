@@ -111,3 +111,9 @@ Phase: L2
 Observation: CI tests passed, but gh run list did not resolve the already verified parent strategy-regime-lab-v2 artifact from the branch context.
 Resolution: pinned verified parent run 35425922439, whose strategy-regime-lab-v2-results artifact is known to contain the research trade population.
 Prevention: historical analyses use immutable acquisition/run identifiers once the source artifact is frozen.
+
+## LRW013 — Pinned-parent fix was not applied cleanly on first attempt
+Phase: L2
+Observation: the workflow still contained the obsolete gh run list lookup and escaped GitHub expressions after the first patch.
+Resolution: replaced the full workflow with an explicit immutable PARENT_RUN_ID and native GitHub Actions expressions.
+Prevention: inspect the exact committed workflow text after every CI-control correction.
