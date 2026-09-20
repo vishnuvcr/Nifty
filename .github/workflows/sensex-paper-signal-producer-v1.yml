@@ -1,0 +1,88 @@
+name: SENSEX Paper Trading Signal Scanners
+
+on:
+  schedule:
+    - cron: "0 4 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: "Fixed Monte Carlo seed"
+        required: true
+        default: "20260920"
+
+concurrency:
+  group: sensex-paper-scan
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SEED: ${{ github.event.inputs.seed || '20260920' }}
+    steps:
+      - name: Checkout SENSEX S7 branch
+        uses: actions/checkout@v4
+        with:
+          ref: research/sensex-s7-paper-trading-v1
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas requests
+
+      - name: Run Batman scanner
+        run: |
+          python scripts/sensex_paper_signal_producer_v1.py \
+            --strategy Batman \
+            --ledger paper_trading/sensex_batman_ledger.csv \
+            --output-json site/sensex/batman/data/latest_signal.json \
+            --seed "$SEED"
+
+      - name: Run Adaptive scanner
+        run: |
+          python scripts/sensex_paper_signal_producer_v1.py \
+            --strategy Adaptive \
+            --ledger paper_trading/sensex_adaptive_ledger.csv \
+            --output-json site/sensex/adaptive/data/latest_signal.json \
+            --seed "$SEED"
+
+      - name: Publish scanner state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin research/sensex-s7-paper-trading-v1
+          git pull --rebase --autostash origin research/sensex-s7-paper-trading-v1
+          git add paper_trading/sensex_batman_ledger.csv \
+                  paper_trading/sensex_adaptive_ledger.csv \
+                  site/sensex/batman/data/latest_signal.json \
+                  site/sensex/adaptive/data/latest_signal.json \
+                  docs/sensex_options/ERROR_LOG.md
+          if git diff --cached --quiet; then
+            echo "No SENSEX scanner state changes."
+          else
+            git commit -m "chore: refresh SENSEX paper scanner state [skip ci]"
+            git push origin HEAD:research/sensex-s7-paper-trading-v1
+          fi
+
+      - name: Summary
+        run: |
+          {
+            echo "## SENSEX paper-trading scanners"
+            echo
+            echo "- Schedule: weekdays at 09:30 IST (04:00 UTC)"
+            echo "- Strategies: Batman + Adaptive"
+            echo "- Monte Carlo: 5,000 paths; 756-session history"
+            echo "- Entry quote: live bid/ask with 0.50-point per-leg slippage stress"
+            echo "- Fail-safe: missing/broken quote data becomes NO_TRADE; no LTP substitution"
+            echo "- Page refresh/settlement: separate 16:00 IST workflow"
+          } >> "$GITHUB_STEP_SUMMARY"
