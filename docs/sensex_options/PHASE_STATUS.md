@@ -31,6 +31,7 @@ The SENSEX study remains strictly separate from the NIFTY MC-WFO manuscript. S7 
 - SENSEX transaction-cost rules remain the frozen S2 model.
 - Paper trading is one-lot transfer-edge mode; no broker order is submitted.
 - Scanner/runtime failures are written to the SENSEX error log and published as NO_TRADE state rather than silently becoming zero-return trades.
+- After successful SENSEX state publication, the scanner/refresh workflows trigger the combined main Pages publisher; the existing 16:00 publisher remains the scheduled backstop.
 
 ## Workflows
 
