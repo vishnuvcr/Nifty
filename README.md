@@ -47,6 +47,7 @@ Current status: L0 complete. No new performance result is claimed.
 
 Verified CI run: **35496685719** using parent run **35425922439**.
 
+- [Phase manuscript](reports/limited_risk_wfo/MANUSCRIPT.md)
 - [Final phase report](reports/limited_risk_wfo/FINAL_PHASE_REPORT.md)
 - [Risk classification](reports/limited_risk_wfo/RISK_CLASSIFICATION.csv)
 - [Key validation results](reports/limited_risk_wfo/VALIDATION_KEY_RESULTS.csv)
