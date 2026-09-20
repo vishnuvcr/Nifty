@@ -171,3 +171,17 @@ New research question: can MC/WFO identify sufficiently cheap Buy Call / Buy Put
 Historical result: the development-frozen Buy Call <=0.55% of spot rule failed 2023-2024 validation (mean -1.68 points, PF 0.968; block-bootstrap 95% CI -24.92 to +29.70). The 22-rule multiple-testing diagnostic was p=0.886. The 2025-2026 period is already exposed by the parent study and is descriptive only. No long-premium rule is promoted.
 
 The current live Pages selector is https://vishnuvcr.github.io/Nifty/; the root selector and prospective dashboard sources have been updated for Jade Lizard and Put Ratio Spread, and the Pages publisher is redeploying the corrected tree.
+
+
+## BATMAN Tuning V1
+
+A separate research branch has been created to test whether the promoted BATMAN strategy can be improved without changing the promoted control.
+
+- Branch: https://github.com/vishnuvcr/Nifty/tree/research/batman-tuning-v1
+- Research plan: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-v1/docs/batman_tuning/RESEARCH_PLAN.md
+- Protocol freeze: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-v1/docs/batman_tuning/PROTOCOL_FREEZE.md
+- Parameter grid: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-v1/docs/batman_tuning/PARAMETER_GRID.md
+- Phase status: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-v1/docs/batman_tuning/PHASE_STATUS.md
+- Error log: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-v1/docs/batman_tuning/ERROR_LOG.md
+
+T0 protocol freeze is complete. The study will test D0-D6 entry offsets, prior-session signal to market-open execution, same-session 09:30 execution, fixed targets, fixed stops, trailing targets and trailing stops. No tuned result is claimed yet. The promoted BATMAN prospective-validation stream remains untouched.
