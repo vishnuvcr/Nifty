@@ -10,21 +10,52 @@ Research framework for Nifty 50 expiry-range forecasting, bull/bear/neutral clas
 - GBM as a baseline, with bootstrap/GARCH/regime-aware extensions
 - Reproducible experiments and fixed random seeds
 
+## Unified paper-trading GitHub Pages
+
+GitHub Pages now uses a two-level selector:
+
+**Index**
+- NIFTY 50
+  - BATMAN
+  - ADAPTIVE STRATEGY
+- BSE SENSEX
+  - BATMAN
+  - ADAPTIVE STRATEGY
+
+Live Pages: https://vishnuvcr.github.io/Nifty/
+
+Paper-trading publication and scheduling:
+- Combined Pages publisher: https://github.com/vishnuvcr/Nifty/blob/main/.github/workflows/publish-paper-pages.yml
+- NIFTY paper branch: https://github.com/vishnuvcr/Nifty/tree/research/adaptive-paper-signals-v1
+- SENSEX prospective paper branch: https://github.com/vishnuvcr/Nifty/tree/research/sensex-s7-paper-trading-v1
+- SENSEX entry scanner: https://github.com/vishnuvcr/Nifty/blob/main/.github/workflows/sensex-paper-signal-producer-v1.yml
+- SENSEX settlement/page refresh: https://github.com/vishnuvcr/Nifty/blob/main/.github/workflows/sensex-paper-pages-refresh-v1.yml
+
+Schedule:
+- NIFTY entry scanning remains at 09:30 IST on trading weekdays; the existing 16:00 IST publisher is refresh-only.
+- SENSEX Batman + Adaptive entry scanners run automatically at 09:30 IST (04:00 UTC) on weekdays and have manual workflow-dispatch buttons.
+- SENSEX settlement/page refresh runs automatically at 16:00 IST (10:30 UTC) on weekdays and has a manual workflow-dispatch button.
+- The 16:00 jobs do not create a second entry signal.
+
+The SENSEX scanner is paper-only. Live entry requires executable bid/ask data and applies a 0.50-point adverse slippage stress per option leg; missing or malformed quote data becomes NO_TRADE and is logged. No broker order is submitted.
+
 ## Parallel SENSEX transfer study
 
-A separate research branch has been created to test the frozen Phase-10 Batman and Adaptive strategies on BSE SENSEX options without contaminating the NIFTY manuscript.
+A separate research branch tests the frozen Phase-10 Batman and Adaptive strategies on BSE SENSEX options without contaminating the NIFTY manuscript.
 
-- Branch: research/sensex-batman-adaptive-v1
-- Active phase branch: research/sensex-s1-data-audit-v1
+- Historical transfer branch: research/sensex-batman-adaptive-v1
+- SENSEX S7 prospective paper branch: research/sensex-s7-paper-trading-v1
 - SENSEX research plan: https://github.com/vishnuvcr/Nifty/blob/research/sensex-batman-adaptive-v1/docs/sensex_options/RESEARCH_PLAN.md
-- SENSEX phase status: https://github.com/vishnuvcr/Nifty/blob/research/sensex-s1-data-audit-v1/docs/sensex_options/PHASE_STATUS.md
-- SENSEX source register: https://github.com/vishnuvcr/Nifty/blob/research/sensex-s1-data-audit-v1/docs/sensex_options/SOURCE_REGISTER.md
-- SENSEX error log: https://github.com/vishnuvcr/Nifty/blob/research/sensex-s1-data-audit-v1/docs/sensex_options/ERROR_LOG.md
+- SENSEX S7 phase status: https://github.com/vishnuvcr/Nifty/blob/research/sensex-s7-paper-trading-v1/docs/sensex_options/PHASE_STATUS.md
+- SENSEX S7 specification: https://github.com/vishnuvcr/Nifty/blob/research/sensex-s7-paper-trading-v1/docs/sensex_options/S7_PAPER_TRADING.md
+- SENSEX error log: https://github.com/vishnuvcr/Nifty/blob/research/sensex-s7-paper-trading-v1/docs/sensex_options/ERROR_LOG.md
+- SENSEX conversation/audit log: https://github.com/vishnuvcr/Nifty/blob/research/sensex-s7-paper-trading-v1/docs/sensex_options/CONVERSATION_LOG.md
 
-Current SENSEX status: S0–S6 complete through robustness/statistical inference on the validated transfer study; S7 prospective paper trading is not started.
+Current SENSEX status: S0–S6 historical transfer testing and robustness are complete; S7 paper-trading infrastructure is complete, with prospective observations pending. No S7 performance inference has been claimed.
 
 ### SENSEX S6 robustness result
-The SENSEX transfer study has completed S6 robustness/statistical inference on branch `research/sensex-s6-robustness-v1`. The completed protocol uses the validated S5 composite MC history, slippage sensitivity at 0.25/0.50/1.00/2.00 points per leg, five fixed Monte Carlo seeds (101/202/303/404/505) on validation and holdout, and a 10,000-repetition circular moving-block bootstrap with block length 3 trades.
+
+The SENSEX transfer study completed S6 robustness/statistical inference on branch research/sensex-s6-robustness-v1. The protocol uses the validated S5 composite MC history, slippage sensitivity at 0.25/0.50/1.00/2.00 points per leg, five fixed Monte Carlo seeds (101/202/303/404/505) on validation and holdout, and a 10,000-repetition circular moving-block bootstrap with block length 3 trades.
 
 - S6 phase status: https://github.com/vishnuvcr/Nifty/blob/research/sensex-s6-robustness-v1/docs/sensex_options/PHASE_STATUS.md
 - S6 robustness report: https://github.com/vishnuvcr/Nifty/blob/research/sensex-s6-robustness-v1/reports/sensex_s6/S6_ROBUSTNESS_RESULTS.md
@@ -34,7 +65,6 @@ The SENSEX transfer study has completed S6 robustness/statistical inference on b
 - S6 bootstrap table: https://github.com/vishnuvcr/Nifty/blob/research/sensex-s6-robustness-v1/reports/sensex_s6/S6_BLOCK_BOOTSTRAP.csv
 
 Final base-slippage combined OOS inference: Adaptive n=64, mean ₹2,612.93, bootstrap 95% CI -₹804.31 to ₹6,133.11; Batman n=44, mean ₹5,742.06, bootstrap 95% CI ₹662.67 to ₹10,341.49. These remain one-lot transfer-edge results; the SENSEX holdout is limited by the available options archive through 2026-05-21.
-
 
 The SENSEX study is intentionally separate from the NIFTY MC-WFO manuscript.
 
@@ -47,13 +77,3 @@ The SENSEX study is intentionally separate from the NIFTY MC-WFO manuscript.
 - data/ local-only datasets (not committed)
 
 See the active research branch for the relevant experiment protocol.
-
-### SENSEX execution note
-The frozen S5 backtest workflow is `.github/workflows/sensex-s5-wfa-backtest-dispatcher.yml` on `main`; it checks out `research/sensex-s5-wfa-backtest-v1`, downloads the validated public SENSEX 1-minute dataset, and runs development/validation/holdout with the frozen Batman and Adaptive rules. No numerical result is considered valid until a successful run commits `reports/sensex_options/`.
-
-
-SENSEX results: https://github.com/vishnuvcr/Nifty/blob/research/sensex-s5-wfa-backtest-v1/reports/sensex_options/RESULT_SUMMARY.md
-
-
-### SENSEX backtest result
-See `docs/sensex_options/SENSEX_BACKTEST_RESULT.md` for the frozen-method result, validation/holdout statistics, slippage sensitivity, account-affordability analysis, limitations, and next research phase.
