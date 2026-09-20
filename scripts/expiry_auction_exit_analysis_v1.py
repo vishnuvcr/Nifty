@@ -402,12 +402,12 @@ def run(index_name: str, exit_mode: str, out_dir: Path, paths: int, seed_base: i
                     entry_cost_inr=entry_cost_points*lot_sz
                 else:
                     entry_cost_inr,entry_entry_only=sensex_entry_costs(entry_date,entry_legs,lot_sz,entry_cash,terminal)
-                    net=gross-entry_inr/lot_sz
+                    net=gross-entry_cost_inr/lot_sz
                 ev=float(np.mean(net)); pop=float(np.mean(net>0))
                 q05=float(np.quantile(net,0.05));q01=float(np.quantile(net,0.01))
                 es95=float(max(0,-np.mean(net[net<=q05])));es99=float(max(0,-np.mean(net[net<=q01])))
                 risk=max(es95,es99)
-                        risk_budget_inr = 2000.0
+                risk_budget_inr = 2000.0
                 risk_points = max(es95, es99)
                 risk_inr_per_lot = risk_points * lot_sz
                 if index_name=="NIFTY":
