@@ -1,0 +1,34 @@
+{
+  "study": "BATMAN_TUNING_V1",
+  "branch": "research/batman-tuning-v1",
+  "control": {
+    "entry_offset_sessions": 3,
+    "signal_time_ist": "09:30",
+    "lookback_sessions": 756,
+    "mc_paths": 5000,
+    "strike_quantiles": ["P20", "P35", "P65", "P80"],
+    "legs": {
+      "P35_PE": 1,
+      "P20_PE": -2,
+      "C65_CE": 1,
+      "C80_CE": -2
+    },
+    "entry_gate": "net_mc_ev_points > 0"
+  },
+  "entry_offsets": [0,1,2,3,4,5,6],
+  "timings": [
+    "prior_session_evening_to_open",
+    "same_session_09_30"
+  ],
+  "exit_families": [
+    "control",
+    "fixed_target",
+    "fixed_stop",
+    "fixed_target_and_stop",
+    "trailing_target",
+    "trailing_stop",
+    "trailing_target_and_stop"
+  ],
+  "bootstrap_repetitions": 10000,
+  "status": "T0_COMPLETE"
+}
