@@ -35,7 +35,7 @@ def load_index_1m(path: Path) -> pd.DataFrame:
     x = pd.read_parquet(path)
     x["timestamp"] = pd.to_datetime(x["timestamp"], errors="coerce")
     if getattr(x["timestamp"].dt, "tz", None) is not None:
-        x["timestamp"] = x["timestamp"].dt.tz_localize(None)
+        x["timestamp"] = x["timestamp"].dt.tz_convert("Asia/Kolkata").dt.tz_localize(None)
     x["trading_day"] = pd.to_datetime(
         x.get("trading_day", x["timestamp"]), errors="coerce"
     ).dt.normalize()
@@ -79,7 +79,7 @@ def load_option_file(path: Path) -> pd.DataFrame:
             x[c] = np.nan
     x["timestamp"] = pd.to_datetime(x["timestamp"], errors="coerce")
     if getattr(x["timestamp"].dt, "tz", None) is not None:
-        x["timestamp"] = x["timestamp"].dt.tz_localize(None)
+        x["timestamp"] = x["timestamp"].dt.tz_convert("Asia/Kolkata").dt.tz_localize(None)
     x["trading_day"] = pd.to_datetime(x["trading_day"], errors="coerce").dt.normalize()
     x["expiry"] = pd.to_datetime(x["expiry"], errors="coerce").dt.normalize()
     for c in ("strike","open","close"):
@@ -305,12 +305,12 @@ def run_nifty(paths:int,seed_base:int,data_root:Path):
                              "pnl_inr":p,"mc_ev":entry["mc_ev"],"regime":regime["vol_regime"]})
     return pd.DataFrame(rows)
 
-def run_sensex(paths:int,seed_base:int,data_root:Path):
+def run_sensex(paths:int,seed_base:int,data_root:Path,sensex_mc_daily:Path):
     from scripts.sensex_backtest_v1 import run_backtest, realized_costs
     rows=[]
     idx_path=data_root/"index"/"SENSEX.parquet"; opts=data_root/"options"/"SENSEX"
     for split in ("development","validation","holdout"):
-        candidates,adaptive_trades,stats=run_backtest(opts,idx_path,split,0.5,seed_base, data_root/"index"/"SENSEX.parquet", True)
+        candidates,adaptive_trades,stats=run_backtest(opts,idx_path,split,0.5,seed_base, sensex_mc_daily, True)
         from scripts.sensex_backtest_v1 import run_batman_from_candidates, load_option_file, realized_costs as rc
         batman=run_batman_from_candidates(candidates,opts,idx_path,split,0.5,seed_base)
         for strat,trade_df in (("Adaptive",adaptive_trades),("Batman",batman)):
