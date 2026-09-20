@@ -157,3 +157,28 @@ Type: CI publication
 Observation: numerical S6 analysis completed, but publication failed because generated report files existed on the remote branch and the workflow attempted to rebase a new report commit onto them, creating add/add conflicts.
 Resolution: publication now snapshots the current run's reports outside the repository, hard-resets to the current remote branch tip, restores only the current run's S6 reports, commits, and pushes.
 Prevention: generated-report publication must be conflict-safe and must treat the current successful run's reports as authoritative only after all numerical gates pass.
+
+
+### E022 — S7 scanner source-layout import
+Type: Python package integration
+Observation: the first S7 scanner draft imported src.nifty_mc directly even though src is a source-layout directory rather than a Python package namespace in CI.
+Resolution: S7 now prepends the repository src/ directory to sys.path and imports nifty_mc.strategy_catalog, matching the validated S5/S6 pattern.
+Prevention: reuse the repository's proven source-layout import convention in all new workflows.
+
+### E023 — S7 expiry shortcut needed trading-session semantics
+Type: methodology / calendar handling
+Observation: the initial prospective scanner used a generic future-weekday helper without documenting that the frozen protocol means exactly three future SENSEX trading sessions before the target expiry.
+Resolution: target expiry is now derived from future weekday positions and must still be confirmed by the actual BSE option-chain response for that date; missing listed expiry produces NO_TRADE.
+Prevention: never synthesize an expiry contract solely from a calendar rule; require listed-contract confirmation before signal generation.
+
+### E024 — S7 workflow authoring template collision
+Type: CI authoring
+Observation: an intermediate workflow-generation attempt collided with GitHub Actions expression syntax inside the authoring template before any repository write occurred.
+Resolution: escaped the Actions expression syntax and re-created the workflows; no malformed workflow was committed.
+Prevention: validate generated YAML strings before calling repository write operations.
+
+### E025 — SENSEX Pages parent selector missing from initial S7 state
+Type: Pages publication
+Observation: the S7 refresh script creates the SENSEX parent selector dynamically, while the first static mirror did not contain site/sensex/index.html.
+Resolution: added an explicit SENSEX selector file to the S7 branch and mirrored it to the NIFTY Pages source branch.
+Prevention: all published navigation parents must exist as committed static state as well as being reproducible by refresh scripts.
