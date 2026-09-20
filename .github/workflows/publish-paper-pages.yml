@@ -95,6 +95,17 @@ jobs:
           test -f site/sensex/adaptive/index.html
           echo "SENSEX dashboard state synchronized from research/sensex-s7-paper-trading-v1"
 
+      - name: Sync frozen defined-risk prospective dashboards
+        run: |
+          git fetch origin research/prospective-defined-risk-nifty-v1
+          git fetch origin research/prospective-defined-risk-sensex-v1
+          rm -rf site/prospective-defined-risk
+          rm -rf site/sensex/prospective-defined-risk
+          git archive origin/research/prospective-defined-risk-nifty-v1 site/prospective-defined-risk | tar -x
+          git archive origin/research/prospective-defined-risk-sensex-v1 site/sensex/prospective-defined-risk | tar -x
+          test -f site/prospective-defined-risk/nifty/index.html
+          test -f site/sensex/prospective-defined-risk/index.html
+          echo "Defined-risk prospective dashboards synchronized."
       - name: Persist combined dashboard state
         run: |
           git config user.name "github-actions[bot]"
@@ -130,6 +141,16 @@ jobs:
             echo "- SENSEX: /sensex/"
             echo "- SENSEX Batman: /sensex/batman/"
             echo "- SENSEX Adaptive: /sensex/adaptive/"
+            echo "- NIFTY defined-risk prospective: /prospective-defined-risk/nifty/"
+            echo "- NIFTY Jade Lizard: /prospective-defined-risk/nifty/jade-lizard/"
+            echo "- NIFTY Put Ratio Spread: /prospective-defined-risk/nifty/put-ratio-spread/"
+            echo "- NIFTY Sell Put: /prospective-defined-risk/nifty/sell-put/"
+            echo "- NIFTY Bull Put Spread: /prospective-defined-risk/nifty/bull-put-spread/"
+            echo "- SENSEX defined-risk prospective: /sensex/prospective-defined-risk/"
+            echo "- SENSEX Jade Lizard: /sensex/prospective-defined-risk/jade-lizard/"
+            echo "- SENSEX Put Ratio Spread: /sensex/prospective-defined-risk/put-ratio-spread/"
+            echo "- SENSEX Sell Put: /sensex/prospective-defined-risk/sell-put/"
+            echo "- SENSEX Bull Put Spread: /sensex/prospective-defined-risk/bull-put-spread/"
             echo
             echo "The 16:00 job settles matured paper trades and republishes both indices. It does not create a second entry signal."
           } >> "$GITHUB_STEP_SUMMARY"
