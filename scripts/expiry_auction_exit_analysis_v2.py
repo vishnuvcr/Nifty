@@ -335,7 +335,17 @@ def run_sensex(paths:int,seed_base:int,data_root:Path):
                     full[cc]=pd.to_numeric(full[cc],errors="coerce")
                 full["option_type"]=full["option_type"].astype(str).str.upper()
                 expiry_day=full.loc[full["trading_day"].eq(expiry)].copy()
-                legs=json.loads(r["legs_json"])
+                # S5 CSV contains NO_TRADE rows with blank/NaN legs_json.
+                # Those rows are not actual positions and must not enter exit analysis.
+                legs_json_value=r.get("legs_json")
+                if not isinstance(legs_json_value, str) or not legs_json_value.strip():
+                    continue
+                if str(r.get("status","")).upper() != "CLOSED":
+                    continue
+                try:
+                    legs=json.loads(legs_json_value)
+                except (TypeError, json.JSONDecodeError):
+                    continue
                 entry_cash=float(r["entry_cashflow_points"])
                 entry_only=float(r.get("entry_cost_inr_entry_only",np.nan))
                 if not np.isfinite(entry_only):
