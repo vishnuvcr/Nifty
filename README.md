@@ -25,3 +25,7 @@ Historical option-chain data will be added as a separate layer. It must contain 
 
 ## Important
 This repository currently contains the research scaffold; no live-trading claim is made. The next stage is historical data ingestion and a full option-chain walk-forward experiment.
+
+
+## Unified paper-trading Pages
+The published dashboard is organized as Index -> Strategy: NIFTY -> Batman/Adaptive and SENSEX -> Batman/Adaptive. SENSEX prospective paper trading is sourced from research/sensex-s7-paper-trading-v1 and synchronized by the main Pages publisher.
