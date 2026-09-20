@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: batman-tuning-t1-normalize
+  cancel-in-progress: true
+
 jobs:
   normalize:
     runs-on: ubuntu-latest
