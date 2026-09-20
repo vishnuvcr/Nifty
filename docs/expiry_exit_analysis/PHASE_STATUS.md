@@ -1,6 +1,6 @@
 # Expiry-Day Exit Analysis — Phase Status
 
-Last updated: 2026-09-20 (Asia/Kolkata) — branch-push execution initiated
+Last updated: 2026-09-20 (Asia/Kolkata) — CI rerun after import-path correction
 
 | Phase | Status |
 |---|---|
