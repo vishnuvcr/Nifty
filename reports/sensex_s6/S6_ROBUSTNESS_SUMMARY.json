@@ -1,23 +1,9 @@
 {
   "phase": "S6",
   "one_lot_edge_mode": true,
-  "slippage_grid": [
-    0.25,
-    0.5,
-    1.0,
-    2.0
-  ],
-  "seed_grid": [
-    101,
-    202,
-    303,
-    404,
-    505
-  ],
-  "seed_sensitivity_scope": [
-    "validation",
-    "holdout"
-  ],
+  "slippage_grid": [0.25, 0.5, 1.0, 2.0],
+  "seed_grid": [101, 202, 303, 404, 505],
+  "seed_sensitivity_scope": ["validation", "holdout"],
   "bootstrap": {
     "method": "circular moving-block",
     "block_length_trades": 3,
@@ -27,24 +13,22 @@
   "quote_data_limitation": "Historical archive contains OHLCV/OI, not point-in-time bid/ask; slippage is a stress test, not direct spread reconstruction.",
   "results": {
     "Adaptive": {
-      "n": 28,
-      "block_length": 3,
-      "reps": 10000,
-      "mean": 3253.3354240771378,
-      "ci_low": -3080.2671922532086,
-      "ci_high": 9467.811267415189,
-      "p_mean_gt_zero": 0.8413,
-      "median_bootstrap_mean": 3212.924962640715
+      "n": 64,
+      "mean": 2612.932178269996,
+      "total": 167227.65940927973,
+      "ci_low": -804.3144014507675,
+      "ci_high": 6133.11055277453,
+      "p_mean_gt_zero": 0.9314,
+      "median_bootstrap_mean": 2655.4077986912384
     },
     "Batman": {
-      "n": 26,
-      "block_length": 3,
-      "reps": 10000,
-      "mean": 8173.539764175377,
-      "ci_low": 1353.7913016826274,
-      "ci_high": 14539.765529300807,
-      "p_mean_gt_zero": 0.9921,
-      "median_bootstrap_mean": 8200.724064620743
+      "n": 44,
+      "mean": 5742.06493579091,
+      "total": 252650.8571748,
+      "ci_low": 662.6747393258911,
+      "ci_high": 10341.493785679377,
+      "p_mean_gt_zero": 0.9875,
+      "median_bootstrap_mean": 5843.208658213183
     }
   }
 }
