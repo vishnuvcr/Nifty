@@ -92,3 +92,9 @@ Observation: The initial written taxonomy omitted Double Plateau and treated Put
 Impact: The written plan could have excluded an eligible finite-loss strategy and mischaracterized the profit bound of a put-only ratio backspread.
 Resolution: The mechanical auditor is authoritative. The written taxonomy now classifies Put Ratio Back Spread and Double Plateau as R2 for the S >= 0 single-expiry core.
 Prevention: Risk-classification tables must be generated from the executable auditor rather than manually maintained lists.
+
+## LRW009 — Overlapping historical CI runs
+Phase: L2-L7 CI
+Observation: successive protocol/data corrections triggered multiple concurrent limited-risk workflow runs.
+Resolution: added workflow concurrency with cancel-in-progress so only the newest research revision can execute the historical analysis.
+Prevention: all long historical research workflows use a single branch-level concurrency group.
