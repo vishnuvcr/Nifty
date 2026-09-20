@@ -77,7 +77,7 @@ Status: NOT STARTED
 Report trade count, total/mean/median P&L, expectancy, win rate, profit factor, max drawdown, Sharpe/Sortino where sample size permits, tail losses, turnover, net versus gross P&L, dependence-aware bootstrap intervals, yearly/regime stratification, MC seed sensitivity, transaction-cost sensitivity, and quote-source sensitivity.
 
 ### Phase S7 — Prospective paper-trading gate
-Status: NOT STARTED
+Status: INFRASTRUCTURE COMPLETE / OBSERVATIONS PENDING
 
 Only after S1–S6 pass their data-integrity and scientific-validity checks. Generate a SENSEX-only paper ledger using the frozen rules. The first prospective observation must never be backfilled.
 
