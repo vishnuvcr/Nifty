@@ -12,4 +12,10 @@ E004: T1 workflow originally only printed a blocker message and did not mechanic
 
 E005: A code-generation transfer attempt used an unescaped template delimiter while embedding the T1 acquisition workflow. The error occurred before any repository write. Correction: the workflow and documentation were resent using safe string serialization.
 
-E006: Initial T1 acquisition workflow separated cache restore and cache save with the same fixed key. Correction: use actions/cache in combined restore/save mode so the first successful acquisition can populate the cache and later runs can reuse it without a duplicate-save path.
+E006: Initial T1 acquisition workflow separated cache restore and cache save with the same fixed key. Correction: use a persistent raw-source cache and an explicit cache-save step before validation so source acquisition survives downstream test failures.
+
+E007: T1 acquisition run 35537467726 successfully downloaded all four raw archives and generated their SHA-256 manifest, but the validation step failed because pytest was not installed. The cache-save and manifest-upload steps were also skipped by the failure. Correction: install pytest and save the raw cache before validation; publish the manifest even when validation fails.
+
+E008: Run 35537505911 repeated the same missing-pytest defect because the correction had not yet been committed. Correction: installed pytest and added explicit cache persistence in run 35537798592.
+
+E009: The first transfer of the raw-source schema-audit script failed in the connector before repository write because one sequential lookup returned no object. Correction: repository state was checked and the audit script was then created separately; no partial source-audit file was left behind.
