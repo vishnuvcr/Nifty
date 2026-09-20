@@ -159,7 +159,10 @@ def strategy_page(strategy,signals,ledger,latest,site_dir):
     pf=gains/losses if losses else float("inf")
     eq=pnl.cumsum() if len(pnl) else pd.Series(dtype=float)
     dd=float((eq-eq.cummax()).min()) if len(eq) else 0.0
-    rows="".join(f"<tr><td>{html.escape(str(r.signal_id))}</td><td>{html.escape(str(r.expiry))}</td><td>{html.escape(str(r.status))}</td><td>{html.escape(str(r.signal))}</td><td>{float(r.mc_ev_points_net):.2f}</td><td>{'' if pd.isna(r.realized_pnl_inr) else f'₹{float(r.realized_pnl_inr):,.2f}'}</td></tr>" for _,r in signals.tail(25).iloc[::-1].iterrows())
+    def obs_row(r):
+        pnl="" if pd.isna(r.realized_pnl_inr) else f"₹{float(r.realized_pnl_inr):,.2f}"
+        return f"<tr><td>{html.escape(str(r.signal_id))}</td><td>{html.escape(str(r.expiry))}</td><td>{html.escape(str(r.status))}</td><td>{html.escape(str(r.signal))}</td><td>{float(r.mc_ev_points_net):.2f}</td><td>{pnl}</td></tr>"
+    rows="".join(obs_row(r) for _,r in signals.tail(25).iloc[::-1].iterrows())
     page=f"""<!doctype html><html><head><meta charset="utf-8"><title>NIFTY {html.escape(strategy)}</title><style>body{{font-family:Arial;background:#0d1117;color:#e6edf3;max-width:1200px;margin:auto;padding:24px}}.card{{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;margin:14px 0}}.grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}}.kpi{{font-size:24px;font-weight:700}}table{{width:100%;border-collapse:collapse}}th,td{{padding:7px;border-bottom:1px solid #30363d;text-align:left}}a{{color:#58a6ff}}</style></head><body>
 <h1>NIFTY — {html.escape(strategy)}</h1>
 <p>Frozen prospective validation • 09:30 IST • 3 future trading sessions • 5,000 MC paths • 756-session lookback • net MC-EV gate. No strategy is selected over another.</p>
@@ -181,7 +184,8 @@ def selector_page(stats,site_dir):
     cards=[]
     for s in STRATEGIES:
         x=stats.get(s,{})
-        cards.append(f'<div class="card"><h2>{html.escape(s)}</h2><p>Closed trades: {x.get("n",0)} &nbsp; Total P&L: ₹{x.get("total",0):,.2f}</p><p><a href="{html.escape(s.lower().replace(" ","-"))}/index.html">Open dashboard</a></p></div>')
+        folder=s.lower().replace(" ","-")
+        cards.append(f'<div class="card"><h2>{html.escape(s)}</h2><p>Closed trades: {x.get("n",0)} &nbsp; Total P&L: ₹{x.get("total",0):,.2f}</p><p><a href="{folder}/index.html">Open dashboard</a></p></div>')
     (site_dir/"index.html").write_text(f"""<!doctype html><html><head><meta charset="utf-8"><title>NIFTY Defined-Risk Prospective</title><style>body{{font-family:Arial;background:#0d1117;color:#e6edf3;max-width:1100px;margin:auto;padding:24px}}.card{{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;margin:14px 0}}a{{color:#58a6ff}}</style></head><body><h1>NIFTY — Defined-Risk Prospective Validation</h1><p>Four frozen strategies. Each strategy has an independent paper-validation ledger and no post-hoc selection.</p>{''.join(cards)}</body></html>""",encoding="utf-8")
 
 def main():
