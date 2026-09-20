@@ -27,3 +27,115 @@ jobs:
 
       - name: Run tests
         run: python -m pytest -q
+
+  expiry-exit-analysis:
+    name: expiry-exit-analysis-v2
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - name: Checkout analysis branch
+        uses: actions/checkout@v4
+        with:
+          ref: research/expiry-auction-exit-analysis-v2
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install analysis dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas pyarrow huggingface_hub
+          python -m pip install -e .
+
+      - name: Restore cached India index-options dataset
+        uses: actions/cache@v4
+        with:
+          path: data/hf_index_options
+          key: india-index-options-1m-expiry-exit-v1
+          restore-keys: |
+            india-index-options-1m-expiry-exit-
+
+      - name: Download India index-options data on cache miss
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -f data/hf_index_options/index/NIFTY.parquet || ! -f data/hf_index_options/index/SENSEX.parquet ]]; then
+            rm -rf data/hf_index_options
+            python -c 'from huggingface_hub import snapshot_download; snapshot_download(repo_id="thetrademarkk/india-index-options-1m", repo_type="dataset", local_dir="data/hf_index_options", allow_patterns=["index/NIFTY.parquet","options/NIFTY/*.parquet","index/SENSEX.parquet","options/SENSEX/*.parquet"])'
+          fi
+          test -f data/hf_index_options/index/NIFTY.parquet
+          test -f data/hf_index_options/index/SENSEX.parquet
+
+      - name: Restore SENSEX warmup cache
+        uses: actions/cache@v4
+        with:
+          path: data/external/sensex_legacy_2018_2024.csv
+          key: sensex-warmup-2018-2024-v1
+
+      - name: Fetch SENSEX warmup on cache miss
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -s data/external/sensex_legacy_2018_2024.csv ]]; then
+            mkdir -p data/external
+            curl -L --retry 5 --retry-delay 2 -A "Mozilla/5.0"               -o data/external/sensex_legacy_2018_2024.csv               https://raw.githubusercontent.com/sandeepkapri/Sensex-Minute-Data/master/sensex_candlestick_data.csv
+          fi
+          test -s data/external/sensex_legacy_2018_2024.csv
+
+      - name: Build exact S5 composite SENSEX MC history
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p data/external
+          python - <<'PY'
+          import pandas as pd
+          legacy = pd.read_csv("data/external/sensex_legacy_2018_2024.csv")
+          legacy["timestamp"] = pd.to_datetime(legacy["Date"].astype(str)+" "+legacy["Time"].astype(str), dayfirst=True, errors="coerce")
+          legacy["close"] = pd.to_numeric(legacy["Close"], errors="coerce")
+          legacy = legacy.dropna(subset=["timestamp","close"]).sort_values("timestamp")
+          legacy["trading_day"] = legacy["timestamp"].dt.normalize()
+          legacy_daily = legacy.groupby("trading_day", as_index=False).tail(1)[["timestamp","trading_day","close"]]
+          hf = pd.read_parquet("data/hf_index_options/index/SENSEX.parquet")
+          hf["timestamp"] = pd.to_datetime(hf["timestamp"], errors="coerce")
+          if getattr(hf["timestamp"].dt, "tz", None) is not None:
+              hf["timestamp"] = hf["timestamp"].dt.tz_convert("Asia/Kolkata").dt.tz_localize(None)
+          hf["trading_day"] = pd.to_datetime(hf["trading_day"], errors="coerce").dt.normalize()
+          hf["close"] = pd.to_numeric(hf["close"], errors="coerce")
+          hf = hf.dropna(subset=["timestamp","trading_day","close"]).sort_values("timestamp")
+          hf_daily = hf.groupby("trading_day", as_index=False).tail(1)[["timestamp","trading_day","close"]]
+          daily = pd.concat([legacy_daily,hf_daily],ignore_index=True).sort_values(["trading_day","timestamp"])
+          daily = daily.drop_duplicates("trading_day",keep="last").reset_index(drop=True)
+          daily.to_parquet("data/external/sensex_mc_daily.parquet",index=False)
+          PY
+
+      - name: Prepare stable analysis data tree
+        run: |
+          set -euo pipefail
+          rm -rf data/expiry_exit_v2
+          mkdir -p data/expiry_exit_v2/index data/expiry_exit_v2/options/NIFTY data/expiry_exit_v2/options/SENSEX data/expiry_exit
+          cp data/hf_index_options/index/NIFTY.parquet data/expiry_exit_v2/index/NIFTY.parquet
+          cp data/hf_index_options/index/SENSEX.parquet data/expiry_exit_v2/index/SENSEX.parquet
+          cp data/hf_index_options/options/NIFTY/*.parquet data/expiry_exit_v2/options/NIFTY/
+          cp data/hf_index_options/options/SENSEX/*.parquet data/expiry_exit_v2/options/SENSEX/
+          cp data/external/sensex_mc_daily.parquet data/expiry_exit/sensex_mc_daily.parquet
+
+      - name: Compile expiry-exit engine
+        run: python -m py_compile scripts/expiry_auction_exit_analysis_v2.py
+
+      - name: Run frozen-entry expiry exit sensitivity
+        run: |
+          python scripts/expiry_auction_exit_analysis_v2.py             --data-root data/expiry_exit_v2             --sensex-mc-daily data/expiry_exit/sensex_mc_daily.parquet             --paths 5000             --seed-base 20260920             --out-dir reports/expiry_exit_v2
+
+      - name: Publish expiry-exit reports
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin research/expiry-auction-exit-analysis-v2
+          git reset --hard origin/research/expiry-auction-exit-analysis-v2
+          git add reports/expiry_exit_v2
+          git commit -m "research: publish expiry-day exit analysis v2 [skip ci]" || true
+          git push origin HEAD:research/expiry-auction-exit-analysis-v2
