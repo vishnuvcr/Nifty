@@ -3,7 +3,7 @@
 | Phase | Status | Evidence |
 |---|---|---|
 | T0 Protocol freeze | COMPLETE | Frozen control, parameter grid, cost/statistical plans |
-| T1 Data and frozen-control reconstruction | IN PROGRESS — DATA ACQUISITION GATE | Historical sources identified; acquisition/cache workflow committed; integrity execution still pending |
+| T1 Data and frozen-control reconstruction | IN PROGRESS — SOURCE AUDIT | Four raw archives acquired successfully; persistent cache and schema audit now being validated |
 | T2 Entry tuning | BLOCKED on T1 |
 | T3 Exit tuning | BLOCKED on T1 |
 | T4 Nested WFO | BLOCKED on T2/T3 |
@@ -12,20 +12,15 @@
 
 ## T1 execution update — 2026-09-21
 
-The source audit now covers the original BATMAN study horizon. A reproducible acquisition workflow has been committed using: Zenodo Bhat 2017–2020 NIFTY data for the pre-2020 756-session lookback seed, a public 2020–2024 NIFTY/BankNIFTY options archive, and the documented 2025–2026 Rahul/Dhan one-minute NIFTY options archive. NSE public reports are retained as the official EOD/metadata reference.
+The acquisition runs established that the required raw sources are actually downloadable in GitHub Actions:
 
-The workflow uses a persistent GitHub Actions cache so large raw archives are not downloaded on every run. It writes a source SHA-256 manifest and publishes the manifest as a workflow artifact. The raw sources are not treated as exchange-grade bid/ask quotes.
+- 2017–2020 Zenodo option archive;
+- 2017–2020 Zenodo NIFTY spot/futures archive;
+- 2020–2024 Ayush NIFTY/BankNIFTY archive;
+- 2025–2026 Rahul/Dhan NIFTY archive.
 
-The actual compact BATMAN-specific derived cache has not yet been generated and validated. Therefore T2/T3 remain blocked and no tuning P&L is claimed.
+Run 35537467726 generated a complete four-file SHA-256 manifest before its only failure: pytest was missing. Run 35537505911 repeated that same test-environment defect. Run 35537798592 contains the correction and is under execution.
 
-## Required next gate
+The next gate is now source-schema audit, followed by contract-specific normalization into a compact BATMAN cache. The study will continue through every viable acquisition/repair path before declaring the data unavailable.
 
-T1 completes only after the acquisition workflow successfully validates:
-
-1. coverage through 2026-03-30;
-2. authoritative/verified expiry mapping for each historical option observation;
-3. canonical contract identity;
-4. timestamp and OHLC integrity;
-5. zero-volume non-executability;
-6. sufficient one-minute observations for entry and all exit rules;
-7. a signed/provenance-tagged derived cache manifest.
+No tuning P&L is claimed.
