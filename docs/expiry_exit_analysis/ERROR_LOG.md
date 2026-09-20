@@ -18,27 +18,20 @@ Observation: using a 15:00 bar close would incorporate prices after the 15:00 de
 Resolution: the analysis uses the exact 15:00 and 15:10 one-minute bar OPEN as the exit proxy.
 Prevention: no exit scenario may use a bar close for the same timestamp when the intended execution is at the beginning of that minute.
 
- — Connected GitHub Actions dispatch unavailable
-Type: execution infrastructure
-Observation: the connected GitHub toolset exposes workflow inspection/rerun operations but does not expose workflow_dispatch. Commits created through the connector did not start the analysis workflow, and the PR path was blocked by the repository's Codex code-review quota.
-Resolution: retain the complete analysis branch and a manual dispatcher workflow on main; do not fabricate numerical results without a completed CI run.
-Prevention: future data-heavy reruns should invoke the dispatcher manually from the GitHub Actions UI when the connected session lacks workflow_dispatch capability.
-
 ### E003 — Analysis branch/dispatcher separation
 Type: repository/CI architecture
-Observation: the data-heavy analysis branch cannot reliably self-trigger a workflow when workflow execution permissions are unavailable through the connected GitHub toolset.
-Resolution: the execution path is separated from the research branch: the dispatcher workflow lives on main, while the analysis engine, protocol and eventual reports remain isolated on research/expiry-auction-exit-analysis-v1.
-Prevention: keep execution dispatchers on main and keep research outputs on dedicated analysis branches; never treat an unexecuted workflow as a completed numerical result.
+Observation: the data-heavy analysis was initially treated as if a separate dispatcher were required for the branch.
+Resolution: repository inspection confirmed that the research branch itself contains a push-triggered expiry-analysis workflow plus workflow_dispatch. The execution path is therefore kept on the research branch; no numerical result is claimed until it completes.
+Prevention: verify trigger definitions on the actual target ref before documenting an execution architecture.
 
 ### E004 — Connected GitHub Actions dispatch unavailable
 Type: execution infrastructure
-Observation: the connected GitHub toolset exposes workflow inspection/rerun operations but does not expose workflow_dispatch. Commits created through the connector did not start the analysis workflow, and the PR path was blocked by the repository's Codex code-review quota.
-Resolution: retain the complete analysis branch and a manual dispatcher workflow on main; do not fabricate numerical results without a completed CI run.
-Prevention: future data-heavy reruns should invoke the dispatcher manually from the GitHub Actions UI when the connected session lacks workflow_dispatch capability.
+Observation: the connected GitHub toolset does not expose a direct workflow_dispatch call. Earlier notes repeated the same limitation.
+Resolution: no fabricated result was produced. The current run uses the verified branch push trigger instead.
+Prevention: when workflow_dispatch is unavailable through the connector, use a push-triggered workflow that is already present in the research branch, provided its path filters and CI-side skip controls prevent recursion.
 
-
-### E003 — Analysis branch/dispatcher separation
-Type: repository/CI architecture
-Observation: the data-heavy analysis branch cannot reliably self-trigger a workflow when workflow execution permissions are unavailable through the connected GitHub toolset.
-Resolution: execution dispatch is separated from the research branch; the dispatcher is kept on main while the analysis engine and reports remain isolated on the dedicated analysis branch.
-Prevention: never treat an unexecuted workflow as a completed numerical result.
+### E005 — Incorrect execution-path description in prior log
+Type: repository-state verification
+Observation: a prior continuation note said that the authoritative dispatcher lived on main. Repository inspection showed that the expiry-analysis workflow is present on research/expiry-auction-exit-analysis-v1 and its current trigger includes both push and workflow_dispatch; the main branch does not contain that workflow at the inspected path.
+Resolution: corrected PHASE_STATUS, CONVERSATION_LOG, and this error log; execution is being initiated by a controlled branch push.
+Prevention: always re-read the target branch and main branch workflow files before stating where an analysis dispatcher resides.
