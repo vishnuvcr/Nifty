@@ -146,6 +146,29 @@ def fetch_live_sensex() -> dict[str, Any]:
             errors.append(f"{url}: {exc}")
     raise RuntimeError("BSE live SENSEX endpoint unavailable; " + " | ".join(errors))
 
+def extract_live_spot_and_date(data: dict[str, Any]) -> tuple[float, pd.Timestamp]:
+    normalized = {str(k).lower().replace("_", "").replace(" ", ""): v for k, v in data.items()}
+    spot = None
+    for key in ("ltp", "currvalue", "currval"):
+        if key in normalized and str(normalized[key]) not in {"", "None"}:
+            spot = float(normalized[key])
+            break
+    if spot is None or not np.isfinite(spot):
+        raise RuntimeError(f"could not parse live SENSEX spot from keys: {list(data)}")
+
+    timestamp_value = None
+    for key in ("datetime", "dttm", "datetimestamp", "timestamp", "date"):
+        if key in normalized and str(normalized[key]).strip():
+            timestamp_value = normalized[key]
+            break
+    if timestamp_value is None:
+        raise RuntimeError("BSE live SENSEX response has no timestamp/date field")
+
+    observed = pd.to_datetime(timestamp_value, errors="coerce", dayfirst=True)
+    if pd.isna(observed):
+        raise RuntimeError(f"unparseable BSE live SENSEX timestamp: {timestamp_value}")
+    return float(spot), pd.Timestamp(observed).tz_localize(None).normalize()
+
 def recursive_records(obj: Any, inherited: dict[str, Any] | None = None) -> list[dict[str, Any]]:
     inherited = dict(inherited or {})
     if isinstance(obj, list):
@@ -407,16 +430,11 @@ def main() -> int:
         cutoff = pd.Timestamp(history["date"].max())
         returns = np.log(history["close"]).diff().dropna().to_numpy(float)
         live = fetch_live_sensex()
-        spot = next(
-            (
-                float(live[key])
-                for key in ("LTP", "CurrValue", "ltp", "Currvalue")
-                if key in live and str(live[key]) not in {"", "None"}
-            ),
-            None,
-        )
-        if spot is None or not np.isfinite(spot):
-            raise RuntimeError(f"could not parse live SENSEX spot from keys: {list(live)}")
+        spot, live_date = extract_live_spot_and_date(live)
+        if live_date.date() != decision_date.date():
+            raise RuntimeError(
+                f"BSE live SENSEX quote is not dated {decision_date.date()}; observed {live_date.date()}"
+            )
 
         expiry = future_session_expiry(history, decision_date)
         chain = fetch_option_chain(expiry)
