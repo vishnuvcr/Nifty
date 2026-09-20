@@ -41,3 +41,18 @@ This branch is the protocol-only starting point for testing option strategies wi
 - Manual/automatic protocol CI: .github/workflows/limited-risk-option-wfo-v1.yml
 
 Current status: L0 complete. No new performance result is claimed.
+
+
+## Results — L0-L7 complete
+
+Verified CI run: **35496685719** using parent run **35425922439**.
+
+- [Final phase report](reports/limited_risk_wfo/FINAL_PHASE_REPORT.md)
+- [Risk classification](reports/limited_risk_wfo/RISK_CLASSIFICATION.csv)
+- [Key validation results](reports/limited_risk_wfo/VALIDATION_KEY_RESULTS.csv)
+- [Nested selection](reports/limited_risk_wfo/NESTED_SELECTION.csv)
+- [CPCV / multiple-testing](reports/limited_risk_wfo/CPCV_MULTIPLE_TESTING.csv)
+- [Cost stress](reports/limited_risk_wfo/CANDIDATE_COST_STRESS.csv)
+- [Regime router summary](reports/limited_risk_wfo/REGIME_ROUTER_SUMMARY.csv)
+
+**Decision:** no strategy promoted. The 2025-2026 sample is already exposed; L8 remains HOLD pending genuinely new post-exposure data and deployment-grade bid/ask history.
