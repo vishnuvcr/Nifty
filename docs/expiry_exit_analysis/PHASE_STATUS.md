@@ -44,3 +44,6 @@ No same-minute CLOSE is used because that would contain information after the in
 The NIFTY analysis uses the pinned historical NIFTY source file already committed on this branch through 2026-03-30, merged with the cached public 1-minute NIFTY option dataset for executable expiry-day option bars.
 
 The SENSEX analysis uses the cached public SENSEX option/index dataset and the exact composite daily MC history used in S5/S6.
+
+
+CI note: workflow definition is mirrored on main so PR #6 can execute the v2 analysis job; analysis code and outputs remain on this branch.
