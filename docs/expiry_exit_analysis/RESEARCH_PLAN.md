@@ -14,6 +14,8 @@ This is a separate sensitivity-analysis branch. Entry rules, MC process, regime 
 2. Exact 15:00:00 IST expiry-day 1-minute bar OPEN.
 3. Exact 15:10:00 IST expiry-day 1-minute bar OPEN.
 
+The exit timestamps are user-defined execution scenarios. The study does not assume any specific exchange auction mechanism; it only tests the P&L consequence of closing the position at those timestamps.
+
 The exact bar OPEN is used so the exit price does not contain information from later in the same minute.
 
 ## Common controls
@@ -37,9 +39,9 @@ trade count, total P&L, mean/median P&L, win rate, profit factor, max drawdown, 
 
 ## Data boundary
 
-NIFTY holdout is frozen through 2026-03-30 to match the completed Phase-10 historical dataset boundary recorded in the Batman candidate document.
+The rerun uses the public 1-minute index-options dataset already used by the SENSEX transfer study, with NIFTY and SENSEX option/index files cached in GitHub Actions. The NIFTY daily-history warmup source is pinned on the analysis branch. Usable dates are determined from actual option/index coverage; missing observations are not imputed.
 
-SENSEX holdout uses the available public archive through its last observed option expiry within the downloaded dataset.
+The SENSEX sample remains limited by the available public option archive through 2026-05-21.
 
 ## Exit-cost treatment
 
@@ -50,3 +52,7 @@ SENSEX keeps the frozen S5/S6 entry MC gate and SENSEX transaction-cost model. F
 ## Success criterion
 
 Produce reproducible results for all three exit scenarios on both indices, with a clear trade-count comparison and an explicit separation between historical settlement results and the new 15:00/15:10 exit variants.
+
+## Entry-method control
+
+Both indices use the frozen MC/regime entry-selection logic. The exit scenario is the only intended strategy change. To compare exit mechanics rather than account sizing, the rerun uses one-lot/one-strategy-unit transfer-edge realization after the net MC-EV entry gate. Historical transaction-cost/slippage stress is retained.
