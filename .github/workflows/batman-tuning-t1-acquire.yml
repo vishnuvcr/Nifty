@@ -84,6 +84,9 @@ jobs:
           PY
           cat data/batman_tuning_cache/source_manifest.json
 
+      - name: Raw source schema audit
+        run: python scripts/batman_tuning_source_audit.py
+
       - name: Persist raw archive cache
         if: always()
         uses: actions/cache/save@v4
@@ -100,7 +103,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: batman-tuning-t1-source-manifest
-          path: data/batman_tuning_cache/source_manifest.json
+          path: |
+            data/batman_tuning_cache/source_manifest.json
+            data/batman_tuning_cache/source_audit.json
           if-no-files-found: error
 
       - name: T1 summary
