@@ -3,6 +3,7 @@ name: Expiry Auction Exit Analysis — NIFTY + SENSEX
 on:
   push:
     branches:
+      - main
       - research/expiry-auction-exit-analysis-v1
     paths:
       - scripts/expiry_auction_exit_analysis_v1.py
