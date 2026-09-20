@@ -117,3 +117,9 @@ Phase: L2
 Observation: the workflow still contained the obsolete gh run list lookup and escaped GitHub expressions after the first patch.
 Resolution: replaced the full workflow with an explicit immutable PARENT_RUN_ID and native GitHub Actions expressions.
 Prevention: inspect the exact committed workflow text after every CI-control correction.
+
+## LRW014 — Optional tabulate dependency caused report-stage CI failure
+Phase: L5-L7
+Observation: The historical computation completed through risk/WFO analysis but failed while rendering pandas to_markdown because tabulate was not installed.
+Resolution: Result rendering now uses pandas to_string and requires no extra reporting package.
+Prevention: Avoid optional formatting dependencies inside the numerical research engine.
