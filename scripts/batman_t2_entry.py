@@ -172,11 +172,11 @@ def prepare_spot_and_daily(raw_root: Path, ayush_zip: Path, long_index_zip: Path
             d = df["date_only"].iloc[0]
             day = df[df.date_only == d]
             daily_close = float(day.iloc[-1].close)
-            after = day[day["ts"].dt.time >= time(9,30)]
-            if after.empty:
+            exact = day[day["ts"].dt.time == time(9,30)]
+            if exact.empty:
                 spot0930 = np.nan
             else:
-                spot0930 = float(after.iloc[0].close)
+                spot0930 = float(exact.iloc[0].close)
             spot_rows.append({"date": d, "close": daily_close, "spot_0930": spot0930})
             if i % 250 == 0:
                 print(f"T2 spot scan {i}/{len(members)}")
@@ -225,9 +225,6 @@ def compute_costs(signal_prices, actual_prices, execution_date, lot):
     rate = stt_rate(execution_date)
     sold_signal_premium = sum(abs(qty) * signal_prices[(typ, strike)] for typ, strike, qty, _ in batman_legs(signal_prices["__strikes"])) if False else 0.0
     return rate
-
-def stt_rate(execution_date: pd.Timestamp) -> float:
-    return 0.001 if execution_date.date() >= date(2024,10,1) else 0.000625
 
 def contract_cost_points(prices: dict, legs, brokerage_rupees: float, execution_date: pd.Timestamp, lot: int):
     sell_premium_points = sum(abs(qty) * prices[(typ, strike)] for typ, strike, qty, _ in legs if qty < 0)
