@@ -1,0 +1,23 @@
+{
+  "strategy": "Buy Call",
+  "premium_threshold_pct_spot": 0.0055,
+  "development_n": 33,
+  "development_mean": 64.89079254079276,
+  "development_pf": 3.2175520072011587,
+  "validation_n": 70,
+  "validation_mean": -1.6798351648351864,
+  "validation_pf": 0.9675777998122934,
+  "validation_win_rate": 0.37142857142857144,
+  "validation_bootstrap_ci_low": -24.920406593406693,
+  "validation_bootstrap_ci_high": 29.70393269230777,
+  "validation_bootstrap_p_mean_le_zero": 0.439,
+  "validation_pass": false,
+  "exposed_final_n": 31,
+  "exposed_final_mean": -30.39801488833756,
+  "exposed_final_pf": 0.6181879949758288,
+  "execution_cost_points": 2.3076923076923075,
+  "lot_size": 65,
+  "slippage_points_per_contract": 2.0,
+  "brokerage_per_order_inr": 10.0,
+  "thresholds_tested": [0.003,0.0035,0.004,0.0045,0.005,0.0055,0.006,0.0065,0.007,0.0075,0.008]
+}
