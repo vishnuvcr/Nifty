@@ -158,7 +158,7 @@ SENSEX:
 - Plan: https://github.com/vishnuvcr/Nifty/blob/research/prospective-defined-risk-sensex-v1/docs/prospective_defined_risk_sensex_v1/RESEARCH_PLAN.md
 - Phase status: https://github.com/vishnuvcr/Nifty/blob/research/prospective-defined-risk-sensex-v1/docs/prospective_defined_risk_sensex_v1/PHASE_STATUS.md
 
-Each retained strategy has a separate dashboard/ledger under the Pages tree. Entry scans are scheduled at 09:30 IST and settlement/page refresh at 16:00 IST. No broker orders are submitted. Sell Put and Bull Put Spread are excluded from the prospective stream.
+Each retained strategy has a separate dashboard/ledger under the Pages tree. Entry scans are scheduled at 09:30 IST and settlement/page refresh at 16:00 IST. The prospective pages use the same mobile-friendly paper-trading dashboard style as the existing SENSEX Batman dashboard. No broker orders are submitted. Sell Put and Bull Put Spread are excluded from the prospective stream.
 
 ### B. NIFTY long-premium MC/WFO
 
