@@ -182,3 +182,10 @@ Type: Pages publication
 Observation: the S7 refresh script creates the SENSEX parent selector dynamically, while the first static mirror did not contain site/sensex/index.html.
 Resolution: added an explicit SENSEX selector file to the S7 branch and mirrored it to the NIFTY Pages source branch.
 Prevention: all published navigation parents must exist as committed static state as well as being reproducible by refresh scripts.
+
+
+### E026 — Prospective scan required a current-session timestamp gate
+Type: market-session integrity
+Observation: BSE's live SENSEX endpoint can expose a retained prior-session value when the exchange is closed; a weekday-only scheduler is not sufficient to prove that the current date is a trading session.
+Resolution: the prospective scanner now requires a parseable live-quote timestamp dated the current decision date. Stale prior-session values become NO_TRADE and are logged.
+Prevention: never treat weekday scheduling as proof of an open BSE session; require current-session market-data provenance before generating an entry.
