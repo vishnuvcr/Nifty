@@ -185,3 +185,15 @@ A separate research branch has been created to test whether the promoted BATMAN 
 - Error log: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-v1/docs/batman_tuning/ERROR_LOG.md
 
 T0 protocol freeze is complete. The study will test D0-D6 entry offsets, prior-session signal to market-open execution, same-session 09:30 execution, fixed targets, fixed stops, trailing targets and trailing stops. No tuned result is claimed yet. The promoted BATMAN prospective-validation stream remains untouched.
+
+
+### BATMAN Tuning V1 — T1 data audit status
+
+T1 has been audited against historical BATMAN backfill commits and GitHub Actions runs. The parent backfill record is a reconstructed close-price paper entry and explicitly lacks historical bid/ask quotes; no reusable workflow artifact containing the required intraday option history was retained. Therefore D0-D6 and target/stop/trailing tuning remain blocked rather than being estimated from insufficient data.
+
+- T1 cache contract: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-v1/data/batman_tuning_cache/README.md
+- T1 validator: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-v1/scripts/batman_tuning_t1_data_check.py
+- T1 audit: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-v1/docs/batman_tuning/T1_DATA_AUDIT.md
+- Phase status: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-v1/docs/batman_tuning/PHASE_STATUS.md
+
+No tuning P&L or parameter winner is claimed until the immutable historical cache passes validation.
