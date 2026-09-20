@@ -27,6 +27,6 @@ GitHub Actions run: 35492648657 — conclusion: success.
 - 15:00 IST
 - 15:10 IST
 
-No exit result is used to change entry rules. Results are published under reports/expiry_exit/.
+No exit result is used to change entry rules. Results are published under reports/expiry_exit/. Results are published under reports/expiry_exit/.
 
 Numerical results are verified and published under reports/expiry_exit/.

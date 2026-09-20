@@ -80,3 +80,6 @@ Type: capital-sizing / external-state dependency
 Observation: Paytm Money's current overnight F&O margin is dynamic and depends on the exact live basket and exchange margin parameters. Historical trade P&L cannot be substituted for broker margin.
 Resolution: calculate a research MC-risk capital reserve from the frozen SENSEX population and explicitly label it as a proxy; do not claim it is Paytm Money's live margin.
 Prevention: before deployment, capture the Paytm Money margin-calculator result for the exact four-leg basket and retain the snapshot with the trade signal.
+
+## E003 — Authoritative branch-push rerun
+The interrupted PR execution path was bypassed because repository Codex code-review quota was exhausted. The same frozen analysis is executed by the repository branch-push workflow; no entry rule was changed.
