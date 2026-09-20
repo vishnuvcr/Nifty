@@ -47,7 +47,7 @@ def inspect_outer(path):
         rec["csv_samples"]=[{"member":n,"header":sample_csv_header(zf,n)} for n in chosen]
         rec["members_sample"]=[{"name":i.filename,"bytes":i.file_size} for i in infos[:20]]
         if path.name.startswith("nifty_index_"):
-            rec["index_targeted_members"]=choose_csv_members(names,include=("nifty",),exclude=("banknifty",))
+            rec["index_targeted_members"]=[n for n in names if n.lower().startswith("nifty_data/") and n.lower().endswith(".csv")]
         if path.name.startswith("zenodo_"):
             nested=[n for n in names if n.lower().endswith(".zip")]
             rec["nested_archives"]=[]
