@@ -567,10 +567,7 @@ def run(index_name: str, exit_mode: str, out_dir: Path, paths: int, seed_base: i
         s.update({"index":index_name,"strategy":strat,"exit":exit_mode,"first_entry":g["entry_date"].min() if not g.empty else None,"last_entry":g["entry_date"].max() if not g.empty else None})
         summary.append(s)
     pd.DataFrame(summary).to_csv(out_dir/f"{index_name}_{exit_mode.replace(':','')}_SUMMARY.csv",index=False)
-    # Combined OOS bootstrap on validation + holdout only.
-    for strat in ("Batman","Adaptive"):
-        g=trades.loc[(trades["strategy_report"]==strat)&(trades["split"].isin(["validation","holdout"]))&(trades["exit"]==(exit_mode[:5] if exit_mode!="expiry_settlement" else "expiry_settlement"))&(trades.get("status","").ne("EXIT_UNAVAILABLE"))]
-        if exit_mode == "expiry_settlement":
+    if exit_mode == "expiry_settlement":
         selected_cache = trades.loc[trades["exit"].eq("expiry_settlement")].copy()
         if not selected_cache.empty:
             cache_path.parent.mkdir(parents=True, exist_ok=True)
