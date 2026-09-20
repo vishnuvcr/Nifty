@@ -1,0 +1,11 @@
+metric,value
+cpcv_paths,15
+pre2025_selected_path_mean_ci_low,31.62
+pre2025_selected_path_mean_ci_high,49.93
+pre2025_bootstrap_p_mean_le_zero,0.000
+multiple_testing_strategies,27
+multiple_testing_dates,480
+multiple_testing_block_length,5
+multiple_testing_repetitions,5000
+observed_best_mean_per_decision,17.741667
+reality_check_style_p_value,0.7426
