@@ -1,0 +1,9 @@
+name: BATMAN Tuning T3 Exit Tuning
+on:
+  workflow_dispatch:
+jobs:
+  t3:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "T3 is gated on successful T1 reconstruction." && exit 1
