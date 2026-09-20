@@ -310,21 +310,42 @@ def run_nifty(paths:int,seed_base:int,data_root:Path):
     return pd.DataFrame(rows)
 
 def run_sensex(paths:int,seed_base:int,data_root:Path):
-    from scripts.sensex_backtest_v1 import run_backtest, realized_costs
+    """Reprice the frozen validated S5 Adaptive/Batman trade population only.
+
+    The entry selection is intentionally NOT recomputed here. The frozen S5
+    trade CSVs are cached under data/expiry_exit/frozen_sensex_s5/ so this
+    phase measures only the effect of the alternative expiry-day exit.
+    """
     rows=[]
-    idx_path=data_root/"index"/"SENSEX.parquet"; opts=data_root/"options"/"SENSEX"
+    opts=data_root/"options"/"SENSEX"
+    frozen_root=ROOT/"data/expiry_exit/frozen_sensex_s5"
     for split in ("development","validation","holdout"):
-        candidates,adaptive_trades,stats=run_backtest(opts,idx_path,split,0.5,seed_base, ROOT/"data/expiry_exit/sensex_mc_daily.parquet", True)
-        from scripts.sensex_backtest_v1 import run_batman_from_candidates, load_option_file, realized_costs as rc
-        batman=run_batman_from_candidates(candidates,opts,idx_path,split,0.5,seed_base)
-        for strat,trade_df in (("Adaptive",adaptive_trades),("Batman",batman)):
-            for _,r in trade_df.iterrows():
-                expiry=pd.Timestamp(r["expiry"]).normalize(); entry_date=pd.Timestamp(r["entry_date"]).normalize()
+        input_specs=[
+            ("Adaptive", frozen_root/f"adaptive_trades_{split}.csv"),
+            ("Batman", frozen_root/f"batman_trades_{split}.csv"),
+        ]
+        for strat, csv_path in input_specs:
+            if not csv_path.exists():
+                raise FileNotFoundError(csv_path)
+            df=pd.read_csv(csv_path)
+            # Exclude explicit NO_TRADE/invalid rows from the frozen population.
+            df=df.loc[
+                df["status"].astype(str).str.upper().eq("CLOSED")
+                & df["legs_json"].notna()
+                & df["legs_json"].astype(str).str.strip().ne("")
+            ].copy()
+            if strat=="Batman":
+                # The validated Batman export contains repeated rows for
+                # the standalone-universe annotation. Collapse exact trade
+                # duplicates so each expiry trade is counted once.
+                df=df.loc[df["strategy"].astype(str).eq("Batman")].copy()
+                df=df.drop_duplicates(subset=["expiry","entry_date","legs_json"], keep="first")
+            for _,r in df.iterrows():
+                expiry=pd.Timestamp(r["expiry"]).normalize()
+                entry_date=pd.Timestamp(r["entry_date"]).normalize()
                 path=opts/f"{expiry.date()}.parquet"
-                if not path.exists(): continue
-                # Load the full expiry file so both the entry-day quote snapshot and
-                # expiry-day 15:00/15:10 bars are available.
-                opt=load_option_file(path, entry_date)
+                if not path.exists():
+                    continue
                 full=pd.read_parquet(path)
                 full["timestamp"]=pd.to_datetime(full["timestamp"],errors="coerce")
                 if getattr(full["timestamp"].dt,"tz",None) is not None:
@@ -335,33 +356,42 @@ def run_sensex(paths:int,seed_base:int,data_root:Path):
                     full[cc]=pd.to_numeric(full[cc],errors="coerce")
                 full["option_type"]=full["option_type"].astype(str).str.upper()
                 expiry_day=full.loc[full["trading_day"].eq(expiry)].copy()
-                # S5 CSV contains NO_TRADE rows with blank/NaN legs_json.
-                # Those rows are not actual positions and must not enter exit analysis.
-                legs_json_value=r.get("legs_json")
-                if not isinstance(legs_json_value, str) or not legs_json_value.strip():
+                if expiry_day.empty:
                     continue
-                if str(r.get("status","")).upper() != "CLOSED":
+                legs_json_value=r.get("legs_json")
+                if not isinstance(legs_json_value,str) or not legs_json_value.strip():
                     continue
                 try:
                     legs=json.loads(legs_json_value)
-                except (TypeError, json.JSONDecodeError):
+                except (TypeError,json.JSONDecodeError):
                     continue
                 entry_cash=float(r["entry_cashflow_points"])
                 entry_only=float(r.get("entry_cost_inr_entry_only",np.nan))
                 if not np.isfinite(entry_only):
                     entry_only=float(r.get("realized_cost_inr_per_lot",0.0))
-                # baseline uses engine's frozen realized result
                 base=float(r.get("realized_pnl_inr",0.0))
-                rows.append({"index":"SENSEX","strategy":strat,"exit":"expiry_settlement","entry_date":entry_date.date(),"expiry":expiry.date(),
-                             "split":split,"pnl_inr":base,"mc_ev":float(r.get("mc_ev_net",np.nan)),"regime":r.get("regime")})
+                rows.append({
+                    "index":"SENSEX","strategy":strat,"exit":"expiry_settlement",
+                    "entry_date":entry_date.date(),"expiry":expiry.date(),
+                    "split":split,"pnl_inr":base,
+                    "mc_ev":float(r.get("mc_ev_net",np.nan)),
+                    "regime":r.get("regime")
+                })
+                entry_obj={"legs":legs,"entry_cashflow":entry_cash}
                 for mode in ("15:00:00","15:10:00"):
                     try:
-                        entry_obj={"legs": legs, "entry_cashflow": entry_cash}
-                        p=sensex_exit_pnl(entry_obj,expiry_day,mode,20,entry_date,entry_only)
+                        p=sensex_exit_pnl(
+                            entry_obj,expiry_day,mode,20,entry_date,entry_only
+                        )
                     except Exception:
                         continue
-                    rows.append({"index":"SENSEX","strategy":strat,"exit":mode[:5],"entry_date":entry_date.date(),"expiry":expiry.date(),
-                                 "split":split,"pnl_inr":p,"mc_ev":float(r.get("mc_ev_net",np.nan)),"regime":r.get("regime")})
+                    rows.append({
+                        "index":"SENSEX","strategy":strat,"exit":mode[:5],
+                        "entry_date":entry_date.date(),"expiry":expiry.date(),
+                        "split":split,"pnl_inr":p,
+                        "mc_ev":float(r.get("mc_ev_net",np.nan)),
+                        "regime":r.get("regime")
+                    })
     return pd.DataFrame(rows)
 
 def main():
