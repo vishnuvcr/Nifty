@@ -2,14 +2,14 @@
 
 ## Status
 
-The four strategies are frozen and the SENSEX prospective observation infrastructure is active:
+The SENSEX prospective observation infrastructure is active for two retained strategies:
 
 - Jade Lizard
 - Put Ratio Spread
-- Sell Put
-- Bull Put Spread
 
-Each has a separate paper ledger and GitHub Pages dashboard.
+Sell Put and Bull Put Spread were removed from prospective validation before the first eligible observation.
+
+Each retained strategy has a separate paper ledger and GitHub Pages dashboard.
 
 ## Frozen model
 
@@ -31,3 +31,8 @@ On 2026-09-20, there are **no new prospective closed-trade observations to repor
 **ACTIVE PROSPECTIVE VALIDATION / NO PROMOTION YET.**
 
 The SENSEX transfer is observed independently for each frozen candidate.
+
+
+## Scope-change record
+
+The candidate set was narrowed to Jade Lizard and Put Ratio Spread before any prospective trade observation. No future performance outcome was used to make this change.
