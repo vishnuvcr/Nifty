@@ -57,3 +57,17 @@ Verified CI run: **35496685719** using parent run **35425922439**.
 - [Regime router summary](reports/limited_risk_wfo/REGIME_ROUTER_SUMMARY.csv)
 
 **Decision:** no strategy promoted. The 2025-2026 sample is already exposed; L8 remains HOLD pending genuinely new post-exposure data and deployment-grade bid/ask history.
+
+
+## Follow-up phases launched on 2026-09-20
+
+The four candidates that passed the historical nested freeze are now being observed prospectively, independently, on both NIFTY and SENSEX:
+
+- https://github.com/vishnuvcr/Nifty/tree/research/prospective-defined-risk-nifty-v1
+- https://github.com/vishnuvcr/Nifty/tree/research/prospective-defined-risk-sensex-v1
+
+A separate long-premium research question tests Buy Call / Buy Put cheapness rules:
+
+- https://github.com/vishnuvcr/Nifty/tree/research/long-premium-mcwfo-v1
+
+These follow-up phases do not overwrite or retroactively alter the L0-L11 results of this branch.
