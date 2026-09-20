@@ -5,8 +5,8 @@ Last updated: 2026-09-20 (Asia/Kolkata)
 | Phase | Status | Notes |
 |---|---|---|
 | L0 Protocol freeze and repository audit | COMPLETE | New branch created from research/monte-carlo-wfa-v1; protocol artifacts added. |
-| L1 Literature review and strategy taxonomy | PLANNED | Must precede strategy selection and final universe freeze. |
-| L2 Data audit and executable market-data layer | PLANNED | Reuse cached artifacts where possible; no silent quote imputation. |
+| L1 Literature review and strategy taxonomy | COMPLETE | Literature and methodological references are frozen. |
+| L2 Data audit and executable market-data layer | IN PROGRESS | Parent NIFTY archive will be audited in CI; current known schema is EOD close data rather than verified historical bid/ask. |
 | L3 Strategy risk-audit engine | PLANNED | Mechanical finite-loss classification is mandatory. |
 | L4 WFO strategy-construction engine | PLANNED | Existing MC/WFO methodology remains the baseline. |
 | L5 Broad strategy WFO | PLANNED | Descriptive all-candidate comparison; no final candidate promotion. |
