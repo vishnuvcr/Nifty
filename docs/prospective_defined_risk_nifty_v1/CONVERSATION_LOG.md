@@ -13,3 +13,13 @@ Action:
 - Implemented separate Pages dashboards/ledgers.
 - Scheduled 09:30 IST entry scanning and 16:00 IST settlement/page refresh.
 - Prospective observations remain unbackfilled.
+
+## 2026-09-20 — scope correction
+
+User directive: Remove Sell Put and Bull Put Spread from prospective validation and fix the Pages publication.
+
+Action:
+- Narrowed the NIFTY prospective engine and manual workflow choices to Jade Lizard and Put Ratio Spread.
+- Removed the superseded strategy dashboards from the prospective branch.
+- Updated protocol, phase status, candidate provenance, report, error log and audit log before the prospective stream begins.
+- Removed maintenance-push scanning so code changes cannot generate prospective observations.
