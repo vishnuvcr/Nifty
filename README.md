@@ -135,3 +135,39 @@ The separate branch `research/limited-risk-option-wfo-v1` has completed its hist
 - Phase status: https://github.com/vishnuvcr/Nifty/blob/research/limited-risk-option-wfo-v1/docs/limited_risk_option_wfo/PHASE_STATUS.md
 
 **Current decision (2026-09-20):** no strategy promoted. Fresh-holdout confirmation is HOLD until genuinely new post-exposure data and deployment-grade execution data are available.
+
+
+## Next research phases — frozen defined-risk prospective validation and long-premium study
+
+### A. Four frozen finite-loss candidates — NIFTY + SENSEX
+
+The four candidates that passed the limited-risk development-to-validation freeze are now tracked independently, without retrospective strategy selection:
+
+- Jade Lizard
+- Put Ratio Spread
+- Sell Put
+- Bull Put Spread
+
+NIFTY:
+- Branch: https://github.com/vishnuvcr/Nifty/tree/research/prospective-defined-risk-nifty-v1
+- Plan: https://github.com/vishnuvcr/Nifty/blob/research/prospective-defined-risk-nifty-v1/docs/prospective_defined_risk_nifty_v1/RESEARCH_PLAN.md
+- Phase status: https://github.com/vishnuvcr/Nifty/blob/research/prospective-defined-risk-nifty-v1/docs/prospective_defined_risk_nifty_v1/PHASE_STATUS.md
+
+SENSEX:
+- Branch: https://github.com/vishnuvcr/Nifty/tree/research/prospective-defined-risk-sensex-v1
+- Plan: https://github.com/vishnuvcr/Nifty/blob/research/prospective-defined-risk-sensex-v1/docs/prospective_defined_risk_sensex_v1/RESEARCH_PLAN.md
+- Phase status: https://github.com/vishnuvcr/Nifty/blob/research/prospective-defined-risk-sensex-v1/docs/prospective_defined_risk_sensex_v1/PHASE_STATUS.md
+
+Each strategy has a separate dashboard/ledger under the Pages tree. Entry scans are scheduled at 09:30 IST and settlement/page refresh at 16:00 IST. No broker orders are submitted.
+
+### B. NIFTY long-premium MC/WFO
+
+New research question: can MC/WFO identify sufficiently cheap Buy Call / Buy Put opportunities with positive expected value after premium, brokerage, slippage and expiry time decay?
+
+- Branch: https://github.com/vishnuvcr/Nifty/tree/research/long-premium-mcwfo-v1
+- Research plan: https://github.com/vishnuvcr/Nifty/blob/research/long-premium-mcwfo-v1/docs/long_premium_mcwfo_v1/RESEARCH_PLAN.md
+- Final report: https://github.com/vishnuvcr/Nifty/blob/research/long-premium-mcwfo-v1/reports/long_premium_mcwfo_v1/FINAL_PHASE_REPORT.md
+
+Historical result: the development-frozen Buy Call <=0.55% of spot rule failed 2023-2024 validation (mean -1.68 points, PF 0.968; block-bootstrap 95% CI -24.92 to +29.70). The 22-rule multiple-testing diagnostic was p=0.886. The 2025-2026 period is already exposed by the parent study and is descriptive only. No long-premium rule is promoted.
+
+The current live Pages selector remains at https://vishnuvcr.github.io/Nifty/; the frozen defined-risk prospective dashboards are added to that selector by the main Pages publisher.
