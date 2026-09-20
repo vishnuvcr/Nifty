@@ -46,3 +46,8 @@ No strategy is promoted. Fresh post-exposure data and deployment-grade bid/ask e
 - NIFTY long-premium MC/WFO: research/long-premium-mcwfo-v1.
 
 These are downstream phases and do not change the frozen L0-L11 inference.
+
+
+## Per-strategy CI appendix
+
+Added reports/limited_risk_wfo/VALIDATION_BOOTSTRAP_CI.csv containing recomputed 95% moving-block bootstrap validation-trade P&L intervals for the four frozen candidates. This supplementary calculation does not alter candidate selection or the hold/no-promotion decision.
