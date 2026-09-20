@@ -22,6 +22,20 @@ A separate sensitivity branch tests the frozen Batman and Adaptive entry rules f
 
 **Current status (2026-09-20):** E0 specification, E1 engine, and E2 data workflow are complete. E3 CI execution is in progress; E4 result verification and E5 final comparison are pending. No 15:00/15:10 numerical result is claimed until the CI outputs pass verification.
 
+## Expiry-day early-exit analysis — VERIFIED RESULTS
+
+The dedicated branch `research/expiry-auction-exit-analysis-v1` has completed the frozen Batman/Adaptive exit sensitivity study for NIFTY and SENSEX.
+
+Verified GitHub Actions run: 35492648657 (success).
+
+Published outputs:
+- RESULTS.md
+- COMBINED_OOS_SUMMARY.csv
+- EXIT_SUMMARY_BY_SPLIT.csv
+- TRADE_LEVEL_RESULTS.csv
+
+The study compares expiry settlement with exact 15:00 IST and 15:10 IST one-minute bar OPEN exits, keeping entry rules frozen. The SENSEX early-exit rerun uses the cached frozen S5 trade population rather than recomputing entry selection.
+
 ## Unified paper-trading GitHub Pages
 
 GitHub Pages now uses a two-level selector:
