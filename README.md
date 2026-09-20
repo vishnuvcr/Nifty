@@ -29,3 +29,9 @@ This repository currently contains the research scaffold; no live-trading claim 
 
 ## Unified paper-trading Pages
 The published dashboard is organized as Index -> Strategy: NIFTY -> Batman/Adaptive and SENSEX -> Batman/Adaptive. SENSEX prospective paper trading is sourced from research/sensex-s7-paper-trading-v1 and synchronized by the main Pages publisher.
+
+
+## Combined NIFTY + SENSEX Batman capital study
+A provisional simultaneous-trading capital analysis is documented at [docs/combined_batman_capital/CAPITAL_REQUIREMENT.md](docs/combined_batman_capital/CAPITAL_REQUIREMENT.md). For one NIFTY Batman lot plus one SENSEX Batman lot, the current repository-backed research reserve is **₹1.51 lakh**, rounded to **₹1.55 lakh** as a working minimum before a separate operating cash cushion. This remains provisional because the retained NIFTY risk population is incomplete and the exact Paytm Money basket margin must be captured before deployment.
+
+Related phase records: [research plan](docs/combined_batman_capital/RESEARCH_PLAN.md) · [phase status](docs/combined_batman_capital/PHASE_STATUS.md) · [error log](docs/combined_batman_capital/ERROR_LOG.md) · [conversation log](docs/combined_batman_capital/CONVERSATION_LOG.md)
