@@ -126,7 +126,7 @@ jobs:
 
       - name: Run exit scenarios
         run: |
-          python scripts/expiry_auction_exit_analysis_v2.py             --data-root data/expiry_exit_v2             --paths 5000             --seed-base 20260920             --out-dir reports/expiry_exit_v2
+          python scripts/expiry_auction_exit_analysis_v2.py             --data-root data/expiry_exit_v2             --sensex-mc-daily data/expiry_exit/sensex_mc_daily.parquet             --paths 5000             --seed-base 20260920             --out-dir reports/expiry_exit_v2
 
       - name: Publish v2 results
         run: |
