@@ -1,0 +1,9 @@
+name: BATMAN Tuning T4 Nested WFO
+on:
+  workflow_dispatch:
+jobs:
+  t4:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "T4 requires completed T2 and T3 candidate matrices." && exit 1
