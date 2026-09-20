@@ -23,3 +23,9 @@ Type: methodology / reproducibility
 Observation: the raw 1-minute SENSEX index archive is not the same MC/regime history used by validated S5/S6.
 Resolution: V2 explicitly rebuilds and passes the S5 composite daily SENSEX history to the frozen SENSEX backtest engine.
 Prevention: exit sensitivity must keep the validated entry-history data contract unchanged.
+
+### E004 — v2 CLI argument mismatch
+Type: CI execution
+Observation: the first v2 numerical run failed before analysis because the workflow passed --sensex-mc-daily while the branch script entry point still had the older CLI.
+Resolution: the current script now accepts --sensex-mc-daily and passes it to the frozen SENSEX selector so the exact S5 MC history remains in use.
+Prevention: compile plus CLI-argument smoke checks will be kept together in future workflow changes.
