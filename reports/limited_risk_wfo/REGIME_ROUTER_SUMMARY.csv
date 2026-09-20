@@ -1,0 +1,4 @@
+period,decisions,trades,coverage,mean_points,total_points,win_rate,profit_factor,max_drawdown
+development,92,29,0.315217,24.113793,699.30,0.586207,1.660652,-532.25
+validation,25,13,0.520000,101.930769,1325.10,0.769231,6.950157,-135.20
+exposed_final,19,16,0.842105,54.278125,868.45,0.687500,1.528142,-1362.40
