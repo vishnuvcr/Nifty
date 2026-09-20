@@ -1,0 +1,37 @@
+strategy,risk_class,loss_unbounded,profit_unbounded,core_limited_risk,audit_status
+Buy Call,R1,false,true,true,PASS
+Sell Put,R2,false,false,true,PASS
+Bull Call Spread,R2,false,false,true,PASS
+Bull Put Spread,R2,false,false,true,PASS
+Call Ratio Back Spread,R1,false,true,true,PASS
+Long Calendar with Calls,R3,false,false,false,SEPARATE_PATH_STUDY
+Bull Condor,R2,false,false,true,PASS
+Bull Butterfly,R2,false,false,true,PASS
+Range Forward,R1,false,true,true,PASS
+Long Synthetic Future,R1,false,true,true,PASS
+Call Ratio Spread,X,true,false,false,FAIL
+Put Ratio Spread,R2,false,false,true,PASS
+Long Straddle,R1,false,true,true,PASS
+Long Iron Butterfly,R2,false,false,true,PASS
+Long Strangle,R1,false,true,true,PASS
+Long Iron Condor,R2,false,false,true,PASS
+Strip,R1,false,true,true,PASS
+Strap,R1,false,true,true,PASS
+Short Straddle,X,true,false,false,FAIL
+Iron Butterfly,R2,false,false,true,PASS
+Short Strangle,X,true,false,false,FAIL
+Short Iron Condor,R2,false,false,true,PASS
+Batman,X,true,false,false,FAIL
+Double Plateau,R2,false,false,true,PASS
+Jade Lizard,R2,false,false,true,PASS
+Reverse Jade Lizard,X,true,false,false,FAIL
+Buy Put,R2,false,false,true,PASS
+Sell Call,X,true,false,false,FAIL
+Bear Put Spread,R2,false,false,true,PASS
+Bear Call Spread,R2,false,false,true,PASS
+Put Ratio Back Spread,R2,false,false,true,PASS
+Long Calendar with Puts,R3,false,false,false,SEPARATE_PATH_STUDY
+Bear Condor,R2,false,false,true,PASS
+Bear Butterfly,R2,false,false,true,PASS
+Risk Reversal,R1,false,true,true,PASS
+Short Synthetic Future,X,true,false,false,FAIL
