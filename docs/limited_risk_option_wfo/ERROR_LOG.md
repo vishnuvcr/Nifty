@@ -79,3 +79,9 @@ Impact: A one-price-at-expiry payoff calculation is insufficient to represent ea
 Resolution: Treat calendars as a separate path-/expiry-dependent sub-study in L3/L4. They cannot be mixed into single-expiry terminal-payoff statistics without an explicit valuation model.
 
 Prevention: Require an expiry-count/data-contract check before a calendar strategy can enter the core comparison.
+
+## LRW007 — Workflow planning failure
+Phase: L2-L7 CI
+Observation: first limited-risk workflow run 35496468303 completed with failure and zero jobs.
+Resolution: workflow simplified to a single static job with read-only permissions and without in-job repository mutation/status commits.
+Prevention: keep research workflows execution-only; update phase logs in separate commits after successful results.
