@@ -17,7 +17,7 @@ from scripts.sensex_paper_signal_producer_v1 import (
 from scripts.sensex_backtest_v1 import mc_terminal, map_unique_strikes, transaction_costs, realized_costs
 from nifty_mc.strategy_catalog import build_strategy
 
-STRATEGIES=["Jade Lizard","Put Ratio Spread","Sell Put","Bull Put Spread"]
+STRATEGIES=["Jade Lizard","Put Ratio Spread"]
 LOT_SIZE=20
 MC_PATHS=5000
 LOOKBACK=756
@@ -108,11 +108,11 @@ def selector(stats,site_root):
     for s in STRATEGIES:
         x=stats.get(s,{"n":0,"total":0.0}); folder=s.lower().replace(" ","-")
         cards.append(f'<div class="card"><h2>{html.escape(s)}</h2><p>Closed trades: {x["n"]} • Total P&L: ₹{x["total"]:,.2f}</p><a href="{folder}/index.html">Open dashboard</a></div>')
-    (site_root/"index.html").write_text(f"""<!doctype html><html><head><meta charset="utf-8"><title>SENSEX Defined-Risk Prospective</title><style>body{{font-family:Arial;background:#0d1117;color:#e6edf3;max-width:1100px;margin:auto;padding:24px}}.card{{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;margin:14px 0}}a{{color:#58a6ff}}</style></head><body><h1>SENSEX — Defined-Risk Prospective Validation</h1><p>Four frozen strategies, independently observed. No retrospective selection.</p>{''.join(cards)}</body></html>""",encoding="utf-8")
+    (site_root/"index.html").write_text(f"""<!doctype html><html><head><meta charset="utf-8"><title>SENSEX Defined-Risk Prospective</title><style>body{{font-family:Arial;background:#0d1117;color:#e6edf3;max-width:1100px;margin:auto;padding:24px}}.card{{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;margin:14px 0}}a{{color:#58a6ff}}</style></head><body><h1>SENSEX — Defined-Risk Prospective Validation</h1><p>Two retained frozen strategies, independently observed. No retrospective selection.</p>{''.join(cards)}</body></html>""",encoding="utf-8")
 
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--mode",choices=["scan","settle"],default="scan")
-    ap.add_argument("--strategy",default="all",choices=["all","Jade Lizard","Put Ratio Spread","Sell Put","Bull Put Spread"])
+    ap.add_argument("--strategy",default="all",choices=["all","Jade Lizard","Put Ratio Spread"])
     ap.add_argument("--seed",type=int,default=20260920)
     args=ap.parse_args()
     BASE.mkdir(parents=True,exist_ok=True); site_root=ROOT/"site/sensex/prospective-defined-risk"
