@@ -47,6 +47,9 @@ jobs:
       - name: Source schema audit
         run: python scripts/batman_tuning_source_audit.py
 
+      - name: Deep raw-data row probe
+        run: python scripts/batman_tuning_deep_probe.py
+
       - name: Generate v2 raw manifest
         run: |
           python - <<'PY'
@@ -83,6 +86,7 @@ jobs:
           path: |
             data/batman_tuning_cache/source_manifest_v2.json
             data/batman_tuning_cache/source_audit.json
+            data/batman_tuning_cache/deep_probe.json
           if-no-files-found: error
 
       - name: Summary
