@@ -85,3 +85,10 @@ Phase: L2-L7 CI
 Observation: first limited-risk workflow run 35496468303 completed with failure and zero jobs.
 Resolution: workflow simplified to a single static job with read-only permissions and without in-job repository mutation/status commits.
 Prevention: keep research workflows execution-only; update phase logs in separate commits after successful results.
+
+## LRW008 — Initial strategy taxonomy was incomplete
+Phase: L3
+Observation: The initial written taxonomy omitted Double Plateau and treated Put Ratio Back Spread as an unlimited-profit family without stating the non-negative underlying-domain convention.
+Impact: The written plan could have excluded an eligible finite-loss strategy and mischaracterized the profit bound of a put-only ratio backspread.
+Resolution: The mechanical auditor is authoritative. The written taxonomy now classifies Put Ratio Back Spread and Double Plateau as R2 for the S >= 0 single-expiry core.
+Prevention: Risk-classification tables must be generated from the executable auditor rather than manually maintained lists.
