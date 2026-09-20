@@ -12,8 +12,9 @@ h1{margin:0 0 8px;font-size:32px}.sub{color:#9fb0c5;margin:0;line-height:1.5}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px;margin-top:22px}
 .card{display:block;text-decoration:none;color:inherit;padding:24px;border-radius:16px;border:1px solid #2b3648;background:#151f30}
 .card:hover{border-color:#5d8dff}.tag{display:inline-block;padding:5px 9px;border-radius:999px;background:#22304a;color:#bcd0ff;font-size:12px;font-weight:700}
-.card h2{margin:14px 0 8px}.card p{color:#aebdce;line-height:1.5}
+.card h2{margin:14px 0 8px}.card h3{margin:22px 0 6px;font-size:15px}.card p{color:#aebdce;line-height:1.5}
 .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.links a{display:inline-block;padding:9px 12px;border-radius:10px;background:#1b2739;color:#7fb0ff;font-weight:700}
+.prospect{margin-top:18px;padding-top:18px;border-top:1px solid #2b3648}.prospect p{margin:6px 0 0;font-size:14px}
 .notice{margin-top:20px;padding:15px 17px;border-radius:12px;background:#141b27;color:#aebdce;font-size:13px;line-height:1.6}
 footer{margin-top:28px;color:#738195;font-size:12px}
 </style>
@@ -22,7 +23,7 @@ footer{margin-top:28px;color:#738195;font-size:12px}
 <section class="hero">
 <div class="tag">INDEX OPTIONS • PAPER TRADING</div>
 <h1>Choose an index</h1>
-<p class="sub">NIFTY and SENSEX are published as separate paper-trading systems. Each index has independent BATMAN and ADAPTIVE strategy dashboards.</p>
+<p class="sub">NIFTY and SENSEX are published as separate paper-trading systems. Each index has BATMAN, ADAPTIVE and frozen defined-risk prospective validation dashboards.</p>
 </section>
 <section class="grid">
 <article class="card">
@@ -33,6 +34,15 @@ footer{margin-top:28px;color:#738195;font-size:12px}
 <a href="batman/">BATMAN →</a>
 <a href="adaptive/">ADAPTIVE STRATEGY →</a>
 </div>
+<div class="prospect">
+<h3>DEFINED-RISK PROSPECTIVE</h3>
+<p>Two frozen candidates, observed independently with no retrospective re-selection.</p>
+<div class="links">
+<a href="prospective-defined-risk/nifty/">VALIDATION HOME →</a>
+<a href="prospective-defined-risk/nifty/jade-lizard/">JADE LIZARD →</a>
+<a href="prospective-defined-risk/nifty/put-ratio-spread/">PUT RATIO SPREAD →</a>
+</div>
+</div>
 </article>
 <article class="card">
 <div class="tag">INDEX 02</div>
@@ -42,10 +52,19 @@ footer{margin-top:28px;color:#738195;font-size:12px}
 <a href="sensex/batman/">BATMAN →</a>
 <a href="sensex/adaptive/">ADAPTIVE STRATEGY →</a>
 </div>
+<div class="prospect">
+<h3>DEFINED-RISK PROSPECTIVE</h3>
+<p>Two frozen NIFTY candidates transferred to SENSEX without future-outcome retuning.</p>
+<div class="links">
+<a href="sensex/prospective-defined-risk/">VALIDATION HOME →</a>
+<a href="sensex/prospective-defined-risk/jade-lizard/">JADE LIZARD →</a>
+<a href="sensex/prospective-defined-risk/put-ratio-spread/">PUT RATIO SPREAD →</a>
+</div>
+</div>
 </article>
 </section>
 <div class="notice">
-NIFTY entry scanning runs at 09:30 IST on trading weekdays; its existing 16:00 IST job is refresh-only. SENSEX entry scanners run at 09:30 IST and its separate settlement/page refresh runs at 16:00 IST. Both are paper-only and do not place broker orders.
+NIFTY and SENSEX prospective entry scans run at 09:30 IST on trading weekdays; settlement/page refresh runs at 16:00 IST. The defined-risk systems are paper-only and do not place broker orders. Sell Put and Bull Put Spread are not in the active prospective scope.
 </div>
-<footer>Published from the research repository. Strategy dashboards remain isolated by index and strategy.</footer>
+<footer>Published from the research repository. Strategy dashboards remain isolated by index and research phase.</footer>
 </main></body></html>
