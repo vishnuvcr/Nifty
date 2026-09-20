@@ -139,7 +139,7 @@ The separate branch `research/limited-risk-option-wfo-v1` has completed its hist
 
 ## Next research phases — frozen defined-risk prospective validation and long-premium study
 
-### A. Four frozen finite-loss candidates — NIFTY + SENSEX
+### A. Two frozen finite-loss candidates — NIFTY + SENSEX
 
 Two candidates are retained for frozen prospective validation, without retrospective strategy selection:
 
@@ -158,7 +158,7 @@ SENSEX:
 - Plan: https://github.com/vishnuvcr/Nifty/blob/research/prospective-defined-risk-sensex-v1/docs/prospective_defined_risk_sensex_v1/RESEARCH_PLAN.md
 - Phase status: https://github.com/vishnuvcr/Nifty/blob/research/prospective-defined-risk-sensex-v1/docs/prospective_defined_risk_sensex_v1/PHASE_STATUS.md
 
-Each strategy has a separate dashboard/ledger under the Pages tree. Entry scans are scheduled at 09:30 IST and settlement/page refresh at 16:00 IST. No broker orders are submitted.
+Each retained strategy has a separate dashboard/ledger under the Pages tree. Entry scans are scheduled at 09:30 IST and settlement/page refresh at 16:00 IST. No broker orders are submitted. Sell Put and Bull Put Spread are excluded from the prospective stream.
 
 ### B. NIFTY long-premium MC/WFO
 
@@ -170,4 +170,4 @@ New research question: can MC/WFO identify sufficiently cheap Buy Call / Buy Put
 
 Historical result: the development-frozen Buy Call <=0.55% of spot rule failed 2023-2024 validation (mean -1.68 points, PF 0.968; block-bootstrap 95% CI -24.92 to +29.70). The 22-rule multiple-testing diagnostic was p=0.886. The 2025-2026 period is already exposed by the parent study and is descriptive only. No long-premium rule is promoted.
 
-The current live Pages selector remains at https://vishnuvcr.github.io/Nifty/; the frozen defined-risk prospective dashboards are added to that selector by the main Pages publisher.
+The current live Pages selector is https://vishnuvcr.github.io/Nifty/; the root selector and prospective dashboard sources have been updated for Jade Lizard and Put Ratio Spread, and the Pages publisher is redeploying the corrected tree.
