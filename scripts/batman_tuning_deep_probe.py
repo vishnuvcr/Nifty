@@ -49,8 +49,14 @@ def main():
     out={}
     ayush=RAW/"ayush_nifty_banknifty_options_2020_2024.zip"
     with zipfile.ZipFile(ayush) as zf:
-        member="nifty_data/nifty_options/2020/1/nifty_options_01_01_2020.csv"
-        out["ayush_option"]= {"member":member,"rows":probe_plain(ayush,member)}
+        opt_member="nifty_data/nifty_options/2020/1/nifty_options_01_01_2020.csv"
+        spot_candidates=[n for n in zf.namelist() if n.lower().startswith("nifty_data/nifty_spot/2020/1/") and n.lower().endswith(".csv")]
+        spot_member=next((n for n in spot_candidates if "01_01_2020" in n), spot_candidates[0] if spot_candidates else None)
+        out["ayush_option"]={"member":opt_member,"rows":probe_plain(ayush,opt_member)}
+        if spot_member:
+            out["ayush_spot"]={"member":spot_member,"rows":probe_plain(ayush,spot_member)}
+        else:
+            out["ayush_spot"]={"member":None,"rows":[]}
     rahul=RAW/"rahul_nifty_options_2025_2026.zip"
     with zipfile.ZipFile(rahul) as zf:
         member=zf.namelist()[0]
