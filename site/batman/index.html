@@ -33,8 +33,8 @@ small{color:#8b949e} table{width:100%;border-collapse:collapse;font-size:14px} t
 <div class="grid">
 <div><small>Decision date</small><div class="kpi" id="bf-date">—</div></div>
 <div><small>Entry time</small><div class="kpi">09:40 IST</div></div>
-<div><small>Signal</small><div class="kpi" id="bf-signal">NO_TRADE</div></div>
-<div><small>Backfill status</small><div class="kpi" id="bf-status">BACKFILL_0940_NO_TRADE</div></div>
+<div><small>Signal</small><div class="kpi" id="bf-signal">NOT_EVALUATED</div></div>
+<div><small>Backfill status</small><div class="kpi" id="bf-status">BACKFILL_0940_NOT_EVALUATED</div></div>
 </div>
 <p id="bf-reason">Loading...</p>
 <p><small>Historical observation only. It is separate from the prospective ledger.</small></p>
@@ -43,7 +43,7 @@ small{color:#8b949e} table{width:100%;border-collapse:collapse;font-size:14px} t
 (async()=>{
   try{const d=await (await fetch('data/backfill_0940_2026-09-21.json?ts='+Date.now(),{cache:'no-store'})).json();
   document.getElementById('bf-date').textContent=d.decision_date||'—';
-  document.getElementById('bf-signal').textContent=d.signal||'NO_TRADE';
+  document.getElementById('bf-signal').textContent=d.signal||'NOT_EVALUATED';
   document.getElementById('bf-status').textContent=(d.status||'NOT_RECORDED').replaceAll('_',' ');
   document.getElementById('bf-reason').textContent=d.reason||d.source_note||'—';}
   catch(e){document.getElementById('bf-signal').textContent='Not recorded';document.getElementById('bf-status').textContent='ERROR';document.getElementById('bf-reason').textContent='09:40 backfill record could not be loaded.';}
