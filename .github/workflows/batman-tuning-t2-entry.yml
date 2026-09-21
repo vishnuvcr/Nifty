@@ -1,4 +1,4 @@
-name: BATMAN Tuning T2 Entry
+name: BATMAN Tuning T2 Entry Reconciled
 
 on:
   push:
@@ -64,6 +64,10 @@ jobs:
       - name: Run T2 unit tests
         run: python -m pytest -q tests/test_batman_t2_entry.py
 
+      - name: Reconstruct parent-style EOD control
+        run: |
+          python scripts/batman_t2_parent_eod_reconcile.py             --options-zip .cache/batman_t2/ayush_nifty_banknifty_options_2020_2024.zip             --long-index-zip .cache/batman_t2/nifty_index_2008_2020.zip             --raw-cache .cache/batman_t2             --out-dir reports/batman_t2             --paths 5000             --seed-base 20260921
+
       - name: Run full T2 D0-D6 entry study
         run: |
           python scripts/batman_t2_entry.py             --options-zip .cache/batman_t2/ayush_nifty_banknifty_options_2020_2024.zip             --long-index-zip .cache/batman_t2/nifty_index_2008_2020.zip             --raw-cache .cache/batman_t2             --out-dir reports/batman_t2             --paths 5000             --seed-base 20260921
@@ -79,13 +83,16 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: batman-tuning-t2-entry-results
+          name: batman-tuning-t2-entry-v2-results
           path: |
             reports/batman_t2/T2_ENTRY_TRADE_LEVEL.csv
             reports/batman_t2/T2_ENTRY_SUMMARY.csv
             reports/batman_t2/T2_ENTRY_PAIRED_CONTROL.csv
             reports/batman_t2/T2_OPPORTUNITY_MATRIX.csv
             reports/batman_t2/T2_SKIP_COUNTS.json
+            reports/batman_t2/BATMAN_PARENT_EOD_CONTROL.csv
+            reports/batman_t2/BATMAN_PARENT_EOD_CONTROL_SUMMARY.json
+            reports/batman_t2/BATMAN_PARENT_EOD_SKIP_COUNTS.json
           if-no-files-found: warn
 
       - name: Summary
