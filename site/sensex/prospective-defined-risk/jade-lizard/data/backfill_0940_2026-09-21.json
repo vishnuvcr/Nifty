@@ -1,16 +1,62 @@
 {
-  "producer": "Paper Trade Signals Producer  controlled 09:40 IST backfill",
+  "producer": "Available-data 09:40 candidate signal v1",
   "strategy": "SENSEX JADE LIZARD",
-  "status": "BACKFILL_0940_NOT_EVALUATED",
-  "signal": "NOT_EVALUATED",
   "decision_date": "2026-09-21",
   "entry_time_ist": "09:40",
-  "workflow_finished_at_ist": "2026-09-21T14:55:34.626851+05:30",
-  "historical_snapshot_available": false,
+  "signal": "DATA_LIMITED_CANDIDATE",
+  "status": "DATA_LIMITED_CANDIDATE",
+  "execution_status": "NOT_EXECUTABLE",
+  "option_chain_available": false,
+  "premium_available": false,
+  "bid_ask_available": false,
   "quote_snapshot_used": false,
   "future_outcome_used": false,
   "lookahead_safe": true,
   "backfill_only": true,
-  "reason": "HISTORICAL_0940_EXECUTABLE_OPTION_SNAPSHOT_UNAVAILABLE",
-  "source_note": "Historical 09:40 execution-grade option-chain data was unavailable through the repository/public sources available to this run. Current premiums/quotes were not substituted; therefore this is NOT_EVALUATED, not a NO_TRADE conclusion."
-}
+  "spot": 74748.7,
+  "spot_source": "Business Standard Capital Market News (verified 09:30 IST print)",
+  "spot_source_timestamp_ist": "09:30",
+  "source_latency_minutes": 10,
+  "model_data_cutoff": "2026-09-18",
+  "target_expiry": "2026-09-24",
+  "horizon_sessions": 3,
+  "entry_timing_rule": "3 future trading sessions before target expiry",
+  "timing_gate": "PASS",
+  "rv20": 0.07496333273876675,
+  "rv20_rank": 0.16666666666666666,
+  "vol_regime": "low",
+  "terminal_quantiles": {
+    "p10": 73460.80890502744,
+    "p20": 73968.17628273339,
+    "p35": 74435.37906853837,
+    "p65": 75149.75088236,
+    "p80": 75601.01712159324,
+    "p90": 76066.83846362832
+  },
+  "reason": "OPTION_PREMIUM_BID_ASK_SNAPSHOT_UNAVAILABLE",
+  "note": "Candidate generated from verified underlying data available by 09:40 IST plus frozen past-only return history. Option premiums, bid/ask, slippage-adjusted entry cost, and MC-EV eligibility were not evaluated.",
+  "primary_strategy": "Jade Lizard",
+  "legs": [
+    {
+      "side": "SELL",
+      "option_type": "PE",
+      "target_label": "p35",
+      "target_price": 74435.38,
+      "quantity_per_lot": 1
+    },
+    {
+      "side": "SELL",
+      "option_type": "CE",
+      "target_label": "c65",
+      "target_price": 75149.75,
+      "quantity_per_lot": 1
+    },
+    {
+      "side": "BUY",
+      "option_type": "CE",
+      "target_label": "c90",
+      "target_price": 76066.84,
+      "quantity_per_lot": 1
+    }
+  ]
+}\n
