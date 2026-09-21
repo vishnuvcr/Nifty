@@ -231,13 +231,19 @@ def main():
             if decision not in decision_rows:
                 skips["missing_decision_0930"] = skips.get("missing_decision_0930", 0) + 1
                 continue
+            stages["decision_dates_present"] += 1
 
             spot = decision_rows[decision]["spot"]
+            if not np.isfinite(spot):
+                skips["nonfinite_0930_spot"] = skips.get("nonfinite_0930_spot", 0) + 1
+                continue
+            stages["exact_0930_spot"] += 1
             hist = daily.loc[daily.date <= (decision - pd.Timedelta(days=1)), "close"].astype(float)
             returns = np.log(hist).diff().dropna().tail(756).to_numpy()
             if len(returns) < 756:
                 skips["insufficient_756_returns"] = skips.get("insufficient_756_returns", 0) + 1
                 continue
+            stages["mc_ready_756"] += 1
 
             terminals = mc_reference(spot, returns, 20260921, decision, expiry)
             targets = {
@@ -250,6 +256,7 @@ def main():
             if strikes is None:
                 skips["insufficient_strikes"] = skips.get("insufficient_strikes", 0) + 1
                 continue
+            stages["strike_grid_ready"] += 1
 
             legs = batman_legs(strikes)
             execution = entry_rows.get(decision, {})
