@@ -194,3 +194,12 @@ For historical backfill requests, the orchestrator supports `backfill_0940` with
 - Backfill recorder: [scripts/backfill_0940_no_trade.py](scripts/backfill_0940_no_trade.py)
 - Orchestration audit: [PAPER_TRADE_SIGNAL_ORCHESTRATION_2026-09-21](docs/operations/PAPER_TRADE_SIGNAL_ORCHESTRATION_2026-09-21.md)
 - Live Pages: https://vishnuvcr.github.io/Nifty/
+
+### 2026-09-21 execution status
+
+The requested controlled 09:40 IST backfill has completed for all eight active strategies. Every strategy page now has a per-strategy Workflow Audit panel showing the last completed workflow time in IST, workflow status, and the separate 09:40 backfill status. All eight backfills are explicitly `BACKFILL_0940_NO_TRADE` because no trustworthy historical executable 09:40 option snapshot was available; no current quote or future outcome was substituted.
+
+- Paper Trade Signals Producer: [.github/workflows/paper-trade-signals-producer.yml](.github/workflows/paper-trade-signals-producer.yml)
+- Operations audit: [PAPER_TRADE_SIGNAL_ORCHESTRATION_2026-09-21](docs/operations/PAPER_TRADE_SIGNAL_ORCHESTRATION_2026-09-21.md)
+- Error log: [ERROR_LOG](docs/operations/ERROR_LOG.md)
+- Final Pages publication run: 35582136269 (success)
