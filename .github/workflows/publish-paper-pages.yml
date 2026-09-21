@@ -106,6 +106,125 @@ jobs:
           test -f site/prospective-defined-risk/nifty/index.html
           test -f site/sensex/prospective-defined-risk/index.html
           echo "Defined-risk prospective dashboards synchronized."
+      - name: Sync workflow run audit records
+        run: |
+          git fetch origin research/adaptive-paper-signals-v1
+          git fetch origin research/monte-carlo-wfa-v1
+          git fetch origin research/sensex-s7-paper-trading-v1
+          git fetch origin research/prospective-defined-risk-nifty-v1
+          git fetch origin research/prospective-defined-risk-sensex-v1
+          mkdir -p site/data
+
+          copy_status() {
+            local ref="$1"
+            local src="$2"
+            local dst="$3"
+            if git cat-file -e "origin/$ref:$src" 2>/dev/null; then
+              git show "origin/$ref:$src" > "$dst"
+            else
+              cat > "$dst" <<EOF
+          {"workflow":"$dst","status":"NOT_RECORDED","finished_at_ist":null,"note":"Run audit instrumentation was added after the historical run; no prior workflow timestamp was persisted."}
+          EOF
+            fi
+          }
+
+          copy_status "research/monte-carlo-wfa-v1" "site/data/run_status_batman.json" "site/data/run_status_batman.json"
+          copy_status "research/adaptive-paper-signals-v1" "site/data/run_status_nifty_signal_generation.json" "site/data/run_status_nifty_signal_generation.json"
+          copy_status "research/adaptive-paper-signals-v1" "site/data/run_status_nifty_adaptive.json" "site/data/run_status_nifty_adaptive.json"
+          copy_status "research/sensex-s7-paper-trading-v1" "site/data/run_status_sensex.json" "site/data/run_status_sensex.json"
+          copy_status "research/prospective-defined-risk-nifty-v1" "site/data/run_status_defined_risk_nifty.json" "site/data/run_status_defined_risk_nifty.json"
+          copy_status "research/prospective-defined-risk-sensex-v1" "site/data/run_status_defined_risk_sensex.json" "site/data/run_status_defined_risk_sensex.json"
+
+      - name: Build combined run-status feed and validate Pages tree
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime
+          from pathlib import Path
+
+          base = Path("site/data")
+          def read(name):
+              p = base / name
+              try:
+                  return json.loads(p.read_text(encoding="utf-8"))
+              except Exception as exc:
+                  return {"workflow": name, "status": "READ_ERROR", "finished_at_ist": None, "note": str(exc)}
+
+          src = {
+              "batman": read("run_status_batman.json"),
+              "nifty_generation": read("run_status_nifty_signal_generation.json"),
+              "nifty_adaptive": read("run_status_nifty_adaptive.json"),
+              "sensex": read("run_status_sensex.json"),
+              "defined_risk_nifty": read("run_status_defined_risk_nifty.json"),
+              "defined_risk_sensex": read("run_status_defined_risk_sensex.json"),
+          }
+
+          def ts(x):
+              v = x.get("finished_at_ist")
+              if not v:
+                  return datetime.min
+              try:
+                  return datetime.fromisoformat(v.replace("Z","+00:00")).replace(tzinfo=None)
+              except Exception:
+                  return datetime.min
+
+          def latest(*names):
+              vals = [src[n] for n in names]
+              return max(vals, key=ts)
+
+          combined = {
+              "generated_at_ist": datetime.now().astimezone().isoformat(),
+              "nifty_batman": latest("batman", "nifty_generation"),
+              "nifty_adaptive": latest("nifty_generation", "nifty_adaptive"),
+              "sensex_batman": src["sensex"],
+              "sensex_adaptive": src["sensex"],
+              "nifty_defined_risk": src["defined_risk_nifty"],
+              "sensex_defined_risk": src["defined_risk_sensex"],
+          }
+          (base / "run_status.json").write_text(json.dumps(combined, indent=2) + "\n", encoding="utf-8")
+          (base / "pages_manifest.json").write_text(json.dumps({
+              "required_paths": [
+                  "index.html",
+                  "batman/index.html",
+                  "adaptive/index.html",
+                  "sensex/index.html",
+                  "sensex/batman/index.html",
+                  "sensex/adaptive/index.html",
+                  "prospective-defined-risk/nifty/index.html",
+                  "prospective-defined-risk/nifty/jade-lizard/index.html",
+                  "prospective-defined-risk/nifty/put-ratio-spread/index.html",
+                  "sensex/prospective-defined-risk/index.html",
+                  "sensex/prospective-defined-risk/jade-lizard/index.html",
+                  "sensex/prospective-defined-risk/put-ratio-spread/index.html"
+              ]
+          }, indent=2) + "\n", encoding="utf-8")
+          PY
+
+          required=(
+            site/index.html
+            site/batman/index.html
+            site/adaptive/index.html
+            site/sensex/index.html
+            site/sensex/batman/index.html
+            site/sensex/adaptive/index.html
+            site/prospective-defined-risk/nifty/index.html
+            site/prospective-defined-risk/nifty/jade-lizard/index.html
+            site/prospective-defined-risk/nifty/put-ratio-spread/index.html
+            site/sensex/prospective-defined-risk/index.html
+            site/sensex/prospective-defined-risk/jade-lizard/index.html
+            site/sensex/prospective-defined-risk/put-ratio-spread/index.html
+            site/data/run_status.json
+          )
+          for f in "${required[@]}"; do
+            test -f "$f" || { echo "MISSING REQUIRED PAGE: $f"; exit 1; }
+          done
+
+          grep -q "BATMAN" site/index.html
+          grep -q "ADAPTIVE STRATEGY" site/index.html
+          grep -q "BSE SENSEX" site/index.html
+          grep -q "JADE LIZARD" site/index.html
+          grep -q "PUT RATIO SPREAD" site/index.html
+
       - name: Persist combined dashboard state
         run: |
           git config user.name "github-actions[bot]"
@@ -147,6 +266,8 @@ jobs:
             echo "- SENSEX defined-risk prospective: /sensex/prospective-defined-risk/"
             echo "- SENSEX Jade Lizard: /sensex/prospective-defined-risk/jade-lizard/"
             echo "- SENSEX Put Ratio Spread: /sensex/prospective-defined-risk/put-ratio-spread/"
+            echo "- Run audit feed: /data/run_status.json"
+            echo "- Pages tree validation: all required strategy dashboards must exist before deploy"
             echo
             echo "The 16:00 job settles matured paper trades and republishes both indices. It does not create a second entry signal."
           } >> "$GITHUB_STEP_SUMMARY"
