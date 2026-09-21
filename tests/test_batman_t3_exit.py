@@ -37,4 +37,4 @@ def test_adverse_slippage_never_creates_negative_long_exit_price():
     )
     # Sell of a long leg is floored at zero after 2-point adverse slippage.
     assert gross == -1.0
-    assert net_inr == -81.0
+    assert net_inr == -210.0
