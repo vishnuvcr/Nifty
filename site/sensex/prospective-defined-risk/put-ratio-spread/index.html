@@ -19,24 +19,36 @@ th,td{padding:8px;border-bottom:1px solid #30363d;text-align:left;vertical-align
 <div class="grid">
 <div><small>Last completed workflow run</small><div class="kpi" id="wf-audit-time">Loading...</div></div>
 <div><small>Workflow status</small><div class="kpi" id="wf-audit-status">Loading...</div></div>
-<div><small>09:40 IST backfill</small><div class="kpi" id="wf-backfill-status">Checking...</div></div>
+<div><small>Backfill decision date</small><div class="kpi" id="bf-date">2026-09-21</div></div>
+<div><small>Backfill entry time</small><div class="kpi">09:40 IST</div></div>
+<div><small>Backfill signal</small><div class="kpi" id="bf-signal">Loading...</div></div>
+<div><small>Backfill status</small><div class="kpi" id="bf-status">Loading...</div></div>
 </div>
-<p class="note" id="wf-backfill-note">The backfill is recorded separately from the prospective ledger.</p>
+<p class="note" id="wf-backfill-note">Loading backfill observation...</p>
+<p><small>Audit source: <a href="../../../data/run_status_defined_risk_sensex.json">run_status_defined_risk_sensex.json</a> · Backfill record: <a href="data/backfill_0940_2026-09-21.json">data/backfill_0940_2026-09-21.json</a></small></p>
 </div>
 <script>
 (async()=>{
   const fmt=v=>v?new Date(v).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Kolkata'}):'Not recorded';
-  const wf=document.getElementById('wf-audit-time'), st=document.getElementById('wf-audit-status');
-  const bf=document.getElementById('wf-backfill-status'), bn=document.getElementById('wf-backfill-note');
   try{
-    const r=await fetch('../../../data/run_status_defined_risk_sensex.json?ts='+Date.now(),{cache:'no-store'}); const d=await r.json();
-    wf.textContent=fmt(d.finished_at_ist); st.textContent=(d.status||'NOT_RECORDED').toUpperCase();
-  }catch(e){wf.textContent='Audit unavailable';st.textContent='ERROR';}
+    const d=await (await fetch('../../../data/run_status_defined_risk_sensex.json?ts='+Date.now(),{cache:'no-store'})).json();
+    document.getElementById('wf-audit-time').textContent=fmt(d.finished_at_ist);
+    document.getElementById('wf-audit-status').textContent=(d.status||'NOT_RECORDED').toUpperCase();
+  }catch(e){
+    document.getElementById('wf-audit-time').textContent='Audit unavailable';
+    document.getElementById('wf-audit-status').textContent='ERROR';
+  }
   try{
-    const r=await fetch('../../../data/backfill_0940_2026-09-21.json?ts='+Date.now(),{cache:'no-store'}); const d=await r.json();
-    bf.textContent=(d.status||'NOT_RECORDED').replaceAll('_',' ');
-    bn.textContent='Requested SENSEX PUT RATIO SPREAD: 2026-09-21 at 09:40 IST. No historical executable option snapshot was available, so no current quote was substituted and no future outcome was used.';
-  }catch(e){bf.textContent='Not recorded';bn.textContent='No 09:40 backfill observation has been published yet.';}
+    const d=await (await fetch('data/backfill_0940_2026-09-21.json?ts='+Date.now(),{cache:'no-store'})).json();
+    document.getElementById('bf-date').textContent=d.decision_date||'2026-09-21';
+    document.getElementById('bf-signal').textContent=d.signal||'NO_TRADE';
+    document.getElementById('bf-status').textContent=(d.status||'NOT_RECORDED').replaceAll('_',' ');
+    document.getElementById('wf-backfill-note').textContent=(d.reason||d.source_note||'—')+' This controlled backfill is separate from the prospective ledger.';
+  }catch(e){
+    document.getElementById('bf-signal').textContent='Not recorded';
+    document.getElementById('bf-status').textContent='ERROR';
+    document.getElementById('wf-backfill-note').textContent='09:40 backfill record could not be loaded.';
+  }
 })();
 </script>
 
