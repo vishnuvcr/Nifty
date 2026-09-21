@@ -52,3 +52,13 @@
 **Root cause:** the initial backfill workflow did not run the frozen strategy scanners at all; it wrote a controlled placeholder record when the historical executable option snapshot was unavailable. That was incorrectly labelled `NO_TRADE`, which could be read as a strategy-generated trading decision.
 **Correction:** reclassified all eight records as `BACKFILL_0940_NOT_EVALUATED` / `NOT_EVALUATED`. A true `NO_TRADE` label will only be used after the frozen strategy has actually evaluated a valid historical 09:40 snapshot and rejected the trade.
 **Data requirement:** exact historical 09:40 option-chain inputs are required for genuine reconstruction. NSE's public historical pages provide historical contract/EOD facilities, while vendors such as StockMojo advertise minute-level replay and MoneyTicks documents a minute-level API for expired contracts; the currently accessible sources do not provide an execution-grade 21-Sep-2026 09:40 snapshot to this workflow without a usable data-access path. Therefore no strategy conclusion is being fabricated.
+
+### E2026-09-21-08 — Data-limited candidate mode added
+**User correction:** exact 09:30 option-chain data is not mandatory for candidate generation.
+**Correction:** introduced `DATA_LIMITED_CANDIDATE` as a distinct signal state. When underlying data and past-only model history are available but option premiums/bid-ask are unavailable, the system publishes model-derived candidate levels and candidate sets while setting `execution_status=NOT_EXECUTABLE`, `premium_available=false`, `bid_ask_available=false`, and `option_chain_available=false`. It does not claim `NO_TRADE` and does not enter the prospective execution ledger.
+**Scientific rule:** `NO_TRADE` is only written after the frozen strategy has actually evaluated a valid snapshot and failed its entry gate.
+
+### E2026-09-21-09 — Short-history regime inference
+**Observed:** the available cached backfill history contained only 20 return observations, insufficient for the frozen 252-session volatility rank.
+**Correction:** Adaptive now reports `vol_regime=UNAVAILABLE` and exposes the full frozen candidate set rather than silently defaulting to high volatility. Fixed-strategy candidate levels remain available, but are explicitly data-limited.
+**Verification:** final orchestrated backfill run `35587070935` completed successfully and final Pages publication `35587158445` completed successfully.
