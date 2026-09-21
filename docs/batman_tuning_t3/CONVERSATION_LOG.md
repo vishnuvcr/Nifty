@@ -13,3 +13,5 @@ T3 workflow activation commit completed. A separate audit-log commit is used to 
 The first T3 run was intentionally rejected before computation because unit tests caught an exit-brokerage omission. The corrected workflow will rerun the full grid with round-trip brokerage included.
 
 The first corrected T3 computation passed all unit tests but stopped before the grid because of a runner-only import-path defect. The next run uses the same data, same frozen parameters and corrected cost model with the import path fixed.
+
+Final T3 trigger issued after the preceding workflow cancellations. No further trigger commits will be made until this run completes.
