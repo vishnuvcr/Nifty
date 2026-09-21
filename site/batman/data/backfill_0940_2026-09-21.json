@@ -5,7 +5,7 @@
   "signal": "NO_TRADE",
   "decision_date": "2026-09-21",
   "entry_time_ist": "09:40",
-  "workflow_finished_at_ist": "2026-09-21T14:44:21.910146+05:30",
+  "workflow_finished_at_ist": "2026-09-21T14:55:37.969018+05:30",
   "historical_snapshot_available": false,
   "quote_snapshot_used": false,
   "future_outcome_used": false,
