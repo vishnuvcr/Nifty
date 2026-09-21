@@ -1,0 +1,122 @@
+name: BATMAN Tuning T7 Joint WFO
+
+on:
+  push:
+    branches:
+      - research/batman-tuning-t7-joint-wfo-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  joint_wfo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 210
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore T7 source cache
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/batman_t7
+          key: batman-tuning-t7-source-v1-2026-09-21
+
+      - name: Prepare source cache
+        run: mkdir -p .cache/batman_t7
+
+      - name: Acquire Ayush option archive when unavailable
+        run: |
+          set -euo pipefail
+          if [ ! -s .cache/batman_t7/ayush_nifty_banknifty_options_2020_2024.zip ]; then
+            curl -fL --retry 3 --retry-all-errors               "https://www.kaggle.com/api/v1/datasets/download/ayushsacri/indian-nifty-and-banknifty-options-data-2020-2024"               -o .cache/batman_t7/ayush_nifty_banknifty_options_2020_2024.zip
+          fi
+
+      - name: Acquire long NIFTY archive when unavailable
+        run: |
+          set -euo pipefail
+          if [ ! -s .cache/batman_t7/nifty_index_2008_2020.zip ]; then
+            curl -fL --retry 3 --retry-all-errors               "https://www.kaggle.com/api/v1/datasets/download/nishanthsalian/indian-stock-index-1minute-data-2008-2020"               -o .cache/batman_t7/nifty_index_2008_2020.zip
+          fi
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas pytest
+
+      - name: Validate source files
+        run: |
+          set -euo pipefail
+          test -s .cache/batman_t7/ayush_nifty_banknifty_options_2020_2024.zip
+          test -s .cache/batman_t7/nifty_index_2008_2020.zip
+          sha256sum .cache/batman_t7/ayush_nifty_banknifty_options_2020_2024.zip .cache/batman_t7/nifty_index_2008_2020.zip
+
+      - name: Run T7 unit tests
+        run: python -m pytest -q tests/test_batman_t7_joint.py
+
+      - name: Run 3-expiry smoke test
+        run: |
+          rm -rf reports/batman_t7_smoke
+          python scripts/batman_t7_joint_engine.py             --options-zip .cache/batman_t7/ayush_nifty_banknifty_options_2020_2024.zip             --long-index-zip .cache/batman_t7/nifty_index_2008_2020.zip             --raw-cache .cache/batman_t7             --out-dir reports/batman_t7_smoke             --paths 500             --limit-expiries 3
+
+      - name: Validate smoke-test configuration count
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          s=pd.read_csv("reports/batman_t7_smoke/T7_JOINT_SUMMARY.csv")
+          configs=s[["entry_offset","entry_timing","exit_family","target_param","stop_param","activation_param","retracement_param"]].drop_duplicates()
+          assert len(configs) <= 42
+          assert len(configs) > 0
+          print("Smoke configurations:",len(configs))
+          PY
+
+      - name: Run full T7 joint study
+        run: |
+          rm -rf reports/batman_t7
+          python scripts/batman_t7_joint_engine.py             --options-zip .cache/batman_t7/ayush_nifty_banknifty_options_2020_2024.zip             --long-index-zip .cache/batman_t7/nifty_index_2008_2020.zip             --raw-cache .cache/batman_t7             --out-dir reports/batman_t7             --paths 5000
+
+      - name: Run nested joint WFO
+        run: |
+          python scripts/batman_t7_joint_wfo.py             --trade-level reports/batman_t7/T7_JOINT_TRADE_LEVEL.csv             --out-dir reports/batman_t7_wfo
+
+      - name: Validate complete 448-configuration grid
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          s=pd.read_csv("reports/batman_t7/T7_JOINT_SUMMARY.csv")
+          c=s[["entry_offset","entry_timing","exit_family","target_param","stop_param","activation_param","retracement_param"]].drop_duplicates()
+          assert len(c)==448, len(c)
+          print("FULL JOINT GRID PASS:",len(c),"configurations")
+          PY
+
+      - name: Save T7 source cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/batman_t7
+          key: batman-tuning-t7-source-v1-2026-09-21
+
+      - name: Upload T7 results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: batman-tuning-t7-joint-wfo
+          path: |
+            reports/batman_t7/T7_JOINT_TRADE_LEVEL.csv
+            reports/batman_t7/T7_JOINT_SUMMARY.csv
+            reports/batman_t7/T7_SKIP_COUNTS.json
+            reports/batman_t7_wfo/T7_OUTER_OOS_SUMMARY.csv
+            reports/batman_t7_wfo/T7_OUTER_OOS_TRADE_LEVEL.csv
+            reports/batman_t7_wfo/T7_INNER_SELECTION_TABLE.csv
+            reports/batman_t7_wfo/T7_FINAL_CANDIDATE_MATRIX.csv
+            reports/batman_t7_wfo/T7_FINAL_SELECTION.csv
+            reports/batman_t7_wfo/T7_FINAL_SELECTION.json
+            reports/batman_t7_wfo/T7_REPORT.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "T7 joint entry/timing/exit WFO completed or failed; inspect uploaded artifacts." >> "$GITHUB_STEP_SUMMARY"
