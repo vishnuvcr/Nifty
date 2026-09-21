@@ -21,3 +21,5 @@ E008: Run 35537505911 repeated the same missing-pytest defect because the correc
 E009: The first transfer of the raw-source schema-audit script failed in the connector before repository write because one sequential lookup returned no object. Correction: repository state was checked and the audit script was then created separately; no partial source-audit file was left behind.
 
 E010: Deep raw-data probe run 35538086620 failed because the Zenodo option archive nests ZIPs across multiple levels; the probe attempted to parse a nested ZIP as CSV. Correction: the probe now recursively descends ZIP layers until a CSV member is found. Raw archives remain intact.
+
+E013: T1 raw-source recovery workflow did not trigger on the workflow-definition-only commit. Correction: after enabling the push trigger, a non-workflow audit-log commit was added to force the intended Actions event without changing research logic.
