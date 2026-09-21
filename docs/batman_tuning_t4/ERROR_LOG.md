@@ -18,3 +18,6 @@ The first corrected holdout run completed with zero trades but did not persist s
 
 E027
 The holdout diagnostics showed all 81 requests failed the 756-session history gate because comma-formatted prices in the independent NIFTY daily CSV were parsed as nonnumeric. Correction: the loader now removes thousands separators before numeric conversion and records daily-history coverage in the stage diagnostics.
+
+E028
+The holdout reached four-leg entry construction but failed comparing Rahul's timezone-aware UTC option timestamps with a timezone-naive entry sentinel. Correction: entry_complete is now initialized as None and remains timezone-aware UTC throughout execution.
