@@ -1,0 +1,26 @@
+{
+  "study":"BATMAN_TUNING_V1",
+  "status":"FROZEN_RESEARCH_ONLY_NOT_PROMOTED",
+  "entry":{
+    "offset_d3":true,
+    "signal_time":"09:30 Asia/Kolkata",
+    "lookback_completed_sessions":756,
+    "mc_paths":5000,
+    "gate":"gross_mc_ev_gt_0",
+    "legs":["+1 P35 PE","-2 P20 PE","+1 C65 CE","-2 C80 CE"]
+  },
+  "exit":{
+    "family":"trailing_target",
+    "activation_max_profit_reference":0.20,
+    "retracement_max_profit_reference":0.10
+  },
+  "holdout":{
+    "eligible_trades":7,
+    "selected_total_net_inr_at_20_brokerage":38075.32675,
+    "win_rate":1.0,
+    "paired_expiry_control_comparable_trades":6,
+    "paired_selected_total_inr_at_20":33420.25025,
+    "paired_expiry_control_total_inr_at_20":80917.425,
+    "paired_difference_total_inr":-47497.17475
+  }
+}
