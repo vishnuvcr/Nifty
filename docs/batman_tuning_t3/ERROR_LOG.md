@@ -11,3 +11,6 @@ E018
 Adverse premium slippage could theoretically drive a very low premium below zero. Correction: sell-side execution premiums are floored at zero after adverse slippage for both entries and exits; a unit test will enforce this.
 
 Any subsequent T3 computation error will be logged before rerun.
+
+E019
+The first T3 cost routine charged entry brokerage but omitted the four exit orders from net P&L. The unit test exposed the omission before the exit grid ran. Correction: net P&L now includes 4 entry brokerage orders + 4 exit brokerage orders + STT + slippage.
