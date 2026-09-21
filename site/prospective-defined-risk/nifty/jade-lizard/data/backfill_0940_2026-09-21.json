@@ -1,16 +1,65 @@
 {
-  "producer": "Paper Trade Signals Producer  controlled 09:40 IST backfill",
+  "producer": "Available-data 09:40 candidate signal v1",
   "strategy": "NIFTY JADE LIZARD",
-  "status": "BACKFILL_0940_NOT_EVALUATED",
-  "signal": "NOT_EVALUATED",
   "decision_date": "2026-09-21",
   "entry_time_ist": "09:40",
-  "workflow_finished_at_ist": "2026-09-21T14:55:36.834251+05:30",
-  "historical_snapshot_available": false,
+  "signal": "DATA_LIMITED_CANDIDATE",
+  "status": "DATA_LIMITED_CANDIDATE",
+  "execution_status": "NOT_EXECUTABLE",
+  "option_chain_available": false,
+  "premium_available": false,
+  "bid_ask_available": false,
   "quote_snapshot_used": false,
   "future_outcome_used": false,
   "lookahead_safe": true,
   "backfill_only": true,
-  "reason": "HISTORICAL_0940_EXECUTABLE_OPTION_SNAPSHOT_UNAVAILABLE",
-  "source_note": "Historical 09:40 execution-grade option-chain data was unavailable through the repository/public sources available to this run. Current premiums/quotes were not substituted; therefore this is NOT_EVALUATED, not a NO_TRADE conclusion."
-}
+  "spot": 23398.0,
+  "spot_source": "Business Standard Capital Market News (verified 09:30 IST print)",
+  "spot_source_timestamp_ist": "09:30",
+  "source_latency_minutes": 10,
+  "model_data_cutoff": "2026-09-18",
+  "frozen_lookback_sessions": 756,
+  "lookback_sessions_used": 20,
+  "lookback_status": "DATA_LIMITED_SHORT_LOOKBACK",
+  "target_expiry": "2026-09-22",
+  "horizon_sessions": 1,
+  "entry_timing_rule": "3 future trading sessions before target expiry",
+  "timing_gate": "NOT_ENTRY_DAY",
+  "rv20": 0.07326484910468463,
+  "rv20_rank": NaN,
+  "vol_regime": "high",
+  "terminal_quantiles": {
+    "p10": 23256.25894113121,
+    "p20": 23260.515181369967,
+    "p35": 23298.53262659667,
+    "p65": 23417.456611855898,
+    "p80": 23474.21498371337,
+    "p90": 23482.144692334543
+  },
+  "reason": "OPTION_PREMIUM_BID_ASK_SNAPSHOT_UNAVAILABLE",
+  "note": "Candidate generated from verified underlying data available by 09:40 IST plus frozen past-only return history. Option premiums, bid/ask, slippage-adjusted entry cost, and MC-EV eligibility were not evaluated.",
+  "primary_strategy": "Jade Lizard",
+  "legs": [
+    {
+      "side": "SELL",
+      "option_type": "PE",
+      "target_label": "p35",
+      "target_price": 23298.53,
+      "quantity_per_lot": 1
+    },
+    {
+      "side": "SELL",
+      "option_type": "CE",
+      "target_label": "c65",
+      "target_price": 23417.46,
+      "quantity_per_lot": 1
+    },
+    {
+      "side": "BUY",
+      "option_type": "CE",
+      "target_label": "c90",
+      "target_price": 23482.14,
+      "quantity_per_lot": 1
+    }
+  ]
+}\n
