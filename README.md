@@ -203,3 +203,11 @@ The requested controlled 09:40 IST backfill has completed for all eight active s
 - Operations audit: [PAPER_TRADE_SIGNAL_ORCHESTRATION_2026-09-21](docs/operations/PAPER_TRADE_SIGNAL_ORCHESTRATION_2026-09-21.md)
 - Error log: [ERROR_LOG](docs/operations/ERROR_LOG.md)
 - Final Pages publication run: 35582136269 (success)
+
+### Final Pages/backfill verification — 2026-09-21
+
+The 09:40 IST controlled backfill and Pages hardening are complete. The final common orchestrator `35583151500` completed all four child strategy families successfully, the unified publication `35583226780` succeeded, and the final page-hardening publication `35583533118` succeeded.
+
+Every active strategy page now shows its own workflow completion audit and an explicit 09:40 signal record. Because no trustworthy historical executable 09:40 option-chain snapshot was available, all eight backfill signals are explicitly **NO_TRADE** rather than “not recorded”. These records are separate from the prospective performance ledgers.
+
+The common Paper Trade Signals Producer now waits for all child workflows and performs one Pages publication; the child workflows no longer independently trigger Pages, preventing overlapping/partial publication races.
