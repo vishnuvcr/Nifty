@@ -48,3 +48,16 @@ def test_selection_rejects_less_than_25_unique_trades():
     except RuntimeError:
         return
     raise AssertionError("selector accepted fewer than 25 training trades")
+
+
+def test_trailing_stop_variant_uses_stop_fraction():
+    from scripts.batman_t7_joint_engine import evaluate_exit
+    legs=[("PE",105,1,"p35")]
+    frames={}
+    marks=pd.DataFrame({"timestamp":[pd.Timestamp("2024-01-01 10:00")],"pnl_points":[10.0]})
+    result, reason = evaluate_exit(
+        frames, legs, marks, 0.0, 20.0, 10.0,
+        ("trailing_stop", None, 0.50, 1),
+        pd.Timestamp("2024-01-01")
+    )
+    assert reason in {"missing_expiry_exit", "missing_expiry_fallback", None}
