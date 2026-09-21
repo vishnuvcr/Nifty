@@ -1,9 +1,45 @@
 name: BATMAN Tuning T5 Robustness
+
 on:
+  push:
+    branches:
+      - research/batman-tuning-t5-robustness-v1
   workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
 jobs:
-  t5:
+  robustness:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - run: echo "T5 requires a frozen nested-WFO candidate." && exit 1
+
+      - name: Download accepted frozen holdout artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p reports/holdout
+          gh run download 35605509219 --repo "${{ github.repository }}" --name batman-tuning-t4-frozen-holdout --dir reports/holdout
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas scipy
+
+      - name: Run robustness analysis
+        run: |
+          python scripts/batman_t5_robustness.py --trade-level reports/holdout/T4_HOLDOUT_TRADE_LEVEL.csv --out-dir reports/batman_t5
+
+      - name: Upload robustness results
+        uses: actions/upload-artifact@v4
+        with:
+          name: batman-tuning-t5-robustness
+          path: |
+            reports/batman_t5/T5_ROBUSTNESS_SUMMARY.json
+            reports/batman_t5/T5_SLIPPAGE_STRESS.csv
+            reports/batman_t5/T5_YEARLY_STABILITY.csv
+            reports/batman_t5/T5_LEAVE_ONE_OUT.csv
+          retention-days: 30
