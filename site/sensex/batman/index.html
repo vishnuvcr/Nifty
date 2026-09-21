@@ -1,56 +1,42 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SENSEX Batman Paper Trading</title>
-<style>
-body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#0d1117;color:#e6edf3}main{max-width:1180px;margin:auto;padding:24px}
-.card{background:#161b22;border:1px solid #30363d;border-radius:14px;padding:18px;margin:14px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
-.kpi{font-size:23px;font-weight:750}small{color:#8b949e}a{color:#58a6ff}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px;border-bottom:1px solid #30363d;text-align:left;vertical-align:top}.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#21262d;font-weight:700}
-.note{color:#aebdce;line-height:1.5}
-</style></head><body><main>
-<div class="card" id="workflow-audit"><h2>Workflow audit</h2>
-<div class="grid">
-<div><small>Last completed workflow run</small><div class="kpi" id="wf-audit-time">Loading...</div></div>
-<div><small>Workflow status</small><div class="kpi" id="wf-audit-status">Loading...</div></div>
-<div><small>Backfill decision date</small><div class="kpi" id="bf-date">2026-09-21</div></div>
-<div><small>Backfill entry time</small><div class="kpi">09:40 IST</div></div>
-<div><small>Backfill signal</small><div class="kpi" id="bf-signal">DATA_LIMITED_CANDIDATE</div></div>
-<div><small>Backfill status</small><div class="kpi" id="bf-status">BACKFILL_0940_DATA_LIMITED_CANDIDATE</div></div>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SENSEX Batman Paper Trading</title><style>
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#0b1220;color:#e8eef6}
+main{max-width:1180px;margin:auto;padding:24px}.card{background:#111a2a;border:1px solid #2a374b;border-radius:14px;padding:18px;margin:14px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}.kpi{font-size:23px;font-weight:750}
+small{color:#93a5bb}a{color:#7fb0ff}.badge{display:inline-block;padding:5px 10px;border-radius:999px;background:#21304a;font-weight:700}
+.note{color:#aebdce;line-height:1.55}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px;border-bottom:1px solid #293547;text-align:left;vertical-align:top}
+</style></head>
+<body><main>
+<div class="card"><h2>Workflow audit</h2><div class="grid">
+<div><small>Last completed scanner run</small><div class="kpi">21 Sep 2026, 3:38 pm</div></div>
+<div><small>Workflow status</small><div class="kpi">SUCCESS</div></div>
+<div><small>Decision date</small><div class="kpi">21 Sep 2026</div></div>
+<div><small>Decision time</small><div class="kpi">09:30 IST</div></div>
+<div><small>Today's signal</small><div class="kpi">DATA-LIMITED CANDIDATE</div></div>
+<div><small>Execution</small><div class="kpi">NOT EXECUTABLE</div></div>
 </div>
-<p class="note" id="wf-backfill-note">Loading backfill observation...</p>
-<p><small>Audit source: <a href="../../data/run_status_sensex.json">run_status_sensex.json</a> · Backfill record: <a href="data/backfill_0940_2026-09-21.json">data/backfill_0940_2026-09-21.json</a></small></p>
+<p class="note">Underlying and past-only model data were available at the decision boundary. Live option premium bid/ask was unavailable, so the system publishes a lookahead-safe data-limited signal rather than suppressing the model output. This is not a backfilled executable trade and no broker order was attempted.</p>
+<p><small>Audit: <a href="../../data/run_status_sensex.json">run_status_sensex.json</a> · Signal: <a href="data/latest_signal.json">latest_signal.json</a> · Workflow <a href="https://github.com/vishnuvcr/Nifty/actions/runs/35587080630">#35587080630</a></small></p>
 </div>
-<script>
-(async()=>{
-  const fmt=v=>v?new Date(v).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Kolkata'}):'Not recorded';
-  try{
-    const d=await (await fetch('../../data/run_status_sensex.json?ts='+Date.now(),{cache:'no-store'})).json();
-    document.getElementById('wf-audit-time').textContent=fmt(d.finished_at_ist);
-    document.getElementById('wf-audit-status').textContent=(d.status||'NOT_RECORDED').toUpperCase();
-  }catch(e){
-    document.getElementById('wf-audit-time').textContent='Audit unavailable';
-    document.getElementById('wf-audit-status').textContent='ERROR';
-  }
-  try{
-    const d=await (await fetch('data/backfill_0940_2026-09-21.json?ts='+Date.now(),{cache:'no-store'})).json();
-    document.getElementById('bf-date').textContent=d.decision_date||'2026-09-21';
-    document.getElementById('bf-signal').textContent=d.signal||'DATA_LIMITED_CANDIDATE';
-    document.getElementById('bf-status').textContent=(d.status||'NOT_RECORDED').replaceAll('_',' ');
-    document.getElementById('wf-backfill-note').textContent=(d.reason||d.source_note||'—')+' This controlled backfill is separate from the prospective ledger.';
-  }catch(e){
-    document.getElementById('bf-signal').textContent='Not recorded';
-    document.getElementById('bf-status').textContent='ERROR';
-    document.getElementById('wf-backfill-note').textContent='09:40 backfill record could not be loaded.';
-  }
-})();
-</script>
-
 <p><a href="../">← SENSEX strategy selector</a> · <a href="../adaptive/">Adaptive</a></p>
-<div class="card"><span class="badge">SENSEX • BATMAN • PAPER ONLY</span>
-<h1>Batman Paper-Trading Scanner</h1>
-<p class="note">Frozen SENSEX transfer protocol. Entry at 09:30 IST; one-lot transfer-edge sizing; no broker execution.</p></div>
-<div class="card"><h2>Latest signal</h2><div id="latest"><p class="badge">NO DATA YET</p></div></div>
-<div class="card"><h2>Paper-trading summary</h2><div id="summary">No prospective observations yet.</div></div>
-<div class="card"><h2>Recent signals</h2><div id="signals"><p class="note">The page is populated automatically from the S7 scanner.</p></div></div>
-<div class="card"><h2>Scientific boundary</h2><p class="note">S7 is prospective only. Missing bid/ask or broken BSE data schemas cause NO_TRADE. No LTP substitution is allowed. Historical S5/S6 results are not used to backfill the S7 ledger.</p></div>
-<div class="card"><small>Source: BSE public market-data surfaces. Branch: research/sensex-s7-paper-trading-v1.</small></div>
+<div class="card"><span class="badge">SENSEX • BATMAN • PAPER ONLY</span><h1>Batman Paper-Trading Scanner</h1>
+<p class="note">Frozen S0–S6 protocol. Decision time 09:30 IST. Data-limited mode is allowed when underlying/past-only model data exist but live option quotes do not.</p></div>
+<div class="card"><h2>Today's decision-time signal</h2><div class="grid">
+<div><small>Signal</small><div class="kpi">DATA-LIMITED CANDIDATE</div></div>
+<div><small>SENSEX spot</small><div class="kpi">74,748.70</div></div>
+<div><small>Target expiry</small><div class="kpi">24 Sep 2026</div></div>
+<div><small>Volatility regime</small><div class="kpi">UNAVAILABLE</div></div>
+<div><small>Net MC-EV</small><div class="kpi">Not evaluable</div></div>
+<div><small>Executable lots</small><div class="kpi">0</div></div>
+</div>
+<p class="note">Batman’s target structure is computed from the past-only Monte Carlo terminal distribution, but executable prices are unavailable, so the net-MC-EV gate is not evaluated.</p></div>
+
+<div class="card"><h2>Today's Batman structure targets</h2><table><tr><th>Side</th><th>Type</th><th>Target</th><th>Index level</th><th>Qty/lot</th><th>Quote</th></tr>
+<tr><td>BUY</td><td>PE</td><td>P35</td><td>74060.86</td><td>1</td><td>Unavailable</td></tr>
+<tr><td>SELL</td><td>PE</td><td>P20</td><td>73786.53</td><td>2</td><td>Unavailable</td></tr>
+<tr><td>BUY</td><td>CE</td><td>P65</td><td>74538.39</td><td>1</td><td>Unavailable</td></tr>
+<tr><td>SELL</td><td>CE</td><td>P80</td><td>74793.31</td><td>2</td><td>Unavailable</td></tr>
+</table><p class="note">These are Monte Carlo target index levels only; listed strikes were not verified because the option-chain snapshot was unavailable.</p></div>
+<div class="card"><h2>Data-quality boundary</h2><p class="note">Model cutoff: 18 Sep 2026. Past-only sessions available: 20. Frozen lookback: 756. Frozen volatility-rank history: prior 252 RV20 observations. Option chain: unavailable. Premiums/bid-ask: unavailable. Therefore no entry premium, realized P&amp;L, or executable MC-EV decision is claimed.</p></div>
+<div class="card"><h2>Paper-trading accounting</h2><div class="grid"><div><small>Executable trade today</small><div class="kpi">0</div></div><div><small>Data-limited observation</small><div class="kpi">1</div></div><div><small>Realized P&amp;L</small><div class="kpi">Not evaluated</div></div></div>
+<p class="note">The observation is stored for decision-time audit only and is excluded from performance metrics until an executable quote-complete prospective observation occurs.</p></div>
 </main></body></html>
