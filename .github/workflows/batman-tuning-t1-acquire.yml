@@ -126,5 +126,46 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Split large Ayush archive for artifact transport
+        run: |
+          mkdir -p .cache/recovery_parts
+          split -b 400m -d -a 2 .cache/batman_raw/ayush_nifty_banknifty_options_2020_2024.zip .cache/recovery_parts/ayush_part_
+          ls -lh .cache/recovery_parts
+
+      - name: Upload Ayush recovery part 01
+        uses: actions/upload-artifact@v4
+        with:
+          name: batman-t1-ayush-part-01
+          path: .cache/recovery_parts/ayush_part_00
+          retention-days: 30
+
+      - name: Upload Ayush recovery part 02
+        uses: actions/upload-artifact@v4
+        with:
+          name: batman-t1-ayush-part-02
+          path: .cache/recovery_parts/ayush_part_01
+          retention-days: 30
+
+      - name: Upload Ayush recovery part 03
+        uses: actions/upload-artifact@v4
+        with:
+          name: batman-t1-ayush-part-03
+          path: .cache/recovery_parts/ayush_part_02
+          retention-days: 30
+
+      - name: Upload Rahul recovery archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: batman-t1-rahul-options
+          path: .cache/batman_raw/rahul_nifty_options_2025_2026.zip
+          retention-days: 30
+
+      - name: Upload long-index recovery archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: batman-t1-long-index
+          path: .cache/batman_raw/nifty_index_2008_2020.zip
+          retention-days: 30
+
       - name: T1 summary
-        run: echo "Raw-source acquisition/audit completed; derived BATMAN cache construction remains gated on schema and coverage validation." >> "$GITHUB_STEP_SUMMARY"
+        run: echo "Raw-source acquisition/audit completed; split recovery artifacts published for downstream analysis."
