@@ -30,6 +30,8 @@ RULES = {
                                       "label": "Prior T6 candidate (D3 / 09:30 / trailing 20%→10%)"},
     "t7_d4_0930_trailing_target_30_30": {"offset": 4, "family": "trailing_target", "activation": 0.30, "retracement": 0.30,
                                          "label": "T7 frozen candidate (D4 / 09:30 / trailing 30%→30%)"},
+    "t7_d4_0930_expiry_decomposition": {"offset": 4, "family": "expiry_control", "activation": None, "retracement": None,
+                                         "label": "D4 / 09:30 / expiry control (decomposition only)"},
 }
 
 def lot_size(expiry):
@@ -268,6 +270,8 @@ def main():
             path=pd.concat(marks_store[i],ignore_index=True) if marks_store[i] else pd.DataFrame()
             if path.empty:skips["missing_exit_path"]+=1;continue
             for rid,rule in RULES.items():
+                if c["offset"] != rule["offset"]:
+                    continue
                 for slip in SLIPPAGE_CASES:
                     ex,mode,trig=evaluate(path,c,rule)
                     if ex is None:skips[f"{rid}:{mode}"]+=1;continue
@@ -293,16 +297,29 @@ def main():
         trades=("decision_date","nunique"),total_net_inr=("realized_net_inr","sum"),mean_net_inr=("realized_net_inr","mean"),
         win_rate=("realized_net_inr",lambda x:float((x>0).mean()))).reset_index()
     y.to_csv(out/"T7_HOLDOUT_YEARLY.csv",index=False)
-    base=d[(d.slippage_per_option_leg_points==2.0)&(d.brokerage_per_order_inr==20.0)]
-    w=base.pivot_table(index=["decision_date","expiry"],columns="rule_id",values="realized_net_inr",aggfunc="first").reset_index()
-    ctl="original_batman_d3_0930_expiry"; comps=[]
-    for col in w.columns:
-        if col in ("decision_date","expiry",ctl):continue
-        if ctl in w.columns:
-            m=w[["decision_date","expiry",ctl,col]].dropna().copy();m["candidate_rule_id"]=col;m["candidate_minus_original_batman"]=m[col]-m[ctl];comps.append(m)
-    pd.concat(comps,ignore_index=True).to_csv(out/"T7_HOLDOUT_PAIRED_COMPARISON.csv",index=False) if comps else pd.DataFrame().to_csv(out/"T7_HOLDOUT_PAIRED_COMPARISON.csv",index=False)
+    base=d[(d.slippage_per_option_leg_points==2.0)&(d.brokerage_per_order_inr==20.0)].copy()
+    # Pair by expiry, not decision date: D3 and D4 entries occur on different sessions.
+    ctl=base[base.rule_id.eq("original_batman_d3_0930_expiry")][
+        ["expiry","decision_date","realized_net_inr"]
+    ].rename(columns={"decision_date":"control_decision_date","realized_net_inr":"control_net_inr"})
+    paired_parts=[]
+    for rid in RULES:
+        if rid=="original_batman_d3_0930_expiry":
+            continue
+        cand=base[base.rule_id.eq(rid)][["expiry","decision_date","realized_net_inr"]].rename(
+            columns={"decision_date":"candidate_decision_date","realized_net_inr":"candidate_net_inr"}
+        )
+        m=cand.merge(ctl,on="expiry",how="inner")
+        m["candidate_rule_id"]=rid
+        m["candidate_minus_original_batman"]=m["candidate_net_inr"]-m["control_net_inr"]
+        paired_parts.append(m)
+    paired=pd.concat(paired_parts,ignore_index=True) if paired_parts else pd.DataFrame()
+    paired.to_csv(out/"T7_HOLDOUT_PAIRED_COMPARISON.csv",index=False)
+
     report={"holdout_start":str(d.decision_date.min().date()),"holdout_end":str(d.expiry.max().date()),"primary_case":"2-point slippage / ₹20 brokerage",
             "stress_case":"4-point slippage / ₹30 brokerage","frozen_candidate":"D4 / 09:30 / trailing 30% activation / 30% retracement",
+            "rule_entry_offset_enforced":True,
+            "rule_note":"Each rule is evaluated only on its declared entry offset; D4 expiry control is descriptive decomposition only.",
             "selection_after_holdout":False}
     (out/"T7_HOLDOUT_REPORT.json").write_text(json.dumps(report,indent=2)+"\n")
     (out/"T7_HOLDOUT_SKIP_COUNTS.json").write_text(json.dumps(skips,indent=2)+"\n")
