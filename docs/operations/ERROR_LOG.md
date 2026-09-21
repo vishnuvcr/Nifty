@@ -46,3 +46,9 @@
 **Observed:** research-tests run `35582883758` failed during test collection because `block_bootstrap` was missing from `scripts/run_pre2026_cpcv_bootstrap_v1.py` on one branch.
 **Correction:** restored the small compatibility helper on `research/prospective-defined-risk-nifty-v1`, matching the existing implementation on the adaptive branch. This was separate from the Pages/backfill issue.
 **Note:** the captured research-test run predates/overlaps the repair sequence; it is retained here rather than hidden.
+
+### E2026-09-21-07 — Historical 09:40 backfill was incorrectly labelled NO_TRADE
+**Observed from user screenshots:** the page showed `BACKFILL_0940_NO_TRADE` for every strategy.
+**Root cause:** the initial backfill workflow did not run the frozen strategy scanners at all; it wrote a controlled placeholder record when the historical executable option snapshot was unavailable. That was incorrectly labelled `NO_TRADE`, which could be read as a strategy-generated trading decision.
+**Correction:** reclassified all eight records as `BACKFILL_0940_NOT_EVALUATED` / `NOT_EVALUATED`. A true `NO_TRADE` label will only be used after the frozen strategy has actually evaluated a valid historical 09:40 snapshot and rejected the trade.
+**Data requirement:** exact historical 09:40 option-chain inputs are required for genuine reconstruction. NSE's public historical pages provide historical contract/EOD facilities, while vendors such as StockMojo advertise minute-level replay and MoneyTicks documents a minute-level API for expired contracts; the currently accessible sources do not provide an execution-grade 21-Sep-2026 09:40 snapshot to this workflow without a usable data-access path. Therefore no strategy conclusion is being fabricated.
