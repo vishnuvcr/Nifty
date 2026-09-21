@@ -23,3 +23,5 @@ E009: The first transfer of the raw-source schema-audit script failed in the con
 E010: Deep raw-data probe run 35538086620 failed because the Zenodo option archive nests ZIPs across multiple levels; the probe attempted to parse a nested ZIP as CSV. Correction: the probe now recursively descends ZIP layers until a CSV member is found. Raw archives remain intact.
 
 E013: T1 raw-source recovery workflow did not trigger on the workflow-definition-only commit. Correction: after enabling the push trigger, a non-workflow audit-log commit was added to force the intended Actions event without changing research logic.
+
+E014: The T1 acquire workflow's first recovery attempt omitted the long 2008-2020 NIFTY index archive and skipped raw-source publication after the schema audit failed. Correction: the workflow now acquires the long index and marks raw-source publication always-run; a non-workflow commit triggers the corrected workflow revision.
