@@ -28,31 +28,51 @@ ADAPTIVE_BY_REGIME = {
     "high": [("Sell Put", 5), ("Risk Reversal", 5), ("Long Synthetic Future", 3), ("Batman", 2)],
 }
 
-def yahoo_history(symbol: str, start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
-    p1 = int(pd.Timestamp(start, tz="Asia/Kolkata").timestamp())
-    p2 = int((pd.Timestamp(end, tz="Asia/Kolkata") + pd.Timedelta(days=1)).timestamp())
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
-    r = requests.get(url, params={"period1": p1, "period2": p2, "interval": "1d", "events":"history"}, timeout=30)
-    r.raise_for_status()
-    payload = r.json()
-    result = ((payload.get("chart") or {}).get("result") or [None])[0]
-    if not result:
-        raise RuntimeError(f"no Yahoo history for {symbol}")
-    ts = result.get("timestamp") or []
-    close = ((((result.get("indicators") or {}).get("quote") or [{}])[0]).get("close") or [])
-    rows=[]
-    for t,c in zip(ts,close):
-        try:
-            px=float(c)
-        except Exception:
-            continue
-        d=pd.Timestamp(t,unit="s",tz="UTC").tz_convert(IST).normalize().tz_localize(None)
-        if math.isfinite(px):
-            rows.append({"date":d,"close":px})
-    out=pd.DataFrame(rows).drop_duplicates("date").sort_values("date")
-    if len(out)<LOOKBACK+1:
-        raise RuntimeError(f"insufficient historical closes for {symbol}: {len(out)}")
-    return out.reset_index(drop=True)
+def fetch_nifty_history(start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
+    """Fetch past-only NIFTY closes from NSE."""
+    from curl_cffi import requests as curl_requests
+    sess = curl_requests.Session(impersonate="chrome")
+    sess.headers.update({"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/136.0 Safari/537.36", "Accept":"application/json,text/plain,*/*", "Accept-Language":"en-IN,en;q=0.9", "Referer":"https://www.nseindia.com/"})
+    sess.get("https://www.nseindia.com/option-chain", timeout=30)
+    chunks=[]; cur=pd.Timestamp(start).normalize(); end=pd.Timestamp(end).normalize()
+    while cur<=end:
+        ce=min(cur+pd.Timedelta(days=349),end)
+        rr=sess.get("https://www.nseindia.com/api/historical/indicesHistory", params={"indexType":"NIFTY 50","from":cur.strftime("%d-%m-%Y"),"to":ce.strftime("%d-%m-%Y")}, timeout=30)
+        rr.raise_for_status(); payload=rr.json()
+        rows=(payload.get("data") or {}).get("indexCloseOnlineRecords") or []
+        if rows:
+            df=pd.DataFrame(rows); dc="EOD_TIMESTAMP" if "EOD_TIMESTAMP" in df.columns else "TIMESTAMP"; cc="EOD_CLOSE_INDEX_VAL" if "EOD_CLOSE_INDEX_VAL" in df.columns else "CLOSE"
+            if dc in df.columns and cc in df.columns:
+                chunks.append(pd.DataFrame({"date":pd.to_datetime(df[dc],errors="coerce").dt.normalize(),"close":pd.to_numeric(df[cc],errors="coerce")}).dropna())
+        cur=ce+pd.Timedelta(days=1)
+    if not chunks: raise RuntimeError("NSE returned no NIFTY history")
+    return pd.concat(chunks,ignore_index=True).drop_duplicates("date").sort_values("date").reset_index(drop=True)
+
+def fetch_sensex_history(start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
+    """Fetch past-only SENSEX closes from BSE."""
+    import io
+    rr=requests.get("https://api.bseindia.com/BseIndiaAPI/api/ProduceCSVForDate/w", params={"strIndex":"SENSEX","dtFromDate":start.strftime("%d/%m/%Y"),"dtToDate":end.strftime("%d/%m/%Y"),"period":"D"}, headers={"User-Agent":"Mozilla/5.0","Referer":"https://www.bseindia.com/"}, timeout=30)
+    rr.raise_for_status()
+    try: payload=rr.json()
+    except Exception: payload=None
+    df=None
+    if isinstance(payload,dict):
+        data=payload.get("Data") or payload.get("data") or payload.get("Table")
+        if isinstance(data,list): df=pd.DataFrame(data)
+        elif isinstance(data,str): df=pd.read_csv(io.StringIO(data))
+    if df is None:
+        raw=rr.text.strip()
+        if not raw or "<" in raw[:100]: raise RuntimeError("BSE SENSEX history endpoint returned non-tabular data")
+        df=pd.read_csv(io.StringIO(raw))
+    lookup={str(c).strip().lower():c for c in df.columns}
+    dc=next((lookup[k] for k in ("date","dt","trading date") if k in lookup),None)
+    cc=next((lookup[k] for k in ("close","close price","closing price") if k in lookup),None)
+    if not dc or not cc: raise RuntimeError(f"unrecognized BSE SENSEX history schema: {list(df.columns)}")
+    out=pd.DataFrame({"date":pd.to_datetime(df[dc],errors="coerce",dayfirst=True).dt.normalize(),"close":pd.to_numeric(df[cc],errors="coerce")}).dropna()
+    return out.drop_duplicates("date").sort_values("date").reset_index(drop=True)
+
+def history(index: str, start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
+    return fetch_nifty_history(start,end) if index=="NIFTY" else fetch_sensex_history(start,end)
 
 def model(spot: float, hist: pd.DataFrame, decision: pd.Timestamp, expiry: pd.Timestamp, seed: int) -> dict:
     prior=hist.loc[hist.date < decision].copy()
@@ -63,9 +83,8 @@ def model(spot: float, hist: pd.DataFrame, decision: pd.Timestamp, expiry: pd.Ti
         raise RuntimeError("insufficient past-only returns")
     latest=logret[-LOOKBACK:]
     # Fixed frozen 3-session horizon used by the paper protocol.
-    horizon=max(1, int((expiry-decision).days))
     future_days=pd.bdate_range(decision+pd.Timedelta(days=1), periods=3)
-    horizon_sessions=3 if len(future_days)==3 else min(3,len(future_days))
+    horizon_sessions=len(future_days)
     rng=np.random.default_rng(seed)
     sampled=rng.choice(latest,size=MC_PATHS*horizon_sessions,replace=True).reshape(MC_PATHS,horizon_sessions)
     terminal=spot*np.exp(sampled.sum(axis=1))
@@ -110,7 +129,7 @@ def main():
     expiry=decision+pd.Timedelta(days=3)
     index="NIFTY" if args.strategy.startswith("NIFTY") else "SENSEX"
     symbol="^NSEI" if index=="NIFTY" else "^BSESN"
-    hist=yahoo_history(symbol,decision-pd.Timedelta(days=365*5),decision)
+    hist=history(index,decision-pd.Timedelta(days=365*5),decision)
     seed=20260921
     t=model(args.spot,hist,decision,expiry,seed)
     t["spot"]=float(args.spot)
@@ -137,6 +156,8 @@ def main():
         "model_data_cutoff":t["model_data_cutoff"],
         "target_expiry":expiry.date().isoformat(),
         "horizon_sessions":t["horizon_sessions"],
+        "entry_timing_rule":"3 future trading sessions before target expiry",
+        "timing_gate":"PASS" if t["horizon_sessions"]==3 else "NOT_ENTRY_DAY",
         "rv20":t["rv20"],"rv20_rank":t["rv20_rank"],"vol_regime":t["vol_regime"],
         "terminal_quantiles":{k:t[k] for k in ["p10","p20","p35","p65","p80","p90"]},
         "reason":"OPTION_PREMIUM_BID_ASK_SNAPSHOT_UNAVAILABLE",
