@@ -3,7 +3,7 @@ name: BATMAN Tuning T2 Entry Reconciled
 on:
   push:
     branches:
-      - research/batman-tuning-t2-entry-v1
+      - research/batman-tuning-t2-entry-v2
   workflow_dispatch:
 
 permissions:
