@@ -1,0 +1,32 @@
+{
+  "study":"BATMAN_TUNING_V1_T7_JOINT",
+  "status":"FROZEN_BEFORE_HOLDOUT",
+  "entry":{
+    "offset":4,
+    "offset_label":"D4",
+    "timing":"same_session_0930",
+    "mc_paths":5000,
+    "lookback_sessions":756,
+    "gate":"gross_mc_ev_gt_0",
+    "legs":["+1 P35 PE","-2 P20 PE","+1 C65 CE","-2 C80 CE"]
+  },
+  "exit":{
+    "family":"trailing_target",
+    "activation_of_max_profit_reference":0.30,
+    "retracement_of_max_profit_reference":0.30
+  },
+  "development":{
+    "period":"2020-01-01 through 2024-10-31",
+    "training_unique_trades":41,
+    "worst_brokerage_total_inr":66115.4828125,
+    "worst_brokerage_mean_inr":1612.5727515243898,
+    "brokerage_totals_inr":{
+      "10":72675.4828125,
+      "20":69395.4828125,
+      "30":66115.4828125
+    },
+    "outer_years":[2022,2023,2024],
+    "selection_rule":"maximize worst-brokerage mean net P&L per unique trade; then worst-brokerage total, least-negative drawdown, lower complexity, higher training-trade count"
+  },
+  "holdout_reserved":"2025-2026"
+}
