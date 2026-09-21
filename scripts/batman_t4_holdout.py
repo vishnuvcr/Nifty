@@ -57,8 +57,8 @@ def expiry_candidates(sessions):
 def load_daily(path):
     df = pd.read_csv(path)
     df.columns = [str(c).strip().lower() for c in df.columns]
-    date_col = "date" if "date" in df.columns else "datetime"
-    close_col = "close"
+    date_col = "date" if "date" in df.columns else ("datetime" if "datetime" in df.columns else "Date".lower())
+    close_col = "close" if "close" in df.columns else ("price" if "price" in df.columns else "last")
     df["date"] = pd.to_datetime(df[date_col], errors="coerce").dt.tz_localize(None).dt.normalize()
     df["close"] = pd.to_numeric(df[close_col], errors="coerce")
     return df.dropna(subset=["date", "close"]).sort_values("date").drop_duplicates("date")[["date", "close"]]
