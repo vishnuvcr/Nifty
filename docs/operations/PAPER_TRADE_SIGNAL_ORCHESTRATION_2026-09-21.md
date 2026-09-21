@@ -58,3 +58,20 @@ The first implementation used `BACKFILL_0940_NO_TRADE` as a placeholder when no 
 A true `NO_TRADE` result is only valid after the frozen strategy has consumed a valid 09:40 historical snapshot and evaluated its normal entry gates. The repository must not infer a trade rejection merely because the historical data source was unavailable.
 
 The NIFTY page-builder audit path was also corrected from a local page `data/` path to the centralized published `site/data/run_status_nifty_signal_generation.json` path. This prevents the "Audit unavailable" error shown in the mobile screenshots.
+
+## Final 09:40 available-data signal policy — 2026-09-21
+
+The 09:40 backfill now produces **DATA_LIMITED_CANDIDATE** signals whenever sufficient underlying and past-only model data are available, even when exact option premiums/bid-ask are unavailable.
+
+### Interpretation
+- `DATA_LIMITED_CANDIDATE`: model/candidate signal generated; not executable; quote-dependent MC-EV and transaction-cost gates not evaluated.
+- `NO_TRADE`: reserved for a valid quote snapshot that was actually evaluated and failed the frozen entry gate.
+- `ENTER`: requires the normal executable option data and frozen gates.
+
+### 2026-09-21 final backfill
+- Common producer: **35587070935 — success**.
+- Final Pages publication: **35587158445 — success**.
+- All eight strategies published a `DATA_LIMITED_CANDIDATE` observation.
+- NIFTY timing gate: **NOT_ENTRY_DAY** under the frozen 3-sessions-before-expiry rule because NIFTY expiry is 22-Sep-2026.
+- SENSEX timing gate: **PASS** under the same frozen rule because SENSEX expiry is 24-Sep-2026.
+- The available cached history is only 20 past sessions, so the frozen 252-session RV20 rank is unavailable. Adaptive therefore exposes all frozen regime candidates and does not choose a primary regime-dependent strategy.
