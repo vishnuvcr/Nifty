@@ -1,11 +1,22 @@
 name: Generate NIFTY Paper Trading Signals
 
 on:
-  schedule:
-    # 09:30 IST = 04:00 UTC
-    - cron: "0 4 * * 1-5"
   workflow_dispatch:
     inputs:
+      mode:
+        description: "Run mode"
+        required: true
+        default: "scheduled"
+        type: choice
+        options: [scheduled, backfill_0940]
+      decision_date:
+        description: "Decision date YYYY-MM-DD for backfill"
+        required: false
+        default: ""
+      entry_time_ist:
+        description: "Entry time for backfill"
+        required: false
+        default: "09:30"
       capital:
         description: "Paper capital in INR"
         required: true
@@ -55,6 +66,9 @@ jobs:
       COST_PER_CONTRACT: ${{ github.event.inputs.cost_per_contract || '2.0' }}
       EXPIRY: ${{ github.event.inputs.expiry || '' }}
       SEED: ${{ github.event.inputs.seed || '' }}
+      MODE: ${{ github.event.inputs.mode || 'scheduled' }}
+      DECISION_DATE: ${{ github.event.inputs.decision_date || '' }}
+      ENTRY_TIME_IST: ${{ github.event.inputs.entry_time_ist || '09:30' }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
 
@@ -78,6 +92,7 @@ jobs:
           python -m pip install -e .
 
       - name: Generate Batman signal
+        if: env.MODE != 'backfill_0940'
         run: |
           CMD=(python scripts/batman_signal_producer.py
             --capital "$CAPITAL"
@@ -85,13 +100,14 @@ jobs:
             --lot-size "$LOT_SIZE"
             --paths "$PATHS"
             --cost-per-contract "$COST_PER_CONTRACT"
-            --decision-date auto
             --site-dir site/batman)
+          if [ -n "$DECISION_DATE" ]; then CMD+=(--decision-date "$DECISION_DATE"); else CMD+=(--decision-date auto); fi
           if [ -n "$EXPIRY" ]; then CMD+=(--expiry "$EXPIRY"); fi
           if [ -n "$SEED" ]; then CMD+=(--seed "$SEED"); fi
           "${CMD[@]}"
 
       - name: Generate Adaptive signal
+        if: env.MODE != 'backfill_0940'
         run: |
           CMD=(python scripts/adaptive_paper_signal_producer_v1.py
             --capital "$CAPITAL"
@@ -99,11 +115,20 @@ jobs:
             --lot-size "$LOT_SIZE"
             --paths "$PATHS"
             --cost-per-contract "$COST_PER_CONTRACT"
-            --decision-date auto
             --site-dir site/adaptive)
+          if [ -n "$DECISION_DATE" ]; then CMD+=(--decision-date "$DECISION_DATE"); else CMD+=(--decision-date auto); fi
           if [ -n "$EXPIRY" ]; then CMD+=(--expiry "$EXPIRY"); fi
           if [ -n "$SEED" ]; then CMD+=(--seed "$SEED"); fi
           "${CMD[@]}"
+
+      - name: Record controlled 09:40 backfill observations
+        if: env.MODE == 'backfill_0940'
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:scripts/backfill_0940_no_trade.py > /tmp/backfill_0940_no_trade.py
+          python /tmp/backfill_0940_no_trade.py --strategy "NIFTY BATMAN" --decision-date "$DECISION_DATE" --entry-time-ist "$ENTRY_TIME_IST" --output-json site/batman/data/backfill_0940_2026-09-21.json
+          python /tmp/backfill_0940_no_trade.py --strategy "NIFTY ADAPTIVE" --decision-date "$DECISION_DATE" --entry-time-ist "$ENTRY_TIME_IST" --output-json site/adaptive/data/backfill_0940_2026-09-21.json
 
       - name: Persist signal state and run audit
         if: always()
@@ -118,6 +143,9 @@ jobs:
             "workflow_run_id": "${{ github.run_id }}",
             "workflow_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
             "trigger": "${{ github.event_name }}",
+            "mode": "${MODE}",
+            "decision_date": "${DECISION_DATE}",
+            "entry_time_ist": "${ENTRY_TIME_IST}",
             "scheduled_time_ist": "09:30 IST",
             "finished_at_ist": "${FINISHED_IST}",
             "status": "${JOB_STATUS}",
@@ -136,7 +164,9 @@ jobs:
                   paper_trading/adaptive_candidate_screen.csv \
                   paper_trading/adaptive_feature_history.csv \
                   site/data/run_status_nifty_signal_generation.json \
-                  site/batman site/adaptive
+                  site/batman site/adaptive \
+                  site/batman/data/backfill_0940_2026-09-21.json \
+                  site/adaptive/data/backfill_0940_2026-09-21.json
           if git diff --cached --quiet; then
             echo "No signal-state changes."
           else
