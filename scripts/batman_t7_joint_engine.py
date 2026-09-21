@@ -268,6 +268,7 @@ def main():
     ap.add_argument("--paths", type=int, default=5000)
     ap.add_argument("--seed-base", type=int, default=20260921)
     ap.add_argument("--limit-expiries", type=int, default=0)
+    ap.add_argument("--tail-expiries", type=int, default=0)
     args = ap.parse_args()
 
     raw_root = Path(args.raw_cache)
@@ -287,7 +288,9 @@ def main():
     sessions = pd.DatetimeIndex(daily.date.unique()).sort_values()
     expiry_dates = sorted(pd.to_datetime(cal.expiry).dropna().unique())
     expiry_dates = [pd.Timestamp(x).normalize() for x in expiry_dates if pd.Timestamp("2020-01-01") <= pd.Timestamp(x) <= pd.Timestamp("2024-10-31")]
-    if args.limit_expiries > 0:
+    if args.tail_expiries > 0:
+        expiry_dates = expiry_dates[-args.tail_expiries:]
+    elif args.limit_expiries > 0:
         expiry_dates = expiry_dates[:args.limit_expiries]
     file_map = dict(zip(fmap.trade_date.dt.normalize(), fmap.member))
 
@@ -481,7 +484,8 @@ def main():
 
     trades = pd.DataFrame(all_rows)
     if trades.empty:
-        raise SystemExit("No T7 rows generated.")
+        Path(out/"T7_SKIP_COUNTS.json").write_text(json.dumps(skips, indent=2)+"\n")
+        raise SystemExit("No T7 rows generated; skip diagnostics written.")
 
     trades["decision_date"] = pd.to_datetime(trades.decision_date)
     trades["expiry"] = pd.to_datetime(trades.expiry)
