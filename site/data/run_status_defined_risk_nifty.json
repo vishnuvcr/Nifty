@@ -1,0 +1,14 @@
+{
+  "workflow": "NIFTY Defined-Risk Prospective Validation",
+  "workflow_run_id": "35582069757",
+  "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35582069757",
+  "trigger": "workflow_dispatch",
+  "mode": "backfill_0940",
+  "decision_date": "2026-09-21",
+  "entry_time_ist": "09:40",
+  "scheduled_time_ist": "09:30 IST",
+  "finished_at_ist": "2026-09-21T14:44:15+05:30",
+  "status": "success",
+  "scope": ["NIFTY JADE LIZARD", "NIFTY PUT RATIO SPREAD"],
+  "note": "Frozen prospective candidates. No retrospective ranking or retuning."
+}
