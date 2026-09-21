@@ -359,7 +359,8 @@ def run_candidate(request, signal_day, exec_day, daily, spot0930_map, paths, see
             "brokerage_per_order_inr": brokerage,
             "brokerage_total_inr": 4*brokerage,
             "stt_rate": stt_rate(decision),
-            "gate_enter": int(mc_net > 0),
+            "gate_enter_gross": int(mc_ev_gross > 0),
+            "gate_enter_net": int(mc_net > 0),
             "signal_timestamps": json.dumps(signal_ts, sort_keys=True),
             "execution_timestamps": json.dumps(exec_ts, sort_keys=True),
             "execution_delay_rule": "first positive-volume observation after signal",
@@ -450,7 +451,8 @@ def main():
         raise SystemExit("No T2 candidate rows generated.")
     trades["decision_date"] = pd.to_datetime(trades.decision_date)
     trades["expiry"] = pd.to_datetime(trades.expiry)
-    trades["entered"] = trades.gate_enter.astype(bool)
+    trades["entered"] = trades.gate_enter_gross.astype(bool)
+    trades["entered_net_gate"] = trades.gate_enter_net.astype(bool)
 
     # Candidate summary is evaluated for each brokerage scenario separately.
     summary = []
