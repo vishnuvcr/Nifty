@@ -35,12 +35,13 @@ jobs:
   orchestrate:
     if: github.event_name != 'push' || contains(github.event.head_commit.message, '[PAPER-TRADE-ORCHESTRATE]')
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       REPO: ${{ github.repository }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Resolve request
         id: resolve
@@ -55,27 +56,109 @@ jobs:
             DECISION_DATE="$(python -c 'import json; print(json.load(open("ci/paper_trade_signal_trigger.json"))["decision_date"])')"
             ENTRY_TIME="$(python -c 'import json; print(json.load(open("ci/paper_trade_signal_trigger.json"))["entry_time_ist"])')"
           fi
-          if [ "$MODE" = "backfill_0940" ]; then test -n "$DECISION_DATE"; test "$ENTRY_TIME" = "09:40"; fi
+          if [ "$MODE" = "backfill_0940" ]; then
+            test -n "$DECISION_DATE"
+            test "$ENTRY_TIME" = "09:40"
+          fi
           echo "mode=$MODE" >> "$GITHUB_OUTPUT"
           echo "decision_date=$DECISION_DATE" >> "$GITHUB_OUTPUT"
           echo "entry_time_ist=$ENTRY_TIME" >> "$GITHUB_OUTPUT"
 
-      - name: Dispatch strategy-family workflows simultaneously
+      - name: Dispatch all strategy families concurrently
+        id: dispatch
         shell: bash
         run: |
           set -euo pipefail
           M="${{ steps.resolve.outputs.mode }}"
           D="${{ steps.resolve.outputs.decision_date }}"
           T="${{ steps.resolve.outputs.entry_time_ist }}"
+          START_ISO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "start_iso=$START_ISO" >> "$GITHUB_OUTPUT"
           gh workflow run .github/workflows/generate-paper-signals.yml --repo "$REPO" --ref main -f mode="$M" -f decision_date="$D" -f entry_time_ist="$T" &
           gh workflow run .github/workflows/sensex-paper-signal-producer-v1.yml --repo "$REPO" --ref main -f mode="$M" -f decision_date="$D" -f entry_time_ist="$T" &
           gh workflow run .github/workflows/nifty-defined-risk-prospective-scheduled-v1.yml --repo "$REPO" --ref main -f mode="$M" -f decision_date="$D" -f entry_time_ist="$T" -f strategy=all &
           gh workflow run .github/workflows/sensex-defined-risk-prospective-scheduled-v1.yml --repo "$REPO" --ref main -f mode="$M" -f decision_date="$D" -f entry_time_ist="$T" -f strategy=all &
           wait
 
-      - name: Summary
+      - name: Resolve child workflow run IDs
+        id: child_runs
+        shell: bash
         run: |
-          echo "Paper Trade Signals Producer dispatched all strategy families."
-          echo "Mode: ${{ steps.resolve.outputs.mode }}"
-          echo "Decision date: ${{ steps.resolve.outputs.decision_date || 'today' }}"
-          echo "Entry time: ${{ steps.resolve.outputs.entry_time_ist }} IST"
+          set -euo pipefail
+          START_ISO="${{ steps.dispatch.outputs.start_iso }}"
+          : > /tmp/child_run_ids
+          for WF in generate-paper-signals.yml sensex-paper-signal-producer-v1.yml nifty-defined-risk-prospective-scheduled-v1.yml sensex-defined-risk-prospective-scheduled-v1.yml; do
+            ID=""
+            for attempt in $(seq 1 30); do
+              ID="$(gh run list --repo "$REPO" --workflow "$WF" --limit 10 --json databaseId,event,createdAt --jq --arg start "$START_ISO" '.[] | select(.event=="workflow_dispatch" and .createdAt >= $start) | .databaseId' | head -1 || true)"
+              if [ -n "$ID" ]; then break; fi
+              sleep 4
+            done
+            test -n "$ID"
+            echo "$ID" >> /tmp/child_run_ids
+          done
+          sort -u /tmp/child_run_ids > /tmp/child_run_ids.unique
+
+      - name: Wait for every child workflow
+        id: wait_children
+        shell: bash
+        run: |
+          set -u
+          all_done=0
+          failed=0
+          for cycle in $(seq 1 420); do
+            all_done=1
+            while read -r ID; do
+              state="$(gh run view "$ID" --repo "$REPO" --json status,conclusion --jq '.status + "|" + (.conclusion // "")')"
+              status="${state%%|*}"
+              conclusion="${state#*|}"
+              echo "child=$ID status=$status conclusion=$conclusion"
+              if [ "$status" != "completed" ]; then all_done=0; fi
+              if [ "$status" = "completed" ] && [ "$conclusion" != "success" ]; then failed=1; fi
+            done < /tmp/child_run_ids.unique
+            if [ "$all_done" -eq 1 ]; then break; fi
+            sleep 5
+          done
+          if [ "$all_done" -ne 1 ]; then
+            echo "Timed out waiting for child signal workflows." >&2
+            exit 1
+          fi
+          echo "failed=$failed" >> "$GITHUB_OUTPUT"
+
+      - name: Publish Pages once after all children
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run .github/workflows/publish-paper-pages.yml --repo "$REPO" --ref main
+          sleep 8
+          START_ISO="$(date -u -d '20 seconds ago' +%Y-%m-%dT%H:%M:%SZ)"
+          ID=""
+          for attempt in $(seq 1 30); do
+            ID="$(gh run list --repo "$REPO" --workflow publish-paper-pages.yml --limit 10 --json databaseId,event,createdAt --jq --arg start "$START_ISO" '.[] | select(.event=="workflow_dispatch" and .createdAt >= $start) | .databaseId' | head -1 || true)"
+            [ -n "$ID" ] && break
+            sleep 4
+          done
+          test -n "$ID"
+          for cycle in $(seq 1 420); do
+            state="$(gh run view "$ID" --repo "$REPO" --json status,conclusion --jq '.status + "|" + (.conclusion // "")')"
+            status="${state%%|*}"
+            conclusion="${state#*|}"
+            echo "pages=$ID status=$status conclusion=$conclusion"
+            if [ "$status" = "completed" ]; then
+              [ "$conclusion" = "success" ]
+              break
+            fi
+            sleep 5
+          done
+
+      - name: Final result
+        run: |
+          echo "mode=${{ steps.resolve.outputs.mode }}"
+          echo "decision_date=${{ steps.resolve.outputs.decision_date || 'today' }}"
+          echo "entry_time_ist=${{ steps.resolve.outputs.entry_time_ist }}"
+          echo "child_failed=${{ steps.wait_children.outputs.failed }}"
+          if [ "${{ steps.wait_children.outputs.failed }}" != "0" ]; then
+            echo "At least one child workflow failed; inspect the run audit and child logs." >&2
+            exit 1
+          fi
