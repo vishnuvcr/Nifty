@@ -29,47 +29,13 @@ ADAPTIVE_BY_REGIME = {
 }
 
 def fetch_nifty_history(start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
-    """Fetch past-only NIFTY closes from NSE."""
-    from curl_cffi import requests as curl_requests
-    sess = curl_requests.Session(impersonate="chrome")
-    sess.headers.update({"User-Agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/136.0 Safari/537.36", "Accept":"application/json,text/plain,*/*", "Accept-Language":"en-IN,en;q=0.9", "Referer":"https://www.nseindia.com/"})
-    sess.get("https://www.nseindia.com/option-chain", timeout=30)
-    chunks=[]; cur=pd.Timestamp(start).normalize(); end=pd.Timestamp(end).normalize()
-    while cur<=end:
-        ce=min(cur+pd.Timedelta(days=349),end)
-        rr=sess.get("https://www.nseindia.com/api/historical/indicesHistory", params={"indexType":"NIFTY 50","from":cur.strftime("%d-%m-%Y"),"to":ce.strftime("%d-%m-%Y")}, timeout=30)
-        rr.raise_for_status(); payload=rr.json()
-        rows=(payload.get("data") or {}).get("indexCloseOnlineRecords") or []
-        if rows:
-            df=pd.DataFrame(rows); dc="EOD_TIMESTAMP" if "EOD_TIMESTAMP" in df.columns else "TIMESTAMP"; cc="EOD_CLOSE_INDEX_VAL" if "EOD_CLOSE_INDEX_VAL" in df.columns else "CLOSE"
-            if dc in df.columns and cc in df.columns:
-                chunks.append(pd.DataFrame({"date":pd.to_datetime(df[dc],errors="coerce").dt.normalize(),"close":pd.to_numeric(df[cc],errors="coerce")}).dropna())
-        cur=ce+pd.Timedelta(days=1)
-    if not chunks: raise RuntimeError("NSE returned no NIFTY history")
-    return pd.concat(chunks,ignore_index=True).drop_duplicates("date").sort_values("date").reset_index(drop=True)
+    from scripts.batman_signal_producer import NSEClient
+    client=NSEClient()
+    return client.fetch_index_history(start.date(), end.date())
 
 def fetch_sensex_history(start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
-    """Fetch past-only SENSEX closes from BSE."""
-    import io
-    rr=requests.get("https://api.bseindia.com/BseIndiaAPI/api/ProduceCSVForDate/w", params={"strIndex":"SENSEX","dtFromDate":start.strftime("%d/%m/%Y"),"dtToDate":end.strftime("%d/%m/%Y"),"period":"D"}, headers={"User-Agent":"Mozilla/5.0","Referer":"https://www.bseindia.com/"}, timeout=30)
-    rr.raise_for_status()
-    try: payload=rr.json()
-    except Exception: payload=None
-    df=None
-    if isinstance(payload,dict):
-        data=payload.get("Data") or payload.get("data") or payload.get("Table")
-        if isinstance(data,list): df=pd.DataFrame(data)
-        elif isinstance(data,str): df=pd.read_csv(io.StringIO(data))
-    if df is None:
-        raw=rr.text.strip()
-        if not raw or "<" in raw[:100]: raise RuntimeError("BSE SENSEX history endpoint returned non-tabular data")
-        df=pd.read_csv(io.StringIO(raw))
-    lookup={str(c).strip().lower():c for c in df.columns}
-    dc=next((lookup[k] for k in ("date","dt","trading date") if k in lookup),None)
-    cc=next((lookup[k] for k in ("close","close price","closing price") if k in lookup),None)
-    if not dc or not cc: raise RuntimeError(f"unrecognized BSE SENSEX history schema: {list(df.columns)}")
-    out=pd.DataFrame({"date":pd.to_datetime(df[dc],errors="coerce",dayfirst=True).dt.normalize(),"close":pd.to_numeric(df[cc],errors="coerce")}).dropna()
-    return out.drop_duplicates("date").sort_values("date").reset_index(drop=True)
+    from scripts.sensex_paper_signal_producer_v1 import fetch_index_history
+    return fetch_index_history(start, end)
 
 def history(index: str, start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
     return fetch_nifty_history(start,end) if index=="NIFTY" else fetch_sensex_history(start,end)
