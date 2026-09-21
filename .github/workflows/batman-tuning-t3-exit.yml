@@ -76,7 +76,7 @@ jobs:
           python scripts/batman_t3_exit.py             --options-zip .cache/batman_t3/ayush_nifty_banknifty_options_2020_2024.zip             --long-index-zip .cache/batman_t3/nifty_index_2008_2020.zip             --raw-cache .cache/batman_t3             --out-dir reports/batman_t3             --paths 5000             --seed-base 20260921
 
       - name: Save T3 prepared cache
-        if: always()
+        if: always() && steps.t3cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: .cache/batman_t3
