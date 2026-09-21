@@ -79,9 +79,9 @@ jobs:
             "workflow_run_id": "${{ github.run_id }}",
             "workflow_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
             "trigger": "${{ github.event_name }}",
-            "mode": "${MODE}",
-            "decision_date": "${DECISION_DATE}",
-            "entry_time_ist": "${ENTRY_TIME_IST}",
+            "mode": "$MODE",
+            "decision_date": "$DECISION_DATE",
+            "entry_time_ist": "$ENTRY_TIME_IST",
             "scheduled_time_ist": "09:30 IST",
             "finished_at_ist": "${FINISHED_IST}",
             "status": "${JOB_STATUS}",
@@ -91,7 +91,7 @@ jobs:
           EOF
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add paper_trading/prospective_defined_risk/nifty site/prospective-defined-risk/nifty site/data/run_status_defined_risk_nifty.json \
+          git add site/prospective-defined-risk/nifty site/data/run_status_defined_risk_nifty.json \
                   site/prospective-defined-risk/nifty/jade-lizard/data/backfill_0940_2026-09-21.json \
                   site/prospective-defined-risk/nifty/put-ratio-spread/data/backfill_0940_2026-09-21.json
           if git diff --cached --quiet; then
