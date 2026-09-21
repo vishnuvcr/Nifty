@@ -15,16 +15,16 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from scripts.sensex_backtest_v1 import (
-    CANDIDATES_BY_REGIME,
-    compute_regime,
-    map_unique_strikes,
-    mc_terminal,
-    strategy_targets,
-    transaction_costs,
-)
+from scripts.sensex_backtest_v1 import CANDIDATES_BY_REGIME, compute_regime, mc_terminal, strategy_targets
 from scripts.sensex_paper_signal_producer_v1 import (
-    append_unique,
+    DEFAULT_SEED,
+    LOOKBACK,
+    LOT_SIZE,
+    MC_PATHS,
+    RANK_LOOKBACK,
+    RISK_BUDGET_INR,
+    SLIPPAGE_POINTS,
+    NoEligibleListedExpiry,
     fetch_index_history,
     fetch_live_sensex,
     fetch_option_chain,
@@ -34,20 +34,7 @@ from scripts.sensex_paper_signal_producer_v1 import (
     now_ist,
     third_future_weekday,
     write_json,
-    canonical_option_rows,
-    NoEligibleListedExpiry,
-    LOOKBACK,
-    RANK_LOOKBACK,
-    LOT_SIZE,
-    CAPITAL_INR,
-    RISK_BUDGET_INR,
-    SLIPPAGE_POINTS,
-    MC_PATHS,
-    DEFAULT_SEED,
 )
-
-IST = timezone(timedelta(hours=5, minutes=30))
-
 
 def data_limited_legs(strategy: str, terminal: np.ndarray, spot: float) -> list[dict[str, Any]]:
     targets = strategy_targets(strategy, terminal, spot)
@@ -71,7 +58,6 @@ def data_limited_legs(strategy: str, terminal: np.ndarray, spot: float) -> list[
         for side, option_type, label, qty in mapping
     ]
 
-
 def append_row_union(path: Path, row: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     new = pd.DataFrame([row])
@@ -82,10 +68,10 @@ def append_row_union(path: Path, row: dict[str, Any]) -> None:
     cols = list(dict.fromkeys([*old.columns.tolist(), *new.columns.tolist()]))
     old = old.reindex(columns=cols)
     new = new.reindex(columns=cols)
-    pd.concat([old, new], ignore_index=True).drop_duplicates(
-        subset=["signal_id"], keep="last"
-    ).to_csv(path, index=False)
-
+    combined = pd.concat([old, new], ignore_index=True)
+    if "signal_id" in combined.columns:
+        combined = combined.drop_duplicates(subset=["signal_id"], keep="last")
+    combined.to_csv(path, index=False)
 
 def make_data_limited_row(
     strategy: str,
@@ -97,8 +83,8 @@ def make_data_limited_row(
     terminal: np.ndarray,
     timestamp: Any,
     reason: str,
+    lookback_sessions_used: int,
 ) -> dict[str, Any]:
-    targets = strategy_targets("Batman", terminal, spot)
     row = {
         "signal_id": f"{decision_date.date()}|{expiry.date()}|{strategy}|DATA_LIMITED",
         "decision_date": str(decision_date.date()),
@@ -129,49 +115,47 @@ def make_data_limited_row(
             sort_keys=True,
         ),
         "entry_timestamp_ist": timestamp.isoformat(),
+        "entry_observation_time_ist": "09:30",
         "model_data_cutoff": str(cutoff.date()),
+        "model_lookback_sessions_used": int(lookback_sessions_used),
+        "model_lookback_status": (
+            "FULL_FROZEN_LOOKBACK" if lookback_sessions_used >= LOOKBACK else "DATA_LIMITED_SHORT_LOOKBACK"
+        ),
         "quote_retrieved_at_ist": "",
         "selected_candidate": "",
         "candidate_screen_json": "[]",
-        "entry_observation_time_ist": "09:30",
         "publication_status": "DECISION_TIME_AVAILABLE_DATA_OBSERVATION",
         "data_quality_status": (
-            "FULL_756_LOOKBACK" if len(terminal) == MC_PATHS else "DATA_LIMITED"
+            "FULL_UNDERLYING_MODEL" if lookback_sessions_used >= LOOKBACK else "DATA_LIMITED_UNDERLYING_MODEL"
         ),
         "status_reason": reason,
         "target_strikes_source": "MC terminal quantiles; listed strike not verified",
         "notes": (
-            "Available-data decision-time signal only. Underlying spot and past-only "
-            "return history are available, but live option premiums/bid-ask are missing. "
-            "No option premium, P&L, MC-EV or executable entry is claimed."
+            "Available-data decision-time signal only. Underlying spot and past-only return "
+            "history are available, but live option premiums/bid-ask are missing. No option "
+            "premium, P&L, MC-EV or executable entry is claimed."
         ),
     }
     if strategy == "Adaptive":
         regime_name = regime.get("vol_regime", "UNAVAILABLE")
         if regime_name in CANDIDATES_BY_REGIME:
-            row["candidate_screen_json"] = json.dumps(
-                [
-                    {"strategy": name, "regime": regime_name, "cpcv_selection_frequency": None}
-                    for name in CANDIDATES_BY_REGIME[regime_name]
-                ],
-                sort_keys=True,
-            )
+            candidates = [
+                {"strategy": name, "regime": regime_name}
+                for name in CANDIDATES_BY_REGIME[regime_name]
+            ]
         else:
-            row["candidate_screen_json"] = json.dumps(
-                [
-                    {"strategy": name, "regime": reg}
-                    for reg, names in CANDIDATES_BY_REGIME.items()
-                    for name in names
-                ],
-                sort_keys=True,
-            )
+            candidates = [
+                {"strategy": name, "regime": reg}
+                for reg, names in CANDIDATES_BY_REGIME.items()
+                for name in names
+            ]
+        row["candidate_screen_json"] = json.dumps(candidates, sort_keys=True)
         row["status_reason"] = (
             reason
             + "; Adaptive primary selection is withheld because highest net MC-EV "
             "cannot be computed without option premiums/bid-ask."
         )
     return row
-
 
 def run_one(
     strategy: str,
@@ -206,30 +190,46 @@ def run_one(
                 f"BSE live SENSEX quote is dated {live_date.date()}, not {decision_date.date()}"
             )
 
-    horizon = 3
     expiry = third_future_weekday(decision_date)
-    terminal = mc_terminal(returns, spot, horizon, MC_PATHS, seed)
+    terminal = mc_terminal(returns, spot, 3, MC_PATHS, seed)
     regime = compute_regime(history, cutoff, RANK_LOOKBACK)
 
     try:
         chain = fetch_option_chain(expiry)
+    except (NoEligibleListedExpiry, RuntimeError, ValueError) as exc:
+        row = make_data_limited_row(
+            strategy,
+            decision_date,
+            expiry,
+            regime,
+            spot,
+            cutoff,
+            terminal,
+            ts,
+            f"{type(exc).__name__}: {exc}",
+            min(LOOKBACK, len(returns)),
+        )
+        row["spot_source"] = spot_source
+    else:
         if strategy == "Batman":
             evaluation = live_strategy_eval(
                 "Batman", terminal, spot, chain, expiry, decision_date, seed
             )
             selected = "Batman"
         else:
-            rows: list[dict[str, Any]] = []
+            evaluations: list[dict[str, Any]] = []
             for candidate in CANDIDATES_BY_REGIME.get(regime["vol_regime"], []):
                 try:
-                    rows.append(
+                    evaluations.append(
                         live_strategy_eval(
                             candidate, terminal, spot, chain, expiry, decision_date, seed
                         )
                     )
-                except Exception as exc:
-                    rows.append({"strategy": candidate, "eligible": False, "error": str(exc)})
-            eligible = [x for x in rows if x.get("eligible")]
+                except (RuntimeError, ValueError, KeyError) as exc:
+                    evaluations.append(
+                        {"strategy": candidate, "eligible": False, "error": str(exc)}
+                    )
+            eligible = [x for x in evaluations if x.get("eligible")]
             if not eligible:
                 raise RuntimeError(
                     "no eligible frozen Adaptive candidate after executable quote/cost gates"
@@ -264,33 +264,6 @@ def run_one(
                 "publication_status": "EXECUTABLE_QUOTE_OBSERVATION",
             }
         )
-    except (NoEligibleListedExpiry, Exception) as exc:
-        row = make_data_limited_row(
-            strategy,
-            decision_date,
-            expiry,
-            regime,
-            spot,
-            cutoff,
-            terminal,
-            ts,
-            f"{type(exc).__name__}: {exc}",
-        )
-        row["spot_source"] = spot_source
-        row["model_lookback_sessions_used"] = int(min(LOOKBACK, len(returns)))
-        row["model_lookback_status"] = (
-            "FULL_FROZEN_LOOKBACK" if len(returns) >= LOOKBACK else "DATA_LIMITED_SHORT_LOOKBACK"
-        )
-        row["terminal_quantiles"] = json.dumps(
-            {
-                label: float(value)
-                for label, value in zip(
-                    ("p10", "p20", "p35", "p65", "p80", "p90"),
-                    np.percentile(terminal, [10, 20, 35, 65, 80, 90]),
-                )
-            },
-            sort_keys=True,
-        )
 
     append_row_union(ledger, row)
     payload = {
@@ -300,14 +273,13 @@ def run_one(
         "decision_time_rule": "09:30 IST",
         "today_observation_date": str(decision_date.date()),
         "publication_note": (
-            "A DATA_LIMITED_CANDIDATE is a lookahead-safe decision-time observation, not an "
-            "executable option trade. It is published when the underlying/model data are "
+            "DATA_LIMITED_CANDIDATE is a lookahead-safe decision-time observation, not an "
+            "executable option trade. It is published when underlying/model data are "
             "available but option premiums/bid-ask are not."
         ),
     }
     write_json(output, payload)
     return payload
-
 
 def main() -> int:
     ap = argparse.ArgumentParser()
@@ -328,11 +300,8 @@ def main() -> int:
         print(json.dumps(payload, indent=2, default=str))
         return 0
     except Exception as exc:
-        # A true acquisition/runtime failure remains a hard stop and is not downgraded
-        # to a candidate signal.
         print(f"{type(exc).__name__}: {exc}", file=sys.stderr)
         return 2
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
