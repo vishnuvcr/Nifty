@@ -1,9 +1,128 @@
 name: BATMAN Tuning T4 Nested WFO
+
 on:
+  push:
+    branches:
+      - research/batman-tuning-t4-wfo-v1
   workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
 jobs:
-  t4:
+  nested_wfo:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
-      - run: echo "T4 requires completed T2 and T3 candidate matrices." && exit 1
+
+      - name: Download accepted T3 corrected artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p reports/t3_source
+          gh run download 35601226109 --repo "${{ github.repository }}" --name batman-tuning-t3-exit-results --dir reports/t3_source
+          find reports/t3_source -type f -maxdepth 2 -print
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas
+
+      - name: Run nested WFO
+        run: |
+          python scripts/batman_t4_nested_wfo.py --trade-level reports/t3_source/T3_EXIT_TRADE_LEVEL.csv --out-dir reports/batman_t4
+
+      - name: Upload T4 development results
+        uses: actions/upload-artifact@v4
+        with:
+          name: batman-tuning-t4-development
+          path: |
+            reports/batman_t4/T4_OUTER_OOS_SUMMARY.csv
+            reports/batman_t4/T4_OUTER_OOS_TRADE_LEVEL.csv
+            reports/batman_t4/T4_INNER_SELECTION_TABLES.csv
+            reports/batman_t4/T4_FINAL_DEVELOPMENT_CANDIDATE_MATRIX.csv
+            reports/batman_t4/T4_FINAL_DEVELOPMENT_SELECTION.csv
+            reports/batman_t4/T4_FINAL_SELECTION.json
+            reports/batman_t4/T4_REPORT.json
+          retention-days: 30
+
+  holdout_probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore T4 holdout source cache
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/batman_t4_holdout
+          key: batman-tuning-t4-holdout-v1-2026-09-21
+
+      - name: Prepare source cache
+        run: mkdir -p .cache/batman_t4_holdout
+
+      - name: Acquire Rahul/Dhan 2025-2026 options when unavailable
+        run: |
+          set -euo pipefail
+          if [ ! -s .cache/batman_t4_holdout/rahul_nifty_options_2025_2026.zip ]; then
+            curl -fL --retry 3 --retry-all-errors "https://www.kaggle.com/api/v1/datasets/download/rahultr1/nifty-options-weekly-1min-2025-01-01-to-2026-07-25" -o .cache/batman_t4_holdout/rahul_nifty_options_2025_2026.zip
+          fi
+
+      - name: Acquire NIFTY daily index
+        run: |
+          curl -fL --retry 3 --retry-all-errors "https://raw.githubusercontent.com/Hareeshkesavan/Stock-Market-Dataset/main/Nifty%2050%20Historical%20Data.csv" -o .cache/batman_t4_holdout/nifty50_source.csv
+
+      - name: Probe holdout schema and coverage
+        run: |
+          python - <<'PY'
+          import json, zipfile
+          from pathlib import Path
+          import pandas as pd
+          root=Path(".cache/batman_t4_holdout")
+          report={}
+          opt=root/"rahul_nifty_options_2025_2026.zip"
+          with zipfile.ZipFile(opt) as z:
+              names=[n for n in z.namelist() if not n.endswith("/")]
+              csvs=[n for n in names if n.lower().endswith(".csv")]
+              target=csvs[0]
+              with z.open(target) as fh:
+                  sample=pd.read_csv(fh,nrows=20000)
+              report["archive_member_count"]=len(names)
+              report["csv_members"]=csvs[:10]
+              report["member"]=target
+              report["columns"]=list(sample.columns)
+              report["dtypes"]={c:str(sample[c].dtype) for c in sample.columns}
+              for c in ["timestamp","expiry_code","strike_price","option_type","spot_price","from_date","to_date"]:
+                  if c in sample.columns:
+                      report[c+"_sample"]=sample[c].head(10).astype(str).tolist()
+              if "timestamp" in sample.columns:
+                  ts=pd.to_datetime(sample.timestamp,errors="coerce")
+                  report["sample_timestamp_min"]=str(ts.min())
+                  report["sample_timestamp_max"]=str(ts.max())
+          idx=pd.read_csv(root/"nifty50_source.csv")
+          idx.columns=[str(c).strip().lower() for c in idx.columns]
+          idx["date"]=pd.to_datetime(idx["date"],errors="coerce")
+          report["index_min"]=str(idx.date.min())
+          report["index_max"]=str(idx.date.max())
+          report["index_rows"]=int(idx.date.notna().sum())
+          out=Path("reports/batman_t4"); out.mkdir(parents=True,exist_ok=True)
+          (out/"T4_HOLDOUT_SOURCE_AUDIT.json").write_text(json.dumps(report,indent=2)+"\n")
+          print(json.dumps(report,indent=2))
+          PY
+
+      - name: Save T4 holdout source cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/batman_t4_holdout
+          key: batman-tuning-t4-holdout-v1-2026-09-21
+
+      - name: Upload holdout probe
+        uses: actions/upload-artifact@v4
+        with:
+          name: batman-tuning-t4-holdout-probe
+          path: reports/batman_t4/T4_HOLDOUT_SOURCE_AUDIT.json
+          retention-days: 30
