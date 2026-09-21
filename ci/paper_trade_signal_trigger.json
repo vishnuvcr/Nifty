@@ -2,6 +2,6 @@
   "mode": "backfill_0940",
   "decision_date": "2026-09-21",
   "entry_time_ist": "09:40",
-  "request_id": "2026-09-21-0940-available-data-signal-final-v5",
-  "reason": "Final available-data candidate run using cached pre-09:40 underlying history; no exact option-chain quotes required for candidate generation."
+  "request_id": "2026-09-21-0940-final-conservative-candidate-v6",
+  "reason": "Regenerate final candidate signals with explicit UNAVAILABLE volatility regime when past-only rank history is insufficient."
 }
