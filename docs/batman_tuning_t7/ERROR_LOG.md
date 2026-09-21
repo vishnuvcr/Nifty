@@ -12,3 +12,6 @@ The representative T7 smoke test reached the trailing-stop exit branch and expos
 
 E033
 The initial T7 branch contained the development freeze but no executable 2025–2026 holdout engine. The joint engine intentionally stops at the development horizon. Correction: a separate T7 holdout engine/workflow is added using the accepted 2025–2026 option archive convention, with explicit lot-size/STT rules, 2-point primary slippage, 4-point stress, and frozen-rule-only evaluation. The T7 configuration remains unchanged.
+
+E034
+The first successful T7 holdout run incorrectly evaluated all three comparison rules on both D3 and D4 candidate entries, mixing entry-day populations. That output is rejected and must not be used for inference. Correction: each rule is now evaluated only on its declared entry offset; the D4 expiry-only result is retained only as a descriptive decomposition. Paired comparisons are matched by expiry rather than decision date because D3 and D4 entries occur on different sessions.
