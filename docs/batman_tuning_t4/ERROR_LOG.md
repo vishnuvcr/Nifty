@@ -21,3 +21,6 @@ The holdout diagnostics showed all 81 requests failed the 756-session history ga
 
 E028
 The holdout reached four-leg entry construction but failed comparing Rahul's timezone-aware UTC option timestamps with a timezone-naive entry sentinel. Correction: entry_complete is now initialized as None and remains timezone-aware UTC throughout execution.
+
+E029
+The holdout basket-mark construction crashed when one selected leg (c80 in the observed case) had no synchronized post-entry mark column. Correction: such trades now use the pre-declared expiry fallback and remain in the denominator; triggered exits still use the trailing-target rule when all legs have synchronized marks.
