@@ -17,3 +17,5 @@ The first corrected T3 computation passed all unit tests but stopped before the 
 Final T3 trigger issued after the preceding workflow cancellations. No further trigger commits will be made until this run completes.
 
 The push-triggered T3 workflow was stabilized on 2026-09-21: the authoritative T1 raw cache is restored directly, source files are asserted before execution, and redundant multi-gigabyte downloads are removed. One fresh run will now be triggered; no concurrent trigger loop remains.
+
+T3 run 16 completed successfully but its results are formally rejected because non-triggering exits were excluded from the trade denominator. The exit grid is being rerun with expiry fallback and an automated completeness assertion requiring all 165 variants to have the same eligible-entry denominator at each brokerage scenario.
