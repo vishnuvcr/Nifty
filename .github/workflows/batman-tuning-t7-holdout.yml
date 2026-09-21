@@ -1,0 +1,116 @@
+name: BATMAN Tuning T7 Holdout
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/batman-tuning-t7-joint-wfo-v1
+    paths:
+      - scripts/batman_t7_holdout.py
+      - configs/batman_t7_frozen_selection.json
+      - tests/test_batman_t7_joint.py
+      - .github/workflows/batman-tuning-t7-holdout.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: batman-tuning-t7-holdout
+  cancel-in-progress: true
+
+jobs:
+  holdout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore T7 holdout cache
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/batman_t7_holdout
+          key: batman-tuning-t7-holdout-v1-2026-09-21
+
+      - name: Prepare source cache
+        run: mkdir -p .cache/batman_t7_holdout
+
+      - name: Acquire 2025-2026 NIFTY option archive when unavailable
+        run: |
+          set -euo pipefail
+          if [ ! -s .cache/batman_t7_holdout/rahul_nifty_options_2025_2026.zip ]; then
+            curl -fL --retry 3 --retry-all-errors               "https://www.kaggle.com/api/v1/datasets/download/rahultr1/nifty-options-weekly-1min-2025-01-01-to-2026-07-25"               -o .cache/batman_t7_holdout/rahul_nifty_options_2025_2026.zip
+          fi
+
+      - name: Acquire NIFTY daily source when unavailable
+        run: |
+          set -euo pipefail
+          if [ ! -s .cache/batman_t7_holdout/nifty50_source.csv ]; then
+            curl -fL --retry 3 --retry-all-errors               "https://raw.githubusercontent.com/Hareeshkesavan/Stock-Market-Dataset/main/Nifty%2050%20Historical%20Data.csv"               -o .cache/batman_t7_holdout/nifty50_source.csv
+          fi
+
+      - name: Validate frozen selection
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open("configs/batman_t7_frozen_selection.json"))
+          assert d["status"]=="FROZEN_BEFORE_HOLDOUT"
+          assert d["entry"]["offset"]==4
+          assert d["entry"]["timing"]=="same_session_0930"
+          assert d["entry"]["gate"]=="gross_mc_ev_gt_0"
+          assert d["exit"]["family"]=="trailing_target"
+          assert abs(d["exit"]["activation_of_max_profit_reference"]-0.30)<1e-12
+          assert abs(d["exit"]["retracement_of_max_profit_reference"]-0.30)<1e-12
+          print("T7 FROZEN SELECTION VALID")
+          PY
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas pytest
+
+      - name: Run existing T7 unit tests
+        run: python -m pytest -q tests/test_batman_t7_joint.py
+
+      - name: Compile T7 holdout engine
+        run: python -m py_compile scripts/batman_t7_holdout.py
+
+      - name: Validate source files
+        run: |
+          set -euo pipefail
+          test -s .cache/batman_t7_holdout/rahul_nifty_options_2025_2026.zip
+          test -s .cache/batman_t7_holdout/nifty50_source.csv
+          sha256sum .cache/batman_t7_holdout/rahul_nifty_options_2025_2026.zip             .cache/batman_t7_holdout/nifty50_source.csv
+
+      - name: Run untouched 2025-2026 holdout
+        run: |
+          rm -rf reports/batman_t7_holdout
+          python scripts/batman_t7_holdout.py             --options-zip .cache/batman_t7_holdout/rahul_nifty_options_2025_2026.zip             --daily-index .cache/batman_t7_holdout/nifty50_source.csv             --out-dir reports/batman_t7_holdout
+
+      - name: Save T7 holdout source cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/batman_t7_holdout
+          key: batman-tuning-t7-holdout-v1-2026-09-21
+
+      - name: Upload T7 holdout results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: batman-tuning-t7-holdout
+          path: |
+            reports/batman_t7_holdout/T7_HOLDOUT_TRADE_LEVEL.csv
+            reports/batman_t7_holdout/T7_HOLDOUT_SUMMARY.csv
+            reports/batman_t7_holdout/T7_HOLDOUT_YEARLY.csv
+            reports/batman_t7_holdout/T7_HOLDOUT_PAIRED_COMPARISON.csv
+            reports/batman_t7_holdout/T7_HOLDOUT_REPORT.json
+            reports/batman_t7_holdout/T7_HOLDOUT_SKIP_COUNTS.json
+            reports/batman_t7_holdout/T7_HOLDOUT_STAGE_COUNTS.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "T7 untouched holdout completed or failed; inspect uploaded artifacts." >> "$GITHUB_STEP_SUMMARY"
