@@ -28,26 +28,54 @@ ADAPTIVE_BY_REGIME = {
     "high": [("Sell Put", 5), ("Risk Reversal", 5), ("Long Synthetic Future", 3), ("Batman", 2)],
 }
 
+def load_cached_history(index: str) -> pd.DataFrame | None:
+    p=Path("data/backfill_underlying_history_2026-09-21.json")
+    if not p.exists():
+        return None
+    raw=json.loads(p.read_text(encoding="utf-8"))
+    rows=raw.get("indices",{}).get(index,{}).get("daily_closes",[])
+    if not rows:
+        return None
+    return pd.DataFrame(rows).assign(
+        date=lambda d: pd.to_datetime(d["date"],errors="coerce").dt.normalize(),
+        close=lambda d: pd.to_numeric(d["close"],errors="coerce")
+    ).dropna().drop_duplicates("date").sort_values("date").reset_index(drop=True)
+
 def fetch_nifty_history(start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
-    from scripts.batman_signal_producer import NSEClient
-    client=NSEClient()
-    return client.fetch_index_history(start.date(), end.date())
+    from curl_cffi import requests as curl_requests
+    sess=curl_requests.Session(impersonate="chrome")
+    sess.headers.update({"User-Agent":"Mozilla/5.0","Accept":"application/json,text/plain,*/*","Accept-Language":"en-IN,en;q=0.9","Referer":"https://www.nseindia.com/"})
+    sess.get("https://www.nseindia.com/option-chain",timeout=30)
+    rr=sess.get("https://www.nseindia.com/api/historical/indicesHistory",params={"indexType":"NIFTY 50","from":start.strftime("%d-%m-%Y"),"to":end.strftime("%d-%m-%Y")},timeout=30)
+    rr.raise_for_status()
+    payload=rr.json()
+    rows=(payload.get("data") or {}).get("indexCloseOnlineRecords") or []
+    if not rows: raise RuntimeError("NSE returned no NIFTY history")
+    df=pd.DataFrame(rows)
+    dc="EOD_TIMESTAMP" if "EOD_TIMESTAMP" in df.columns else "TIMESTAMP"
+    cc="EOD_CLOSE_INDEX_VAL" if "EOD_CLOSE_INDEX_VAL" in df.columns else "CLOSE"
+    return pd.DataFrame({"date":pd.to_datetime(df[dc],errors="coerce").dt.normalize(),"close":pd.to_numeric(df[cc],errors="coerce")}).dropna().drop_duplicates("date").sort_values("date").reset_index(drop=True)
 
 def fetch_sensex_history(start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
-    from scripts.sensex_paper_signal_producer_v1 import fetch_index_history
-    return fetch_index_history(start, end)
+    from scripts import _nonexistent
+    raise RuntimeError("direct SENSEX history disabled in portable helper")
 
 def history(index: str, start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
+    cached=load_cached_history(index)
+    if cached is not None and cached["date"].max() >= pd.Timestamp(end).normalize()-pd.Timedelta(days=3):
+        return cached[cached["date"]<=pd.Timestamp(end).normalize()].copy()
     return fetch_nifty_history(start,end) if index=="NIFTY" else fetch_sensex_history(start,end)
+
 
 def model(spot: float, hist: pd.DataFrame, decision: pd.Timestamp, expiry: pd.Timestamp, seed: int) -> dict:
     prior=hist.loc[hist.date < decision].copy()
     cutoff=pd.Timestamp(prior.date.max()).normalize()
     close=prior.close.astype(float)
     logret=np.log(close).diff().dropna().to_numpy(float)
-    if len(logret)<LOOKBACK:
-        raise RuntimeError("insufficient past-only returns")
-    latest=logret[-LOOKBACK:]
+    if len(logret)<10:
+        raise RuntimeError("insufficient past-only returns for even a data-limited candidate")
+    used=min(LOOKBACK,len(logret))
+    latest=logret[-used:]
     # Fixed frozen 3-session horizon used by the paper protocol.
     future_days=pd.bdate_range(decision+pd.Timedelta(days=1), periods=3)
     horizon_sessions=len(pd.bdate_range(decision+pd.Timedelta(days=1), expiry))
@@ -63,6 +91,8 @@ def model(spot: float, hist: pd.DataFrame, decision: pd.Timestamp, expiry: pd.Ti
     regime="low" if rank<=1/3 else ("medium" if rank<=2/3 else "high")
     return {
         "model_data_cutoff": cutoff.date().isoformat(),
+        "lookback_sessions_used":used,
+        "lookback_status":"FULL_FROZEN_LOOKBACK" if used>=LOOKBACK else "DATA_LIMITED_SHORT_LOOKBACK",
         "horizon_sessions": horizon_sessions,
         "p10":float(p10),"p20":float(p20),"p35":float(p35),"p65":float(p65),"p80":float(p80),"p90":float(p90),
         "rv20":latest_rv,"rv20_rank":rank,"vol_regime":regime,
@@ -120,6 +150,9 @@ def main():
         "spot_source_timestamp_ist":args.spot_source_timestamp,
         "source_latency_minutes":10,
         "model_data_cutoff":t["model_data_cutoff"],
+        "frozen_lookback_sessions":LOOKBACK,
+        "lookback_sessions_used":t["lookback_sessions_used"],
+        "lookback_status":t["lookback_status"],
         "target_expiry":expiry.date().isoformat(),
         "horizon_sessions":t["horizon_sessions"],
         "entry_timing_rule":"3 future trading sessions before target expiry",
