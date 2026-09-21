@@ -1,22 +1,10 @@
 name: SENSEX Paper Trading Signal Scanners
 
 on:
+  schedule:
+    - cron: "0 4 * * 1-5"
   workflow_dispatch:
     inputs:
-      mode:
-        description: "Run mode"
-        required: true
-        default: "scheduled"
-        type: choice
-        options: [scheduled, backfill_0940]
-      decision_date:
-        description: "Decision date YYYY-MM-DD for backfill"
-        required: false
-        default: ""
-      entry_time_ist:
-        description: "Entry time for backfill"
-        required: false
-        default: "09:30"
       seed:
         description: "Fixed Monte Carlo seed"
         required: true
@@ -36,9 +24,6 @@ jobs:
     timeout-minutes: 20
     env:
       SEED: ${{ github.event.inputs.seed || '20260920' }}
-      MODE: ${{ github.event.inputs.mode || 'scheduled' }}
-      DECISION_DATE: ${{ github.event.inputs.decision_date || '' }}
-      ENTRY_TIME_IST: ${{ github.event.inputs.entry_time_ist || '09:30' }}
     steps:
       - name: Checkout SENSEX S7 branch
         uses: actions/checkout@v4
@@ -56,34 +41,13 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install numpy pandas requests
 
-      - name: Run Batman scanner
-        if: env.MODE != 'backfill_0940'
+      - name: Run today's Batman decision-time signal
         run: |
-          python scripts/sensex_paper_signal_producer_v1.py \
-            --strategy Batman \
-            --ledger paper_trading/sensex_batman_ledger.csv \
-            --output-json site/sensex/batman/data/latest_signal.json \
-            --seed "$SEED"
+          python scripts/sensex_available_data_signal_producer_v1.py             --strategy Batman             --ledger paper_trading/sensex_batman_ledger.csv             --output-json site/sensex/batman/data/latest_signal.json             --seed "$SEED"
 
-      - name: Run Adaptive scanner
-        if: env.MODE != 'backfill_0940'
+      - name: Run today's Adaptive decision-time signal
         run: |
-          python scripts/sensex_paper_signal_producer_v1.py \
-            --strategy Adaptive \
-            --ledger paper_trading/sensex_adaptive_ledger.csv \
-            --output-json site/sensex/adaptive/data/latest_signal.json \
-            --seed "$SEED"
-
-      - name: Record available-data 09:40 candidate signals
-        if: env.MODE == 'backfill_0940'
-        run: |
-          set -euo pipefail
-          git fetch origin main
-          git show origin/main:scripts/available_data_backfill_signal_v1.py > /tmp/available_data_backfill_signal_v1.py
-          mkdir -p data
-          git show origin/main:data/backfill_underlying_history_2026-09-21.json > data/backfill_underlying_history_2026-09-21.json
-          python /tmp/available_data_backfill_signal_v1.py --strategy "SENSEX BATMAN" --decision-date "$DECISION_DATE" --entry-time-ist "$ENTRY_TIME_IST" --spot 74748.70 --spot-source "Business Standard Capital Market News (verified 09:30 IST print)" --spot-source-timestamp "09:30" --output-json site/sensex/batman/data/backfill_0940_2026-09-21.json
-          python /tmp/available_data_backfill_signal_v1.py --strategy "SENSEX ADAPTIVE" --decision-date "$DECISION_DATE" --entry-time-ist "$ENTRY_TIME_IST" --spot 74748.70 --spot-source "Business Standard Capital Market News (verified 09:30 IST print)" --spot-source-timestamp "09:30" --output-json site/sensex/adaptive/data/backfill_0940_2026-09-21.json
+          python scripts/sensex_available_data_signal_producer_v1.py             --strategy Adaptive             --ledger paper_trading/sensex_adaptive_ledger.csv             --output-json site/sensex/adaptive/data/latest_signal.json             --seed "$SEED"
 
       - name: Persist SENSEX state and run audit
         if: always()
@@ -98,34 +62,33 @@ jobs:
             "workflow_run_id": "${{ github.run_id }}",
             "workflow_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
             "trigger": "${{ github.event_name }}",
-            "mode": "$MODE",
-            "decision_date": "$DECISION_DATE",
-            "entry_time_ist": "$ENTRY_TIME_IST",
+            "mode": "decision_time_signal",
+            "decision_date": "$(TZ=Asia/Kolkata date +%F)",
+            "entry_time_ist": "09:30",
             "scheduled_time_ist": "09:30 IST",
             "finished_at_ist": "${FINISHED_IST}",
             "status": "${JOB_STATUS}",
             "scope": ["SENSEX BATMAN", "SENSEX ADAPTIVE"],
-            "note": "SENSEX scanner audit record. Missing/broken quote data remains a hard NO_TRADE."
+            "note": "Underlying/model availability is allowed to produce a DATA_LIMITED_CANDIDATE. Missing option premiums/bid-ask never become an executable trade or LTP fallback."
           }
           EOF
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin research/sensex-s7-paper-trading-v1
           git pull --rebase --autostash origin research/sensex-s7-paper-trading-v1
-          git add paper_trading/sensex_batman_ledger.csv \
-                  paper_trading/sensex_adaptive_ledger.csv \
-                  site/sensex/batman/data/latest_signal.json \
-                  site/sensex/adaptive/data/latest_signal.json \
-                  site/data/run_status_sensex.json \
-                  site/sensex/batman/data/backfill_0940_2026-09-21.json \
-                  site/sensex/adaptive/data/backfill_0940_2026-09-21.json \
-                  docs/sensex_options/ERROR_LOG.md
+          git add paper_trading/sensex_batman_ledger.csv                   paper_trading/sensex_adaptive_ledger.csv                   site/sensex/batman/data/latest_signal.json                   site/sensex/adaptive/data/latest_signal.json                   site/data/run_status_sensex.json                   docs/sensex_options/ERROR_LOG.md
           if git diff --cached --quiet; then
             echo "No SENSEX scanner state changes."
           else
-            git commit -m "chore: persist SENSEX scanner state and run audit [skip ci]"
+            git commit -m "chore: persist SENSEX decision-time signals [skip ci]"
             git push origin HEAD:research/sensex-s7-paper-trading-v1
           fi
+
+      - name: Trigger combined GitHub Pages publication
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run publish-paper-pages.yml --repo "${{ github.repository }}" --ref main
 
       - name: Summary
         run: |
@@ -134,8 +97,8 @@ jobs:
             echo
             echo "- Schedule: weekdays at 09:30 IST (04:00 UTC)"
             echo "- Strategies: Batman + Adaptive"
-            echo "- Monte Carlo: 5,000 paths; 756-session history"
-            echo "- Entry quote: live bid/ask with 0.50-point per-leg slippage stress"
-            echo "- Fail-safe: missing/broken quote data becomes NO_TRADE; no LTP substitution"
+            echo "- Decision-time mode: underlying/model signal is published even when option premiums/bid-ask are unavailable"
+            echo "- DATA_LIMITED_CANDIDATE: visible audit signal, not an executable paper trade"
+            echo "- No LTP substitution; executable entry still requires verified option bid/ask"
             echo "- Page refresh/settlement: separate 16:00 IST workflow"
           } >> "$GITHUB_STEP_SUMMARY"
