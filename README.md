@@ -21,8 +21,11 @@ Study files:
 - [Data manifest](docs/sensex_options/DATA_MANIFEST.md)
 - [Batman config](configs/sensex_batman_v1.json)
 - [Adaptive config](configs/sensex_adaptive_v1.json)
+- [S7 paper-trading rules](docs/sensex_options/S7_PAPER_TRADING.md)
 
-Current status: **S0 transfer-specification freeze in progress; no SENSEX performance conclusion yet.**
+Current status: **S7 active — 21-Sep-2026 09:30 decision-time DATA_LIMITED_CANDIDATE observations published; executable quote-complete observation pending.**
+
+Today's observed SENSEX spot at the 09:30 decision boundary was 74,748.70. Option premium/bid-ask data were unavailable, so Batman target levels were published without an executable entry and Adaptive primary selection was withheld. These decision-time observations are not counted as trades or P&L.
 
 The SENSEX study is intentionally excluded from the NIFTY MC-WFO manuscript until and unless a separate cross-index analysis is formally created.
 
