@@ -389,58 +389,109 @@ def main():
             allm = pd.concat(frames, ignore_index=True)
             piv = allm.pivot_table(index="timestamp", columns="label", values="close", aggfunc="last").sort_index()
             needed = [x[3] for x in c["legs"]]
-            piv = piv.ffill().dropna(subset=needed)
-            pnl = np.zeros(len(piv))
-            for typ,strike,qty,label in c["legs"]:
-                pnl += qty * piv[label].to_numpy(float)
-            piv["pnl_points"] = pnl + c["entry_cashflow"]
-            piv = piv.reset_index().sort_values("timestamp")
+            missing_labels = [lab for lab in needed if lab not in piv.columns]
 
             peak = 0.0
             activated = False
             trigger_ts = None
-            for _,row in piv.iterrows():
-                p=float(row.pnl_points)
-                if not activated and p >= 0.20 * c["max_profit"]:
-                    activated=True
-                    peak=p
-                elif activated:
-                    peak=max(peak,p)
-                    if p <= peak - 0.10 * c["max_profit"]:
-                        trigger_ts=pd.Timestamp(row.timestamp)
-                        break
+
+            if not missing_labels:
+                piv = piv.ffill().dropna(subset=needed)
+                pnl = np.zeros(len(piv))
+                for typ,strike,qty,label in c["legs"]:
+                    pnl += qty * piv[label].to_numpy(float)
+                piv["pnl_points"] = pnl + c["entry_cashflow"]
+                piv = piv.reset_index().sort_values("timestamp")
+
+                for _,row in piv.iterrows():
+                    p=float(row.pnl_points)
+                    if not activated and p >= 0.20 * c["max_profit"]:
+                        activated=True
+                        peak=p
+                    elif activated:
+                        peak=max(peak,p)
+                        if p <= peak - 0.10 * c["max_profit"]:
+                            trigger_ts=pd.Timestamp(row.timestamp)
+                            break
 
             # Always retain the trade: trigger exit or expiry fallback.
             if trigger_ts is None:
-                exit_rows = piv.iloc[-1]
                 exit_mode="expiry_fallback"
-                exit_time=pd.Timestamp(exit_rows.timestamp)
-                exits=[]
-                for typ,strike,qty,label in c["legs"]:
-                    g=z[(z.option_type.eq(typ))&z.strike_price.eq(float(strike))&(z.timestamp<=exit_time)&(z.volume>0)].sort_values("timestamp")
-                    if g.empty:
-                        exits=[]; break
-                    r=g.iloc[-1]
-                    exits.append((typ,strike,qty,label,float(r.close),pd.Timestamp(r.timestamp)))
-                if not exits:
-                    skips["expiry_exit_missing"] = skips.get("expiry_exit_missing",0)+1
-                    continue
+                if missing_labels:
+                    # A leg never had a synchronized post-entry mark. Use the
+                    # last available mark for every leg on the target expiry date.
+                    fallback_date = pd.Timestamp(c["expiry"]).normalize()
+                    exits=[]
+                    for typ,strike,qty,label in c["legs"]:
+                        g=z[
+                            (z.option_type.eq(typ))
+                            & z.strike_price.eq(float(strike))
+                            & (z.timestamp.dt.tz_convert("Asia/Kolkata").dt.normalize().dt.tz_localize(None) == fallback_date)
+                            & (z.volume>0)
+                        ].sort_values("timestamp")
+                        if g.empty:
+                            exits=[]; break
+                        r=g.iloc[-1]
+                        exits.append((typ,strike,qty,label,float(r.close),pd.Timestamp(r.timestamp)))
+                    if not exits:
+                        skips["expiry_exit_missing"] = skips.get("expiry_exit_missing",0)+1
+                        continue
+                    exit_time=max(x[5] for x in exits)
+                else:
+                    exit_rows = piv.iloc[-1]
+                    exit_time=pd.Timestamp(exit_rows.timestamp)
+                    exits=[]
+                    for typ,strike,qty,label in c["legs"]:
+                        g=z[
+                            (z.option_type.eq(typ))
+                            & z.strike_price.eq(float(strike))
+                            & (z.timestamp<=exit_time)
+                            & (z.volume>0)
+                        ].sort_values("timestamp")
+                        if g.empty:
+                            exits=[]; break
+                        r=g.iloc[-1]
+                        exits.append((typ,strike,qty,label,float(r.close),pd.Timestamp(r.timestamp)))
+                    if not exits:
+                        skips["expiry_exit_missing"] = skips.get("expiry_exit_missing",0)+1
+                        continue
             else:
                 exits=[]
                 exit_mode="trailing_target"
                 for typ,strike,qty,label in c["legs"]:
-                    g=z[(z.option_type.eq(typ))&z.strike_price.eq(float(strike))&(z.timestamp>trigger_ts)&(z.volume>0)].sort_values("timestamp")
+                    g=z[
+                        (z.option_type.eq(typ))
+                        & z.strike_price.eq(float(strike))
+                        & (z.timestamp>trigger_ts)
+                        & (z.volume>0)
+                    ].sort_values("timestamp")
                     if g.empty:
                         exits=[]; break
                     r=g.iloc[0]
                     exits.append((typ,strike,qty,label,float(r.close),pd.Timestamp(r.timestamp)))
                 if not exits:
-                    # Trigger happened but next executable quote was unavailable; use expiry fallback.
                     exit_mode="expiry_fallback_after_unexecutable_trigger"
                     exits=[]
-                    expiry_ts=piv.iloc[-1].timestamp
+                    if missing_labels:
+                        fallback_ts = None
+                    else:
+                        fallback_ts = piv.iloc[-1].timestamp if len(piv) else None
+                    fallback_date = pd.Timestamp(c["expiry"]).normalize()
                     for typ,strike,qty,label in c["legs"]:
-                        g=z[(z.option_type.eq(typ))&z.strike_price.eq(float(strike))&(z.timestamp<=expiry_ts)&(z.volume>0)].sort_values("timestamp")
+                        if fallback_ts is not None:
+                            g=z[
+                                (z.option_type.eq(typ))
+                                & z.strike_price.eq(float(strike))
+                                & (z.timestamp<=fallback_ts)
+                                & (z.volume>0)
+                            ].sort_values("timestamp")
+                        else:
+                            g=z[
+                                (z.option_type.eq(typ))
+                                & z.strike_price.eq(float(strike))
+                                & (z.timestamp.dt.tz_convert("Asia/Kolkata").dt.normalize().dt.tz_localize(None) == fallback_date)
+                                & (z.volume>0)
+                            ].sort_values("timestamp")
                         if g.empty:
                             exits=[]; break
                         r=g.iloc[-1]
@@ -452,7 +503,6 @@ def main():
             lot=lot_size(c["expiry"])
             for brokerage in BROKERAGES:
                 exit_cashflow=0.0
-                entry_stt_inr=sum(v*lot*c["leg_entries"][0][5].strftime("%s")*0 for v in [])  # explicit zero; computed below
                 entry_stt_inr=0.0
                 for typ,strike,qty,label,raw_px,ts in c["leg_entries"]:
                     adj=adjusted_price(raw_px,qty,"entry")
