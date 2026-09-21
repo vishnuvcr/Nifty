@@ -81,7 +81,7 @@ def main():
         parts=members.get(key,[])
         if not parts: continue
         z=pd.concat(parts,ignore_index=True).drop_duplicates(["timestamp","option_type","strike_price"])
-        cutoff=q["decision"]+pd.Timedelta(hours=9,minutes=30)
+        cutoff=(q["decision"]+pd.Timedelta(hours=9,minutes=30)).tz_localize("Asia/Kolkata").tz_convert("UTC")
         entry_cashflow=0.0
         entry_stt={}
         valid=True
