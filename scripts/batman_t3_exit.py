@@ -164,7 +164,7 @@ def realized_exit(entry_cashflow, exits, expiry_date, brokerage, entry_brokerage
     exit_cashflow = 0.0
     exit_stt = 0.0
     for leg, px, ts, _mode in exits:
-        adj = px - SLIPPAGE_POINTS if leg.qty > 0 else px + SLIPPAGE_POINTS
+        adj = max(0.0, px - SLIPPAGE_POINTS) if leg.qty > 0 else px + SLIPPAGE_POINTS
         exit_cashflow += leg.qty * adj
         if leg.qty > 0:
             exit_stt += abs(leg.qty) * adj * lot * stt_rate(pd.Timestamp(ts))
