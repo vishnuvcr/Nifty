@@ -169,7 +169,8 @@ def realized_exit(entry_cashflow, exits, expiry_date, brokerage, entry_brokerage
         if leg.qty > 0:
             exit_stt += abs(leg.qty) * adj * lot * stt_rate(pd.Timestamp(ts))
     gross_points = float(entry_cashflow + exit_cashflow)
-    costs = float(entry_brokerage + exit_stt)
+    exit_brokerage = 4.0 * brokerage
+    costs = float(entry_brokerage + exit_brokerage + exit_stt)
     net_inr = gross_points * lot - costs
     return gross_points, net_inr, exit_stt
 
