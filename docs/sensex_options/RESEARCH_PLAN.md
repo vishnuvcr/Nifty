@@ -28,14 +28,14 @@ Adaptive:
 ## Phase structure
 
 ### Phase S0 — Transfer specification freeze
-Status: IN PROGRESS
+Status: COMPLETE
 
 Freeze the exact NIFTY Batman and Adaptive code/configuration used as the parent specification. Record source commit SHA and configuration hashes. Define all SENSEX-specific substitutions before looking at SENSEX outcome data.
 
 Exit criterion: signed-off transfer specification and no unresolved leakage or universe-definition ambiguity.
 
 ### Phase S1 — SENSEX data-source and contract audit
-Status: NOT STARTED
+Status: COMPLETE
 
 Establish auditable sources for SENSEX daily closes, trading calendar/holidays, BSE SENSEX option expiries, historical option chains, and contract/lot-size history.
 
@@ -44,42 +44,42 @@ Requirements: point-in-time data; historical lot-size changes represented explic
 Exit criterion: reproducible schema-validated SENSEX data manifest covering the intended study period.
 
 ### Phase S2 — SENSEX execution-cost model
-Status: NOT STARTED
+Status: COMPLETE
 
 Model Paytm Money brokerage per executed order, BSE turnover charges, STT, GST, SEBI charges, stamp duty, bid/ask spread, explicit slippage stress, and relevant conditional fees. Do not copy NIFTY cost assumptions without evidence.
 
 Exit criterion: reproducible per-leg and per-trade net-P&L calculator with a sensitivity grid around the base cost.
 
 ### Phase S3 — SENSEX Batman implementation
-Status: NOT STARTED
+Status: COMPLETE
 
 Port frozen Batman logic without optimizing research degrees of freedom. Allowed changes are instrument/data source, SENSEX calendar, expiry schedule, historical lot size, listed strike grid/available strikes, execution costs, and data-quality controls.
 
 Exit criterion: unit tests plus deterministic replay on hand-checked SENSEX cases.
 
 ### Phase S4 — SENSEX Adaptive implementation
-Status: NOT STARTED
+Status: COMPLETE
 
 Port the frozen Adaptive candidate router exactly. Do not reselect candidates using SENSEX outcomes before the primary holdout. Regime classification must be strictly past-only.
 
 Exit criterion: unit tests plus candidate-screen audit showing no future-data dependence.
 
 ### Phase S5 — Historical walk-forward transfer test
-Status: NOT STARTED
+Status: COMPLETE
 
 Use chronological train/development, validation, and untouched final holdout periods. Evaluate Batman standalone, the Adaptive primary signal, and every Adaptive candidate diagnostically. Report no-trade frequency, year/regime splits, cost sensitivity, quote-quality sensitivity, strike-gap/rounding sensitivity, and lot-size-aware P&L.
 
 Primary inference must follow the pre-registered rule, not post-hoc strategy selection.
 
 ### Phase S6 — Robustness and statistical inference
-Status: NOT STARTED
+Status: COMPLETE
 
 Report trade count, total/mean/median P&L, expectancy, win rate, profit factor, max drawdown, Sharpe/Sortino where sample size permits, tail losses, turnover, net versus gross P&L, dependence-aware bootstrap intervals, yearly/regime stratification, MC seed sensitivity, transaction-cost sensitivity, and quote-source sensitivity.
 
 ### Phase S7 — Prospective paper-trading gate
-Status: INFRASTRUCTURE COMPLETE / OBSERVATIONS PENDING
+Status: ACTIVE — DATA-LIMITED OBSERVATION RECORDED / EXECUTABLE OBSERVATION PENDING
 
-Only after S1–S6 pass their data-integrity and scientific-validity checks. Generate a SENSEX-only paper ledger using the frozen rules. The first prospective observation must never be backfilled.
+Generate a SENSEX-only paper ledger using the frozen rules. At each decision boundary, publish an executable signal when the option quote surface is available; otherwise publish a DATA_LIMITED_CANDIDATE from the information actually available by 09:30. Never synthesize option premiums, never use future outcomes, and never create a retrospective/backfilled executable trade. The 21-Sep-2026 observation is retained for audit but excluded from performance inference.
 
 ### Phase S8 — Conclusion and separate manuscript supplement
 Status: NOT STARTED
@@ -90,7 +90,7 @@ Produce a standalone SENSEX transfer report with methods, data provenance, resul
 1. No tuning on the final SENSEX holdout.
 2. No reopening of the already-used NIFTY holdout.
 3. No candidate replacement based on SENSEX hindsight.
-4. No LTP substitution when executable quotes are missing.
+4. No LTP substitution when executable quotes are missing; quote absence produces a data-limited observation rather than a synthetic entry.
 5. No future expiry/strike availability used at decision time.
 6. Historical contract-size changes are applied by effective date.
 7. All transaction costs and slippage are deducted from reported net results.
