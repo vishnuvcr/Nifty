@@ -33,6 +33,14 @@ jobs:
         run: |
           python scripts/batman_t5_robustness.py --trade-level reports/holdout/T4_HOLDOUT_TRADE_LEVEL.csv --out-dir reports/batman_t5
 
+      - name: Run paired holdout expiry-control benchmark
+        run: |
+          mkdir -p .cache/batman_t4_holdout
+          if [ ! -s .cache/batman_t4_holdout/rahul_nifty_options_2025_2026.zip ]; then
+            curl -fL --retry 3 --retry-all-errors               "https://www.kaggle.com/api/v1/datasets/download/rahultr1/nifty-options-weekly-1min-2025-01-01-to-2026-07-25"               -o .cache/batman_t4_holdout/rahul_nifty_options_2025_2026.zip
+          fi
+          python scripts/batman_t5_holdout_control.py             --options-zip .cache/batman_t4_holdout/rahul_nifty_options_2025_2026.zip             --trade-level reports/holdout/T4_HOLDOUT_TRADE_LEVEL.csv             --out-dir reports/batman_t5
+
       - name: Upload robustness results
         uses: actions/upload-artifact@v4
         with:
@@ -42,4 +50,6 @@ jobs:
             reports/batman_t5/T5_SLIPPAGE_STRESS.csv
             reports/batman_t5/T5_YEARLY_STABILITY.csv
             reports/batman_t5/T5_LEAVE_ONE_OUT.csv
+            reports/batman_t5/T5_HOLDOUT_PAIRED_CONTROL.csv
+            reports/batman_t5/T5_HOLDOUT_PAIRED_CONTROL_SUMMARY.csv
           retention-days: 30
