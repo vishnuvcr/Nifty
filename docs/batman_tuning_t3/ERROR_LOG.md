@@ -14,3 +14,6 @@ Any subsequent T3 computation error will be logged before rerun.
 
 E019
 The first T3 cost routine charged entry brokerage but omitted the four exit orders from net P&L. The unit test exposed the omission before the exit grid ran. Correction: net P&L now includes 4 entry brokerage orders + 4 exit brokerage orders + STT + slippage.
+
+E020
+The T3 unit-test suite passed, but the full script failed in GitHub Actions because the repository's scripts directory is not a Python package and the module import could not resolve. Correction: the T3 script now inserts the repository root into sys.path before importing shared T2 functions.
