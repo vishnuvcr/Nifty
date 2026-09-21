@@ -1,5 +1,5 @@
 name: Refresh NIFTY Paper Trading Dashboards
-# v3.4: fix NIFTY audit path and classify unavailable 09:40 backfills as NOT_EVALUATED. Common Paper Trade Signals Producer waits for all entry workflows before one publication; 16:00 IST remains refresh-only.
+# v3.5: publish SENSEX decision-time DATA_LIMITED_CANDIDATE observations without backfill; common publisher consumes the S7 branch state. 16:00 IST remains refresh-only.
 
 on:
   push:
