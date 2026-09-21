@@ -222,3 +222,19 @@ Research branches:
 - T6 prospective freeze: `research/batman-tuning-t6-prospective-v1`
 
 Final disposition: the D3/09:30 BATMAN + trailing-target (20% activation / 10% retracement) candidate produced positive net P&L on 7 untouched holdout trades, but it is **not promoted** because the holdout is too small and expiry control outperformed it on 6 comparable trades. See `docs/batman_tuning_t5/T5_FINAL_CONCLUSION.md` and `docs/batman_tuning_t6/PROSPECTIVE_FREEZE.md`.
+
+
+## BATMAN Tuning T7 — Joint entry × timing × exit
+
+The T7 development selector is frozen before the untouched holdout.
+
+- Branch: https://github.com/vishnuvcr/Nifty/tree/research/batman-tuning-t7-joint-wfo-v1
+- Research plan: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-t7-joint-wfo-v1/docs/batman_tuning_t7/RESEARCH_PLAN.md
+- Protocol freeze: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-t7-joint-wfo-v1/docs/batman_tuning_t7/PROTOCOL_FREEZE.md
+- Phase status: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-t7-joint-wfo-v1/docs/batman_tuning_t7/PHASE_STATUS.md
+- Error log: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-t7-joint-wfo-v1/docs/batman_tuning_t7/ERROR_LOG.md
+- Holdout workflow: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-t7-joint-wfo-v1/.github/workflows/batman-tuning-t7-holdout.yml
+
+**Frozen development configuration:** D4 / same-session 09:30 / trailing target with 30% activation and 30% retracement. The 2025–2026 holdout remains untouched and is evaluated separately against the original D3/09:30/expiry control and the prior D3/09:30 20%/10% trailing-target candidate.
+
+No holdout result is claimed until the holdout workflow outputs pass verification.
