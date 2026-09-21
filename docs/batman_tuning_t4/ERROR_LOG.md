@@ -9,3 +9,6 @@ The T4 holdout probe acquired and cached the Rahul 2025-2026 archive and daily i
 
 E024
 The first T4 selector produced impossible n_training_trades values because variant matching relied on mixed NaN/string comparisons and counted brokerage rows instead of unique decision dates. Correction: variants now use a normalized stable variant_id; selection requires positive unique-trade counts and reports unique trade dates.
+
+E025
+The first frozen-holdout execution failed because the independent NIFTY daily CSV stores the closing value in a Price column rather than Close. The Rahul option archive and frozen selection were valid. Correction: the holdout loader now accepts close, price, or last as the daily closing field.
