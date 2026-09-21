@@ -27,3 +27,5 @@ E013: T1 raw-source recovery workflow did not trigger on the workflow-definition
 E014: The T1 acquire workflow's first recovery attempt omitted the long 2008-2020 NIFTY index archive and skipped raw-source publication after the schema audit failed. Correction: the workflow now acquires the long index and marks raw-source publication always-run; a non-workflow commit triggers the corrected workflow revision.
 
 E015: The full 1.57 GB T1 recovery artifact exceeded the connector's 512 MB download limit. Correction: split the large Ayush archive into three approximately 400 MB artifacts and publish Rahul/long-index archives separately; the source archive itself remains unchanged and checksum-validated.
+
+E016: Full raw bundle upload delayed connector-accessible pieces because split recovery stages followed it. Correction: split Ayush/Rahul/long-index artifacts now execute before the large bundle upload.
