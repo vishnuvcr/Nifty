@@ -1,1 +1,106 @@
-{"status":"NO_TRADE","reason":"S7 has not yet produced a prospective observation.","signal":null}
+{
+  "producer": "SENSEX available-data signal producer v2",
+  "status": "DATA_LIMITED_CANDIDATE",
+  "signal": {
+    "signal_id": "2026-09-21|2026-09-24|Adaptive|DATA_LIMITED",
+    "decision_date": "2026-09-21",
+    "expiry": "2026-09-24",
+    "strategy": "Adaptive",
+    "signal": "DATA_LIMITED_CANDIDATE",
+    "status": "DATA_LIMITED",
+    "execution_status": "NOT_EXECUTABLE",
+    "option_chain_available": false,
+    "premium_available": false,
+    "bid_ask_available": false,
+    "quote_snapshot_used": false,
+    "lookahead_safe": true,
+    "regime": "UNAVAILABLE",
+    "spot": 74748.7,
+    "spot_source": "Business Standard Capital Market News (verified 09:30 IST print)",
+    "spot_source_timestamp_ist": "09:30",
+    "lot_size": 20,
+    "lots": 0,
+    "risk_budget_inr": 2000,
+    "mc_ev_points_net": null,
+    "mc_pop": null,
+    "es95_points": null,
+    "es99_points": null,
+    "entry_slippage_points": 0.5,
+    "entry_cost_inr_expected": null,
+    "entry_cashflow_points_per_unit": null,
+    "entry_observation_time_ist": "09:30",
+    "publication_status": "DECISION_TIME_AVAILABLE_DATA_OBSERVATION",
+    "model_data_cutoff": "2026-09-18",
+    "model_lookback_sessions_used": 20,
+    "model_lookback_status": "DATA_LIMITED_SHORT_LOOKBACK",
+    "target_expiry": "2026-09-24",
+    "horizon_sessions": 3,
+    "timing_gate": "PASS",
+    "rv20": 0.07496333273876712,
+    "rv20_rank": null,
+    "terminal_quantiles": {
+      "p10": 73489.7955624195,
+      "p20": 73786.53148323954,
+      "p35": 74060.86293242169,
+      "p65": 74538.38767473861,
+      "p80": 74793.30669213964,
+      "p90": 75042.5919337851
+    },
+    "selected_candidate": "UNSELECTED_PENDING_OPTION_QUOTES",
+    "candidate_set_scope": "ALL_FROZEN_REGIME_CANDIDATES",
+    "candidate_set": [
+      {
+        "strategy": "Risk Reversal",
+        "regime": "low"
+      },
+      {
+        "strategy": "Long Synthetic Future",
+        "regime": "low"
+      },
+      {
+        "strategy": "Buy Call",
+        "regime": "low"
+      },
+      {
+        "strategy": "Short Straddle",
+        "regime": "medium"
+      },
+      {
+        "strategy": "Put Ratio Spread",
+        "regime": "medium"
+      },
+      {
+        "strategy": "Short Strangle",
+        "regime": "medium"
+      },
+      {
+        "strategy": "Strip",
+        "regime": "medium"
+      },
+      {
+        "strategy": "Buy Put",
+        "regime": "medium"
+      },
+      {
+        "strategy": "Sell Put",
+        "regime": "high"
+      },
+      {
+        "strategy": "Risk Reversal",
+        "regime": "high"
+      },
+      {
+        "strategy": "Long Synthetic Future",
+        "regime": "high"
+      },
+      {
+        "strategy": "Batman",
+        "regime": "high"
+      }
+    ],
+    "reason": "OPTION_PREMIUM_BID_ASK_SNAPSHOT_UNAVAILABLE",
+    "notes": "Underlying and past-only model data were available for the 09:30 decision observation. Adaptive primary selection requires net MC-EV from option premiums; that cannot be computed without the option quote surface. Therefore no Adaptive primary strategy is selected and no executable paper trade is claimed. This is a data-limited signal, not a backfilled trade."
+  },
+  "decision_time_rule": "09:30 IST",
+  "today_observation_date": "2026-09-21"
+}
