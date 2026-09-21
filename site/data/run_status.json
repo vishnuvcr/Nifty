@@ -1,5 +1,5 @@
 {
-  "generated_at_ist": "2026-09-21T15:39:34.592639+05:30",
+  "generated_at_ist": "2026-09-21T16:42:35.665608+05:30",
   "nifty_batman": {
     "workflow": "Generate NIFTY Paper Trading Signals",
     "workflow_run_id": "35587080693",
@@ -39,9 +39,9 @@
     "workflow_run_id": "35587080630",
     "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35587080630",
     "trigger": "workflow_dispatch",
-    "mode": "backfill_0940",
+    "mode": "available_data_decision_observation",
     "decision_date": "2026-09-21",
-    "entry_time_ist": "09:40",
+    "entry_time_ist": "09:30",
     "scheduled_time_ist": "09:30 IST",
     "finished_at_ist": "2026-09-21T15:38:14+05:30",
     "status": "success",
@@ -49,16 +49,16 @@
       "SENSEX BATMAN",
       "SENSEX ADAPTIVE"
     ],
-    "note": "SENSEX scanner audit record. Missing/broken quote data remains a hard NO_TRADE."
+    "note": "The 2026-09-21 09:30 decision-time observation is published as DATA_LIMITED_CANDIDATE because underlying/model data were available but live option premiums/bid-ask were unavailable. No backfilled executable trade is recorded; DATA_LIMITED observations are excluded from performance metrics."
   },
   "sensex_adaptive": {
     "workflow": "SENSEX Paper Trading Signal Scanners",
     "workflow_run_id": "35587080630",
     "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35587080630",
     "trigger": "workflow_dispatch",
-    "mode": "backfill_0940",
+    "mode": "available_data_decision_observation",
     "decision_date": "2026-09-21",
-    "entry_time_ist": "09:40",
+    "entry_time_ist": "09:30",
     "scheduled_time_ist": "09:30 IST",
     "finished_at_ist": "2026-09-21T15:38:14+05:30",
     "status": "success",
@@ -66,7 +66,7 @@
       "SENSEX BATMAN",
       "SENSEX ADAPTIVE"
     ],
-    "note": "SENSEX scanner audit record. Missing/broken quote data remains a hard NO_TRADE."
+    "note": "The 2026-09-21 09:30 decision-time observation is published as DATA_LIMITED_CANDIDATE because underlying/model data were available but live option premiums/bid-ask were unavailable. No backfilled executable trade is recorded; DATA_LIMITED observations are excluded from performance metrics."
   },
   "nifty_defined_risk": {
     "workflow": "NIFTY Defined-Risk Prospective Validation",
