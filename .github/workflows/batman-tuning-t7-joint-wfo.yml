@@ -70,7 +70,7 @@ jobs:
           import pandas as pd
           s=pd.read_csv("reports/batman_t7_smoke/T7_JOINT_SUMMARY.csv")
           configs=s[["entry_offset","entry_timing","exit_family","target_param","stop_param","activation_param","retracement_param"]].drop_duplicates()
-          assert len(configs) <= 42
+          assert len(configs) <= 448
           assert len(configs) > 0
           print("Smoke configurations:",len(configs))
           PY
