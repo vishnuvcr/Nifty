@@ -121,14 +121,14 @@ jobs:
           if [ -n "$SEED" ]; then CMD+=(--seed "$SEED"); fi
           "${CMD[@]}"
 
-      - name: Record controlled 09:40 backfill observations
+      - name: Record available-data 09:40 candidate signals
         if: env.MODE == 'backfill_0940'
         run: |
           set -euo pipefail
           git fetch origin main
-          git show origin/main:scripts/backfill_0940_no_trade.py > /tmp/backfill_0940_no_trade.py
-          python /tmp/backfill_0940_no_trade.py --strategy "NIFTY BATMAN" --decision-date "$DECISION_DATE" --entry-time-ist "$ENTRY_TIME_IST" --output-json site/batman/data/backfill_0940_2026-09-21.json
-          python /tmp/backfill_0940_no_trade.py --strategy "NIFTY ADAPTIVE" --decision-date "$DECISION_DATE" --entry-time-ist "$ENTRY_TIME_IST" --output-json site/adaptive/data/backfill_0940_2026-09-21.json
+          git show origin/main:scripts/available_data_backfill_signal_v1.py > /tmp/available_data_backfill_signal_v1.py
+          python /tmp/available_data_backfill_signal_v1.py --strategy "NIFTY BATMAN" --decision-date "$DECISION_DATE" --entry-time-ist "$ENTRY_TIME_IST" --spot 23398.0 --spot-source "Business Standard Capital Market News (verified 09:30 IST print)" --spot-source-timestamp "09:30" --output-json site/batman/data/backfill_0940_2026-09-21.json
+          python /tmp/available_data_backfill_signal_v1.py --strategy "NIFTY ADAPTIVE" --decision-date "$DECISION_DATE" --entry-time-ist "$ENTRY_TIME_IST" --spot 23398.0 --spot-source "Business Standard Capital Market News (verified 09:30 IST print)" --spot-source-timestamp "09:30" --output-json site/adaptive/data/backfill_0940_2026-09-21.json
 
       - name: Persist signal state and run audit
         if: always()
