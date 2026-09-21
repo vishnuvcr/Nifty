@@ -1,9 +1,100 @@
-name: BATMAN Tuning T3 Exit Tuning
+name: BATMAN Tuning T3 Exit
+
 on:
+  push:
+    branches:
+      - research/batman-tuning-t3-exit-v1
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: batman-tuning-t3-exit
+  cancel-in-progress: true
+
 jobs:
   t3:
     runs-on: ubuntu-latest
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
-      - run: echo "T3 is gated on successful T1 reconstruction." && exit 1
+        with:
+          fetch-depth: 1
+
+      - name: Restore T3 prepared cache
+        id: t3cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/batman_t3
+          key: batman-tuning-t3-raw-v1-2026-09-21
+
+      - name: Restore parent T1 raw cache fallback
+        if: steps.t3cache.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/batman_raw
+          key: batman-tuning-raw-v1-2026-09-21
+
+      - name: Prepare cache directories
+        run: mkdir -p .cache/batman_t3 .cache/batman_raw
+
+      - name: Seed T3 cache from parent raw cache
+        run: |
+          set -euo pipefail
+          for f in ayush_nifty_banknifty_options_2020_2024.zip nifty_index_2008_2020.zip; do
+            if [ -f ".cache/batman_raw/$f" ]; then cp ".cache/batman_raw/$f" ".cache/batman_t3/$f"; fi
+          done
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas pytest
+
+      - name: Acquire Ayush option archive when unavailable
+        run: |
+          set -euo pipefail
+          test -s .cache/batman_t3/ayush_nifty_banknifty_options_2020_2024.zip || curl -fL --retry 3 --retry-all-errors "https://www.kaggle.com/api/v1/datasets/download/ayushsacri/indian-nifty-and-banknifty-options-data-2020-2024" -o .cache/batman_t3/ayush_nifty_banknifty_options_2020_2024.zip
+
+      - name: Acquire long NIFTY archive when unavailable
+        run: |
+          set -euo pipefail
+          test -s .cache/batman_t3/nifty_index_2008_2020.zip || curl -fL --retry 3 --retry-all-errors "https://www.kaggle.com/api/v1/datasets/download/nishanthsalian/indian-stock-index-1minute-data-2008-2020" -o .cache/batman_t3/nifty_index_2008_2020.zip
+
+      - name: Verify T3 source files
+        run: |
+          set -euo pipefail
+          test -s .cache/batman_t3/ayush_nifty_banknifty_options_2020_2024.zip
+          test -s .cache/batman_t3/nifty_index_2008_2020.zip
+          sha256sum .cache/batman_t3/ayush_nifty_banknifty_options_2020_2024.zip .cache/batman_t3/nifty_index_2008_2020.zip
+
+      - name: Run T3 unit tests
+        run: python -m pytest -q tests/test_batman_t3_exit.py
+
+      - name: Run full T3 exit grid
+        run: |
+          python scripts/batman_t3_exit.py             --options-zip .cache/batman_t3/ayush_nifty_banknifty_options_2020_2024.zip             --long-index-zip .cache/batman_t3/nifty_index_2008_2020.zip             --raw-cache .cache/batman_t3             --out-dir reports/batman_t3             --paths 5000             --seed-base 20260921
+
+      - name: Save T3 prepared cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/batman_t3
+          key: batman-tuning-t3-raw-v1-2026-09-21
+
+      - name: Upload T3 results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: batman-tuning-t3-exit-results
+          path: |
+            reports/batman_t3/T3_EXIT_TRADE_LEVEL.csv
+            reports/batman_t3/T3_ENTRY_CONTROL_TRADES.csv
+            reports/batman_t3/T3_EXIT_SUMMARY.csv
+            reports/batman_t3/T3_SKIP_COUNTS.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Summary
+        if: always()
+        run: echo "T3 exit-grid workflow completed or failed. Results and diagnostics are in the uploaded artifact." >> "$GITHUB_STEP_SUMMARY"
