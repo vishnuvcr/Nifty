@@ -17,6 +17,7 @@ concurrency:
   group: nifty-defined-risk-prospective
   cancel-in-progress: false
 permissions:
+  actions: write
   contents: write
 jobs:
   scan:
@@ -39,14 +40,39 @@ jobs:
         env:
           STRATEGY: ${{ github.event.inputs.strategy || 'all' }}
         run: python scripts/nifty_defined_risk_prospective_v1.py --mode scan --strategy "$STRATEGY"
-      - name: Persist candidate state
+      - name: Persist candidate state and run audit
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
         run: |
+          FINISHED_IST="$(TZ=Asia/Kolkata date --iso-8601=seconds)"
+          mkdir -p site/data
+          cat > site/data/run_status_defined_risk_nifty.json <<EOF
+          {
+            "workflow": "NIFTY Defined-Risk Prospective Validation",
+            "workflow_run_id": "${{ github.run_id }}",
+            "workflow_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "trigger": "${{ github.event_name }}",
+            "scheduled_time_ist": "09:30 IST",
+            "finished_at_ist": "${FINISHED_IST}",
+            "status": "${JOB_STATUS}",
+            "scope": ["NIFTY JADE LIZARD", "NIFTY PUT RATIO SPREAD"],
+            "note": "Frozen prospective candidates. No retrospective ranking or retuning."
+          }
+          EOF
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add paper_trading/prospective_defined_risk/nifty site/prospective-defined-risk/nifty
+          git add paper_trading/prospective_defined_risk/nifty site/prospective-defined-risk/nifty site/data/run_status_defined_risk_nifty.json
           if git diff --cached --quiet; then
-            echo "No NIFTY candidate state changes."
+            echo "No NIFTY defined-risk state changes."
           else
-            git commit -m "paper: update NIFTY defined-risk prospective candidates [skip ci]"
+            git commit -m "paper: update NIFTY defined-risk state and run audit [skip ci]"
             git push origin HEAD:research/prospective-defined-risk-nifty-v1
           fi
+
+      - name: Trigger combined GitHub Pages publication
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run publish-paper-pages.yml --repo "${{ github.repository }}" --ref main || echo "Pages publisher dispatch failed; scheduled publisher remains as backstop."
+
