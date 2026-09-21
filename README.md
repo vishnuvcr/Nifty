@@ -183,3 +183,14 @@ New research question: can MC/WFO identify sufficiently cheap Buy Call / Buy Put
 Historical result: the development-frozen Buy Call <=0.55% of spot rule failed 2023-2024 validation (mean -1.68 points, PF 0.968; block-bootstrap 95% CI -24.92 to +29.70). The 22-rule multiple-testing diagnostic was p=0.886. The 2025-2026 period is already exposed by the parent study and is descriptive only. No long-premium rule is promoted.
 
 The current live Pages selector is https://vishnuvcr.github.io/Nifty/; the root selector and prospective dashboard sources have been updated for Jade Lizard and Put Ratio Spread, and the Pages publisher is redeploying the corrected tree.
+
+## Common Paper Trade Signals Producer and 09:40 backfill
+
+The normal 09:30 IST entry cycle is now initiated by one common orchestrator rather than four independently scheduled entry workflows. The orchestrator dispatches the NIFTY Batman+Adaptive, SENSEX Batman+Adaptive, NIFTY defined-risk, and SENSEX defined-risk workflow families concurrently. The combined Pages workflow remains the sole Pages deployer.
+
+For historical backfill requests, the orchestrator supports `backfill_0940` with an explicit decision date and 09:40 IST entry time. A backfill never substitutes current quotes for the historical timestamp. When no trustworthy historical executable option-chain snapshot exists, the observation is recorded as `BACKFILL_0940_NO_TRADE` and kept outside the prospective performance ledger.
+
+- Common orchestrator: [.github/workflows/paper-trade-signals-producer.yml](.github/workflows/paper-trade-signals-producer.yml)
+- Backfill recorder: [scripts/backfill_0940_no_trade.py](scripts/backfill_0940_no_trade.py)
+- Orchestration audit: [PAPER_TRADE_SIGNAL_ORCHESTRATION_2026-09-21](docs/operations/PAPER_TRADE_SIGNAL_ORCHESTRATION_2026-09-21.md)
+- Live Pages: https://vishnuvcr.github.io/Nifty/
