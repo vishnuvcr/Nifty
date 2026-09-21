@@ -413,6 +413,46 @@ def build_site(site_dir: Path, latest: dict[str, Any], candidates: pd.DataFrame,
 
     pf_display = "∞" if math.isinf(float(s["profit_factor"])) else f'{float(s["profit_factor"]):.2f}'
 
+    workflow_audit_panel = """<div class="card">
+<h2>Workflow audit</h2>
+<div class="grid">
+<div><small>Last completed workflow run</small><div class="kpi" id="wf-audit-time">Loading...</div></div>
+<div><small>Workflow status</small><div class="kpi" id="wf-audit-status">Loading...</div></div>
+</div>
+<p><small>Audit source: <a href="data/run_status_nifty_signal_generation.json">run_status_nifty_signal_generation.json</a></small></p>
+</div>
+<script>
+(async()=>{
+  const fmt=v=>v?new Date(v).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Kolkata'}):'Not recorded';
+  try{const d=await (await fetch('data/run_status_nifty_signal_generation.json?ts='+Date.now(),{cache:'no-store'})).json();
+  document.getElementById('wf-audit-time').textContent=fmt(d.finished_at_ist);
+  document.getElementById('wf-audit-status').textContent=(d.status||'NOT_RECORDED').toUpperCase();}
+  catch(e){document.getElementById('wf-audit-time').textContent='Audit unavailable';document.getElementById('wf-audit-status').textContent='ERROR';}
+})();
+</script>
+"""
+    backfill_panel = """<div class="card">
+<h2>09:40 IST controlled backfill</h2>
+<div class="grid">
+<div><small>Decision date</small><div class="kpi" id="bf-date">—</div></div>
+<div><small>Entry time</small><div class="kpi">09:40 IST</div></div>
+<div><small>Signal</small><div class="kpi" id="bf-signal">Loading...</div></div>
+<div><small>Backfill status</small><div class="kpi" id="bf-status">Loading...</div></div>
+</div>
+<p id="bf-reason">Loading...</p>
+<p><small>Historical observation only. It is separate from the prospective ledger.</small></p>
+</div>
+<script>
+(async()=>{
+  try{const d=await (await fetch('data/backfill_0940_2026-09-21.json?ts='+Date.now(),{cache:'no-store'})).json();
+  document.getElementById('bf-date').textContent=d.decision_date||'—';
+  document.getElementById('bf-signal').textContent=d.signal||'NO_TRADE';
+  document.getElementById('bf-status').textContent=(d.status||'NOT_RECORDED').replaceAll('_',' ');
+  document.getElementById('bf-reason').textContent=d.reason||d.source_note||'—';}
+  catch(e){document.getElementById('bf-signal').textContent='Not recorded';document.getElementById('bf-status').textContent='ERROR';document.getElementById('bf-reason').textContent='09:40 backfill record could not be loaded.';}
+})();
+</script>
+"""
     page = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -436,6 +476,8 @@ th,td{{padding:8px;border-bottom:1px solid #293547;text-align:left;vertical-alig
 </style></head>
 <body><main>
 <p><a href="../">← Strategy selector</a> · <a href="../batman/">Batman</a></p>
+{workflow_audit_panel}
+{backfill_panel}
 <div class="card">
 <span class="badge">ADAPTIVE PAPER TRADING v1</span>
 <h1>Adaptive Regime Signal Producer</h1>
