@@ -62,6 +62,27 @@ jobs:
           python scripts/batman_t3_exit.py             --options-zip .cache/batman_t3/ayush_nifty_banknifty_options_2020_2024.zip             --long-index-zip .cache/batman_t3/nifty_index_2008_2020.zip             --raw-cache .cache/batman_t3             --out-dir reports/batman_t3             --paths 5000             --seed-base 20260921
 
 
+      - name: Validate T3 denominator and grid completeness
+        run: |
+          python - <<'PY'
+          import json
+          import pandas as pd
+          from pathlib import Path
+          base=Path("reports/batman_t3")
+          meta=pd.read_csv(base/"T3_ENTRY_CONTROL_TRADES.csv")
+          trade=pd.read_csv(base/"T3_EXIT_TRADE_LEVEL.csv")
+          summary=pd.read_csv(base/"T3_EXIT_SUMMARY.csv")
+          expected=meta["decision_date"].nunique()
+          assert expected > 0
+          assert summary["brokerage_per_order_inr"].nunique() == 3
+          assert summary.shape[0] == 165*3, summary.shape
+          assert set(summary["trades"].astype(int)) == {expected}, summary["trades"].value_counts().to_dict()
+          assert trade["decision_date"].nunique() == expected
+          skips=json.loads((base/"T3_SKIP_COUNTS.json").read_text())
+          assert "trigger_unexecutable" not in skips or skips["trigger_unexecutable"] == 0
+          print("T3 denominator/grid validation PASS:", expected, "eligible entries; 165 variants x 3 brokerage scenarios")
+          PY
+
       - name: Save T3 source cache
         if: always()
         uses: actions/cache/save@v4
