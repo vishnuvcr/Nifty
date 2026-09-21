@@ -1,0 +1,6 @@
+{
+  "mode": "backfill_0940",
+  "decision_date": "2026-09-21",
+  "entry_time_ist": "09:40",
+  "reason": "User-requested controlled historical backfill; no future outcomes and no current quote substitution."
+}
