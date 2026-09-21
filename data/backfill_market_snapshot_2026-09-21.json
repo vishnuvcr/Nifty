@@ -1,0 +1,24 @@
+{
+  "date": "2026-09-21",
+  "requested_signal_time_ist": "09:40",
+  "observations": {
+    "NIFTY": {
+      "spot": 23398.0,
+      "source_timestamp_ist": "09:30",
+      "source": "Business Standard / Capital Market News",
+      "source_url": "https://www.business-standard.com/markets/capital-market-news/nifty-trade-above-23-350-in-early-trade-breadth-positive-126092100142_1.html",
+      "note": "Closest verified pre-09:40 public index print found; exact 09:40 NIFTY spot was not independently verified."
+    },
+    "SENSEX": {
+      "spot": 74748.70,
+      "source_timestamp_ist": "09:30",
+      "source": "Business Standard / Capital Market News",
+      "source_url": "https://www.business-standard.com/markets/capital-market-news/nifty-trade-above-23-350-in-early-trade-breadth-positive-126092100142_1.html",
+      "note": "Closest verified pre-09:40 public index print found; exact 09:40 SENSEX spot was not independently verified."
+    }
+  },
+  "option_chain": {
+    "available_for_exact_0940": false,
+    "note": "No execution-grade historical 09:40 option-chain bid/ask snapshot was independently verified for this backfill."
+  }
+}
