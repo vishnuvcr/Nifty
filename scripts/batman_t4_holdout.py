@@ -208,6 +208,19 @@ def main():
 
     rows = []
     skips = {}
+    stages = {
+        "expiry_candidates": int(len(expiry_list)),
+        "requests": int(len(requests)),
+        "decision_dates_present": 0,
+        "exact_0930_spot": 0,
+        "mc_ready_756": 0,
+        "strike_grid_ready": 0,
+        "all_four_entry_legs_ready": 0,
+        "gross_mc_gate_pass": 0,
+        "positive_max_profit_reference": 0,
+        "final_entry_candidates": 0,
+        "final_exit_candidates": 0,
+    }
 
     with zipfile.ZipFile(args.options_zip) as zf:
         member = [n for n in zf.namelist() if n.lower().endswith(".csv")][0]
