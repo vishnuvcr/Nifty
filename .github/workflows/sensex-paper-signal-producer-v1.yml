@@ -80,6 +80,8 @@ jobs:
           set -euo pipefail
           git fetch origin main
           git show origin/main:scripts/available_data_backfill_signal_v1.py > /tmp/available_data_backfill_signal_v1.py
+          mkdir -p data
+          git show origin/main:data/backfill_underlying_history_2026-09-21.json > data/backfill_underlying_history_2026-09-21.json
           python /tmp/available_data_backfill_signal_v1.py --strategy "SENSEX BATMAN" --decision-date "$DECISION_DATE" --entry-time-ist "$ENTRY_TIME_IST" --spot 74748.70 --spot-source "Business Standard Capital Market News (verified 09:30 IST print)" --spot-source-timestamp "09:30" --output-json site/sensex/batman/data/backfill_0940_2026-09-21.json
           python /tmp/available_data_backfill_signal_v1.py --strategy "SENSEX ADAPTIVE" --decision-date "$DECISION_DATE" --entry-time-ist "$ENTRY_TIME_IST" --spot 74748.70 --spot-source "Business Standard Capital Market News (verified 09:30 IST print)" --spot-source-timestamp "09:30" --output-json site/sensex/adaptive/data/backfill_0940_2026-09-21.json
 
