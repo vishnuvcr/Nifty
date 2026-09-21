@@ -44,6 +44,18 @@ Published outputs:
 
 The study compares expiry settlement with exact 15:00 IST and 15:10 IST one-minute bar OPEN exits, keeping entry rules frozen. The SENSEX early-exit rerun uses the cached frozen S5 trade population rather than recomputing entry selection.
 
+
+## Pages / 09:30 scheduler reliability audit — 2026-09-21
+
+A publication reliability issue was identified and corrected: individual signal producers could deploy their own partial Pages tree, allowing a standalone NIFTY Batman deployment to overwrite the unified NIFTY/SENSEX dashboard. Signal producers now persist run-audit records and request the combined publisher; only the combined publisher deploys Pages.
+
+- Audit: [PAGES_SCHEDULER_AUDIT_2026-09-21](docs/operations/PAGES_SCHEDULER_AUDIT_2026-09-21.md)
+- Combined publisher: [.github/workflows/publish-paper-pages.yml](.github/workflows/publish-paper-pages.yml)
+- Live Pages: https://vishnuvcr.github.io/Nifty/
+- Run-audit feed: https://vishnuvcr.github.io/Nifty/data/run_status.json
+
+The root Pages selector now shows the latest recorded completion time for NIFTY BATMAN, NIFTY ADAPTIVE, SENSEX BATMAN, SENSEX ADAPTIVE, and both defined-risk prospective streams. Historical runs before audit instrumentation are explicitly marked as not recorded rather than inferred.
+
 ## Unified paper-trading GitHub Pages
 
 GitHub Pages now uses a two-level selector:
