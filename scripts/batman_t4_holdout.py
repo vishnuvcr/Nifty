@@ -268,7 +268,7 @@ def main():
             execution = entry_rows.get(decision, {})
             leg_entries = []
             valid = True
-            entry_complete = pd.Timestamp.min
+            entry_complete = None
             entry_cashflow = 0.0
             entry_stt = {}
 
@@ -281,12 +281,12 @@ def main():
                 raw_px, ts = px_ts
                 adj = adjusted_price(raw_px, qty, "entry")
                 entry_cashflow -= qty * adj
-                entry_complete = max(entry_complete, ts)
+                entry_complete = ts if entry_complete is None or ts > entry_complete else entry_complete
                 leg_entries.append((typ, strike, qty, label, raw_px, ts))
                 if qty < 0:
                     entry_stt[label] = abs(qty) * adj
 
-            if not valid or entry_complete == pd.Timestamp.min:
+            if not valid or entry_complete is None:
                 continue
             stages["all_four_entry_legs_ready"] += 1
 
