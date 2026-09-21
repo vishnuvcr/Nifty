@@ -17,3 +17,6 @@ The first T3 cost routine charged entry brokerage but omitted the four exit orde
 
 E020
 The T3 unit-test suite passed, but the full script failed in GitHub Actions because the repository's scripts directory is not a Python package and the module import could not resolve. Correction: the T3 script now inserts the repository root into sys.path before importing shared T2 functions.
+
+E021
+The T3 cache-stabilization edit introduced malformed YAML: duplicate run keys under one step and a stale cache-step ID. GitHub created a run with no jobs. Correction: duplicate key removed and the obsolete cache-save step removed entirely because T1 is the authoritative cached source.
