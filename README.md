@@ -211,3 +211,9 @@ The 09:40 IST controlled backfill and Pages hardening are complete. The final co
 Every active strategy page now shows its own workflow completion audit and an explicit 09:40 signal record. Because no trustworthy historical executable 09:40 option-chain snapshot was available, all eight backfill signals are explicitly **NO_TRADE** rather than “not recorded”. These records are separate from the prospective performance ledgers.
 
 The common Paper Trade Signals Producer now waits for all child workflows and performs one Pages publication; the child workflows no longer independently trigger Pages, preventing overlapping/partial publication races.
+
+### 2026-09-21 — Available-data 09:40 backfill
+
+Exact 09:30 option-chain data is not required for candidate generation. The backfill now emits `DATA_LIMITED_CANDIDATE` when underlying/past-only data are sufficient but option premiums or bid/ask are unavailable. Such signals are explicitly **NOT_EXECUTABLE** and are excluded from prospective execution results. `NO_TRADE` is reserved for a strategy actually evaluated against a valid quote snapshot.
+
+Final producer: `35587070935` (success). Final Pages publication: `35587158445` (success). NIFTY is marked `NOT_ENTRY_DAY` under the frozen 3-sessions-before-expiry rule; SENSEX is `PASS`. Adaptive regime selection remains unselected because the available cache is too short for the frozen volatility-rank lookback.
