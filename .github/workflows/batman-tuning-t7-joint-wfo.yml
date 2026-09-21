@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: batman-tuning-t7-joint-wfo
+  cancel-in-progress: true
+
 jobs:
   joint_wfo:
     runs-on: ubuntu-latest
