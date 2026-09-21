@@ -39,7 +39,9 @@ Timing B:
 A basket is a valid entry only if all four required contracts have usable signal marks and usable execution observations. Different legs may execute at different first executable timestamps; those timestamps are retained in the trade-level output.
 
 ## Entry gate
-The candidate must satisfy positive **net** Monte Carlo expected P&L after:
+Primary/frozen gate: positive **gross** Monte Carlo expected P&L, exactly matching the promoted parent Batman rule. Execution costs are applied to realized P&L and reported as a sensitivity; a secondary net-cost-adjusted MC-EV gate is also reported but is not the primary selection rule.
+
+Execution-cost sensitivity uses:
 - 2.0 points adverse slippage per option contract;
 - Paytm Money brokerage scenario;
 - applicable option-sale STT.
