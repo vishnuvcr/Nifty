@@ -24,7 +24,7 @@ on:
       - "ci/paper_trade_signal_trigger.json"
 
 concurrency:
-  group: paper-trade-signals-producer-repair2
+  group: paper-trade-signals-producer-repair3
   cancel-in-progress: false
 
 permissions:
