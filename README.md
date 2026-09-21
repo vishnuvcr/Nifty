@@ -238,3 +238,20 @@ The T7 development selector is frozen before the untouched holdout.
 **Frozen development configuration:** D4 / same-session 09:30 / trailing target with 30% activation and 30% retracement. The 2025–2026 holdout remains untouched and is evaluated separately against the original D3/09:30/expiry control and the prior D3/09:30 20%/10% trailing-target candidate.
 
 No holdout result is claimed until the holdout workflow outputs pass verification.
+
+
+## BATMAN T7 final status
+
+T7 is complete. The frozen D4 09:30 trailing 30/30 configuration was tested on the untouched 2025-2026 holdout and was not promoted.
+
+Accepted holdout run: 35622783758.
+
+At the primary research cost case, the corrected results are:
+Original D3 09:30 expiry: 148119.05 INR.
+D4 09:30 expiry decomposition: 144552.29 INR.
+Frozen T7 D4 09:30 trailing 30/30: 110624.93 INR.
+Prior D3 09:30 trailing 20/10: 73002.40 INR.
+
+The T7 candidate remained profitable under the 4-point slippage and 30 INR brokerage stress, but it did not improve the same D4 entry versus expiry exit and did not replace the original BATMAN control.
+
+Final report: docs/batman_tuning_t7/T7_CORRECTED_HOLDOUT_REPORT.md
