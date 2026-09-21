@@ -114,18 +114,6 @@ jobs:
             data/batman_tuning_cache/source_audit.json
           if-no-files-found: error
 
-      - name: Upload raw source archives for recovery
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: batman-tuning-t1-raw-source-recovery
-          path: |
-            .cache/batman_raw/ayush_nifty_banknifty_options_2020_2024.zip
-            .cache/batman_raw/nifty_index_2008_2020.zip
-            .cache/batman_raw/rahul_nifty_options_2025_2026.zip
-          if-no-files-found: error
-          retention-days: 30
-
       - name: Split large Ayush archive for artifact transport
         run: |
           mkdir -p .cache/recovery_parts
@@ -165,6 +153,18 @@ jobs:
         with:
           name: batman-t1-long-index
           path: .cache/batman_raw/nifty_index_2008_2020.zip
+          retention-days: 30
+
+      - name: Upload raw source archives for recovery
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: batman-tuning-t1-raw-source-recovery
+          path: |
+            .cache/batman_raw/ayush_nifty_banknifty_options_2020_2024.zip
+            .cache/batman_raw/nifty_index_2008_2020.zip
+            .cache/batman_raw/rahul_nifty_options_2025_2026.zip
+          if-no-files-found: error
           retention-days: 30
 
       - name: T1 summary
