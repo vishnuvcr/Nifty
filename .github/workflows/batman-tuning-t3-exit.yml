@@ -29,13 +29,19 @@ jobs:
       - name: Prepare cache directories
         run: mkdir -p .cache/batman_t3 .cache/batman_raw
 
-      - name: Seed T3 working cache from authoritative raw cache
+      - name: Seed T3 working cache from T1 cache or acquire source
         run: |
           set -euo pipefail
-          test -s .cache/batman_raw/ayush_nifty_banknifty_options_2020_2024.zip
-          test -s .cache/batman_raw/nifty_index_2008_2020.zip
-          cp .cache/batman_raw/ayush_nifty_banknifty_options_2020_2024.zip .cache/batman_t3/
-          cp .cache/batman_raw/nifty_index_2008_2020.zip .cache/batman_t3/
+          if [ -s .cache/batman_raw/ayush_nifty_banknifty_options_2020_2024.zip ] && [ -s .cache/batman_raw/nifty_index_2008_2020.zip ]; then
+            cp .cache/batman_raw/ayush_nifty_banknifty_options_2020_2024.zip .cache/batman_t3/
+            cp .cache/batman_raw/nifty_index_2008_2020.zip .cache/batman_t3/
+          fi
+          if [ ! -s .cache/batman_t3/ayush_nifty_banknifty_options_2020_2024.zip ]; then
+            curl -fL --retry 3 --retry-all-errors "https://www.kaggle.com/api/v1/datasets/download/ayushsacri/indian-nifty-and-banknifty-options-data-2020-2024" -o .cache/batman_t3/ayush_nifty_banknifty_options_2020_2024.zip
+          fi
+          if [ ! -s .cache/batman_t3/nifty_index_2008_2020.zip ]; then
+            curl -fL --retry 3 --retry-all-errors "https://www.kaggle.com/api/v1/datasets/download/nishanthsalian/indian-stock-index-1minute-data-2008-2020" -o .cache/batman_t3/nifty_index_2008_2020.zip
+          fi
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -54,6 +60,14 @@ jobs:
       - name: Run full T3 exit grid
         run: |
           python scripts/batman_t3_exit.py             --options-zip .cache/batman_t3/ayush_nifty_banknifty_options_2020_2024.zip             --long-index-zip .cache/batman_t3/nifty_index_2008_2020.zip             --raw-cache .cache/batman_t3             --out-dir reports/batman_t3             --paths 5000             --seed-base 20260921
+
+
+      - name: Save T3 source cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/batman_t3
+          key: batman-tuning-t3-raw-v2-2026-09-21
 
       - name: Upload T3 results
         if: always()
