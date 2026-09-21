@@ -1,5 +1,5 @@
 name: Refresh NIFTY Paper Trading Dashboards
-# v3.2: centralized Pages publisher. Common Paper Trade Signals Producer waits for all entry workflows before one publication; 16:00 IST remains refresh-only.
+# v3.3: final audit/backfill page hardening. Common Paper Trade Signals Producer waits for all entry workflows before one publication; 16:00 IST remains refresh-only.
 
 on:
   push:
