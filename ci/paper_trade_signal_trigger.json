@@ -2,6 +2,6 @@
   "mode": "backfill_0940",
   "decision_date": "2026-09-21",
   "entry_time_ist": "09:40",
-  "request_id": "2026-09-21-0940-available-data-signal-retry-3",
-  "reason": "Retry after replacing Yahoo historical-data dependency with exchange-first NSE/BSE history and correcting actual NIFTY/SENSEX expiry horizons."
+  "request_id": "2026-09-21-0940-available-data-signal-retry-4",
+  "reason": "Final retry using the already validated NIFTY NSE/BSE history clients instead of direct Yahoo/NSE HTTP parsing."
 }
