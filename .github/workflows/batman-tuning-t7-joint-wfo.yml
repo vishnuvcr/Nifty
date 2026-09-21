@@ -62,7 +62,7 @@ jobs:
       - name: Run 3-expiry smoke test
         run: |
           rm -rf reports/batman_t7_smoke
-          python scripts/batman_t7_joint_engine.py             --options-zip .cache/batman_t7/ayush_nifty_banknifty_options_2020_2024.zip             --long-index-zip .cache/batman_t7/nifty_index_2008_2020.zip             --raw-cache .cache/batman_t7             --out-dir reports/batman_t7_smoke             --paths 500             --limit-expiries 3
+          python scripts/batman_t7_joint_engine.py             --options-zip .cache/batman_t7/ayush_nifty_banknifty_options_2020_2024.zip             --long-index-zip .cache/batman_t7/nifty_index_2008_2020.zip             --raw-cache .cache/batman_t7             --out-dir reports/batman_t7_smoke             --paths 500             --tail-expiries 3
 
       - name: Validate smoke-test configuration count
         run: |
