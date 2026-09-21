@@ -2,6 +2,6 @@
   "mode": "backfill_0940",
   "decision_date": "2026-09-21",
   "entry_time_ist": "09:40",
-  "request_id": "2026-09-21-0940-available-data-signal-retry-1",
-  "reason": "Retry after fixing the available-data candidate generator syntax."
+  "request_id": "2026-09-21-0940-available-data-signal-retry-2",
+  "reason": "Final retry after correcting candidate-generator syntax and releasing orchestration concurrency."
 }
