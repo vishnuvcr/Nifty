@@ -458,21 +458,37 @@ def main():
     summary = []
     for (offset, timing, brokerage), g in trades.groupby(["offset","timing","brokerage_per_order_inr"], dropna=False):
         active = g[g.entered]
+        active_net = g[g.entered_net_gate]
         x = active.realized_net_inr.to_numpy(float)
+        xnet = active_net.realized_net_inr.to_numpy(float)
         gains = x[x > 0].sum()
         losses = -x[x < 0].sum()
         eq = np.cumsum(x) if len(x) else np.array([])
         dd = eq - np.maximum.accumulate(eq) if len(eq) else np.array([0.0])
+        ngains = xnet[xnet > 0].sum()
+        nlosses = -xnet[xnet < 0].sum()
+        neq = np.cumsum(xnet) if len(xnet) else np.array([])
+        ndd = neq - np.maximum.accumulate(neq) if len(neq) else np.array([])
         summary.append({
             "offset": int(offset), "timing": timing, "brokerage_per_order_inr": float(brokerage),
-            "opportunities": int(len(g)), "entered": int(len(active)),
-            "entry_rate": float(len(active)/len(g)) if len(g) else np.nan,
-            "win_rate": float(np.mean(x>0)) if len(x) else np.nan,
-            "mean_net_inr_per_trade": float(np.mean(x)) if len(x) else np.nan,
-            "median_net_inr_per_trade": float(np.median(x)) if len(x) else np.nan,
-            "total_net_inr": float(np.sum(x)) if len(x) else 0.0,
-            "profit_factor": float(gains/losses) if losses > 0 else np.inf,
-            "max_drawdown_inr": float(dd.min()) if len(eq) else 0.0,
+            "opportunities": int(len(g)),
+            "entered_gross_gate": int(len(active)),
+            "entry_rate_gross_gate": float(len(active)/len(g)) if len(g) else np.nan,
+            "win_rate_gross_gate": float(np.mean(x>0)) if len(x) else np.nan,
+            "mean_net_inr_per_trade_gross_gate": float(np.mean(x)) if len(x) else np.nan,
+            "median_net_inr_per_trade_gross_gate": float(np.median(x)) if len(x) else np.nan,
+            "total_net_inr_gross_gate": float(np.sum(x)) if len(x) else 0.0,
+            "profit_factor_gross_gate": float(gains/losses) if losses > 0 else np.inf,
+            "max_drawdown_inr_gross_gate": float(dd.min()) if len(eq) else 0.0,
+            "entered_net_gate": int(len(active_net)),
+            "entry_rate_net_gate": float(len(active_net)/len(g)) if len(g) else np.nan,
+            "win_rate_net_gate": float(np.mean(xnet>0)) if len(xnet) else np.nan,
+            "mean_net_inr_per_trade_net_gate": float(np.mean(xnet)) if len(xnet) else np.nan,
+            "median_net_inr_per_trade_net_gate": float(np.median(xnet)) if len(xnet) else np.nan,
+            "total_net_inr_net_gate": float(np.sum(xnet)) if len(xnet) else 0.0,
+            "profit_factor_net_gate": float(ngains/nlosses) if nlosses > 0 else np.inf,
+            "max_drawdown_inr_net_gate": float(ndd.min()) if len(ndd) else 0.0,
+            "mean_mc_ev_gross_points": float(g.mc_ev_gross_points.mean()),
             "mean_mc_ev_net_points": float(g.mc_ev_net_points.mean()),
         })
     summary = pd.DataFrame(summary).sort_values(["brokerage_per_order_inr","offset","timing"])
@@ -492,8 +508,8 @@ def main():
         pairs.append({
             "offset":int(offset),"timing":timing,"brokerage_per_order_inr":float(brokerage),
             "matched_both_trade":int(len(both)),
-            "paired_mean_net_inr":float((both.realized_net_inr-both.control_pnl).mean()) if len(both) else np.nan,
-            "paired_median_net_inr":float((both.realized_net_inr-both.control_pnl).median()) if len(both) else np.nan,
+            "paired_mean_net_inr_gross_gate":float((both.realized_net_inr-both.control_pnl).mean()) if len(both) else np.nan,
+            "paired_median_net_inr_gross_gate":float((both.realized_net_inr-both.control_pnl).median()) if len(both) else np.nan,
         })
     paired=pd.DataFrame(pairs)
 
