@@ -209,3 +209,16 @@ T1 now has a reproducible historical-source acquisition layer covering the origi
 - T1 audit: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-v1/docs/batman_tuning/T1_DATA_AUDIT.md
 
 T1 remains gated until the raw archives are normalized and the compact BATMAN-specific derived cache passes coverage, contract, timestamp, zero-volume, and expiry-resolution checks. No tuning result is claimed before that gate.
+
+
+## BATMAN Tuning V1 — Final Status
+
+Research branches:
+- T0/T1/T2: `research/batman-tuning-v1`
+- T2 corrected entry branch: `research/batman-tuning-t2-entry-v2`
+- T3 corrected exit branch: `research/batman-tuning-t3-exit-v1`
+- T4 nested WFO + holdout: `research/batman-tuning-t4-wfo-v1`
+- T5 robustness: `research/batman-tuning-t5-robustness-v1`
+- T6 prospective freeze: `research/batman-tuning-t6-prospective-v1`
+
+Final disposition: the D3/09:30 BATMAN + trailing-target (20% activation / 10% retracement) candidate produced positive net P&L on 7 untouched holdout trades, but it is **not promoted** because the holdout is too small and expiry control outperformed it on 6 comparable trades. See `docs/batman_tuning_t5/T5_FINAL_CONCLUSION.md` and `docs/batman_tuning_t6/PROSPECTIVE_FREEZE.md`.
