@@ -489,8 +489,14 @@ def main():
                 )
 
     result=pd.DataFrame(rows)
+    stages["final_exit_candidates"] = int(result["decision_date"].nunique()) if not result.empty else 0
+    (out/"T4_HOLDOUT_STAGE_COUNTS.json").write_text(
+        json.dumps({"stages": stages, "skips": skips}, indent=2) + "\n"
+    )
+    print("HOLDOUT STAGES", json.dumps(stages, indent=2))
+    print("HOLDOUT SKIPS", json.dumps(skips, indent=2))
     if result.empty:
-        raise SystemExit("No holdout trades generated.")
+        raise SystemExit("No holdout trades generated; diagnostics written to T4_HOLDOUT_STAGE_COUNTS.json")
 
     summary=[]
     for brokerage,g in result.groupby("brokerage_per_order_inr"):
