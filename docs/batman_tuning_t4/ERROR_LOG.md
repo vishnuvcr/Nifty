@@ -12,3 +12,6 @@ The first T4 selector produced impossible n_training_trades values because varia
 
 E025
 The first frozen-holdout execution failed because the independent NIFTY daily CSV stores the closing value in a Price column rather than Close. The Rahul option archive and frozen selection were valid. Correction: the holdout loader now accepts close, price, or last as the daily closing field.
+
+E026
+The first corrected holdout run completed with zero trades but did not persist stage-level eligibility diagnostics. Correction: the holdout engine now records expiry candidates, request dates, exact 09:30 spot availability, 756-return readiness, strike-grid availability, four-leg entry availability, gross-MC gate passes, positive-profit references and final exits, even when the result is empty. The artifact upload is always-run.
