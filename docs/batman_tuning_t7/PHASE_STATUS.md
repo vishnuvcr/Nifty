@@ -1,39 +1,22 @@
 # T7 Phase Status
 
-| Phase | Status |
-|---|---|
-| T0 | COMPLETE |
-| T1 | COMPLETE |
-| T2 | COMPLETE |
-| T3 | COMPLETE |
-| T4 | COMPLETE |
-| T5 | COMPLETE |
-| T6 | COMPLETE |
-| T7 Joint development grid + nested WFO | COMPLETE |
-| T7 development freeze | COMPLETE |
-| T7 untouched 2025–2026 holdout | IN PROGRESS |
+T0-T6: COMPLETE.
+T7 joint development grid and nested WFO: COMPLETE.
+T7 development freeze: COMPLETE.
+T7 corrected 2025-2026 untouched holdout: COMPLETE.
+T7 robustness and final decision: COMPLETE.
 
-## Frozen development selection
+Frozen selection: D4, same-session 09:30, trailing target with 30 percent activation and 30 percent retracement.
 
-The joint selector has already produced and frozen:
+Accepted holdout run: 35622783758.
+Rejected run: 35622342772 under E034 because rule evaluation mixed D3 and D4 entry populations.
 
-- D4 entry day.
-- Same-session 09:30 execution.
-- Trailing target: activate at 30% of maximum-profit reference.
-- Retracement: 30% of maximum-profit reference.
-- Development selection uses the frozen T7 brokerage-stress selector.
-- 2025–2026 holdout remains untouched by selection.
+Final status: NOT PROMOTED.
 
-## Current gate
+Primary 2-point slippage / 20 INR brokerage totals:
+Original D3 09:30 expiry: 148119.05 INR.
+D4 09:30 expiry decomposition: 144552.29 INR.
+Frozen T7 D4 09:30 trailing 30/30: 110624.93 INR.
+Prior D3 09:30 trailing 20/10: 73002.40 INR.
 
-The holdout engine is separate from the development engine. It uses the accepted 2025–2026 option archive convention and evaluates the frozen T7 candidate against:
-
-1. Original BATMAN operational control: D3 / 09:30 / expiry.
-2. Prior T6 candidate: D3 / 09:30 / trailing 20% activation / 10% retracement.
-3. T7 frozen candidate: D4 / 09:30 / trailing 30% activation / 30% retracement.
-
-Primary case: 2-point adverse slippage per option leg and ₹20 brokerage per executed F&O order.
-
-A 4-point slippage stress is also reported descriptively and is not used for selection.
-
-No holdout observation is used to alter or re-select the T7 configuration.
+See docs/batman_tuning_t7/T7_CORRECTED_HOLDOUT_REPORT.md.
