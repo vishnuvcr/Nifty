@@ -18,20 +18,23 @@
   "spot_source_timestamp_ist": "09:30",
   "source_latency_minutes": 10,
   "model_data_cutoff": "2026-09-18",
+  "frozen_lookback_sessions": 756,
+  "lookback_sessions_used": 20,
+  "lookback_status": "DATA_LIMITED_SHORT_LOOKBACK",
   "target_expiry": "2026-09-24",
   "horizon_sessions": 3,
   "entry_timing_rule": "3 future trading sessions before target expiry",
   "timing_gate": "PASS",
-  "rv20": 0.07496333273876675,
-  "rv20_rank": 0.16666666666666666,
-  "vol_regime": "low",
+  "rv20": 0.07496333273876712,
+  "rv20_rank": NaN,
+  "vol_regime": "high",
   "terminal_quantiles": {
-    "p10": 73460.80890502744,
-    "p20": 73968.17628273339,
-    "p35": 74435.37906853837,
-    "p65": 75149.75088236,
-    "p80": 75601.01712159324,
-    "p90": 76066.83846362832
+    "p10": 73489.7955624195,
+    "p20": 73786.53148323954,
+    "p35": 74060.86293242169,
+    "p65": 74538.38767473861,
+    "p80": 74793.30669213964,
+    "p90": 75042.5919337851
   },
   "reason": "OPTION_PREMIUM_BID_ASK_SNAPSHOT_UNAVAILABLE",
   "note": "Candidate generated from verified underlying data available by 09:40 IST plus frozen past-only return history. Option premiums, bid/ask, slippage-adjusted entry cost, and MC-EV eligibility were not evaluated.",
@@ -48,7 +51,7 @@
       "side": "SELL",
       "option_type": "PE",
       "target_label": "p35",
-      "target_price": 74435.38,
+      "target_price": 74060.86,
       "quantity_per_lot": 2
     }
   ]
