@@ -307,8 +307,7 @@ def main():
             mae=float(marks.pnl_points.min()); mfe=float(marks.pnl_points.max())
             lot=lot_size(expiry)
             entry_brokerage_base=4.0
-            entry_sold_turnover=sum(abs(l.qty)*(l.entry_price + (-SLIPPAGE_POINTS if l.qty<0 else SLIPPAGE_POINTS))*lot for l in [])
-            # Entry STT uses adjusted execution premiums on option sales.
+                    # Entry STT uses adjusted execution premiums on option sales.
             entry_stt_base=sum(abs(l.qty)*(l.entry_price-SLIPPAGE_POINTS)*lot*stt_rate(l.entry_ts) for l in legs if l.qty<0)
             trade_meta.append({
                 "decision_date":decision.date().isoformat(),"expiry":expiry.date().isoformat(),
@@ -340,7 +339,8 @@ def main():
                             peak=p
                         elif activated:
                             peak=max(peak,p)
-                            if p <= peak-param_b*max_profit:
+                            retracement = param_r if family == "trailing_target_stop" else param_b
+                            if p <= peak-retracement*max_profit:
                                 trigger=ts; reason="trailing_target"; break
                 if trigger is None and family!="expiry_control" and len(pvals)==0:
                     skips["no_path"]+=1; continue
