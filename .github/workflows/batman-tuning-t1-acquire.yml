@@ -58,6 +58,12 @@ jobs:
           cd .cache/batman_raw
           test -f rahul_nifty_options_2025_2026.zip || curl -fL --retry 3 --retry-all-errors "https://www.kaggle.com/api/v1/datasets/download/rahultr1/nifty-options-weekly-1min-2025-01-01-to-2026-07-25" -o rahul_nifty_options_2025_2026.zip
 
+      - name: Acquire long pre-lookback NIFTY index archive
+        run: |
+          set -euo pipefail
+          cd .cache/batman_raw
+          test -f nifty_index_2008_2020.zip || curl -fL --retry 3 --retry-all-errors "https://www.kaggle.com/api/v1/datasets/download/nishanthsalian/indian-stock-index-1minute-data-2008-2020" -o nifty_index_2008_2020.zip
+
       - name: Generate source manifest
         run: |
           python - <<'PY'
@@ -109,6 +115,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload raw source archives for recovery
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: batman-tuning-t1-raw-source-recovery
