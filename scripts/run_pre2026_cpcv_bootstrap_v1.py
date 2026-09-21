@@ -71,6 +71,11 @@ def bootstrap(x,block,n,seed):
   means.append(np.mean(z[:len(x)]))
  b=np.asarray(means)
  return float(np.quantile(b,.025)),float(np.quantile(b,.975)),float(np.mean(b<=0))
+def block_bootstrap(x, block, n, seed):
+ low, high, p_le_zero = bootstrap(x, block, n, seed)
+ return {"ci_low": low, "ci_high": high, "p_le_zero": p_le_zero}
+
+
 def main():
  ap=argparse.ArgumentParser(); ap.add_argument("--trades",required=True); ap.add_argument("--out-dir",required=True)
  ap.add_argument("--lookback",type=int,default=63); ap.add_argument("--qlo",type=float,default=.20); ap.add_argument("--qhi",type=float,default=.80)
