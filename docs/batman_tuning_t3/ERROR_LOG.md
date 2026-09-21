@@ -20,3 +20,6 @@ The T3 unit-test suite passed, but the full script failed in GitHub Actions beca
 
 E021
 The T3 cache-stabilization edit introduced malformed YAML: duplicate run keys under one step and a stale cache-step ID. GitHub created a run with no jobs. Correction: duplicate key removed and the obsolete cache-save step removed entirely because T1 is the authoritative cached source.
+
+E022
+The completed T3 run used an invalid denominator for triggered exit rules: when a fixed/trailing rule did not trigger before expiry, the trade was dropped instead of falling back to the expiry control. This is selection/survivorship bias and made some fixed-target variants appear to have 100% wins. Correction: every eligible entry now exits either at the observed trigger or at expiry fallback; if a triggered exit lacks a subsequent executable quote, expiry fallback is used. The prior T3 result set is rejected.
