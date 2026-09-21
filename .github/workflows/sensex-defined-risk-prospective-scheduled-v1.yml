@@ -101,9 +101,3 @@ jobs:
             git push origin HEAD:research/prospective-defined-risk-sensex-v1
           fi
 
-      - name: Trigger combined GitHub Pages publication
-        if: always()
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run publish-paper-pages.yml --repo "${{ github.repository }}" --ref main || echo "Pages publisher dispatch failed; scheduled publisher remains as backstop."
-
