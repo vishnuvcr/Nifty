@@ -7,7 +7,13 @@
 | T2 entry tuning | COMPLETE |
 | T3 corrected exit tuning | COMPLETE |
 | T4 nested WFO + frozen holdout | COMPLETE |
-| T5 robustness/inference | IN PROGRESS |
-| T6 prospective freeze | NOT STARTED |
+| T5 robustness/inference | COMPLETE |
+| T6 prospective freeze | IN PROGRESS |
 
-The holdout run completed successfully on GitHub Actions run 35605509219 with seven eligible trades.
+## Accepted holdout run
+GitHub Actions run: 35605509219.
+
+## T5 conclusion
+The frozen trailing-target rule was profitable in all 7 holdout trades, but it did not outperform the same-entry expiry-control benchmark on 6 comparable holdout trades. The rule is therefore not promoted as an improved exit replacement.
+
+The small holdout size (7 trades) is the principal statistical limitation.
