@@ -356,9 +356,24 @@ def main():
                         skips["expiry_exit_missing"]+=1; continue
                     exit_time=max(x[2] for x in exits)
                 else:
-                    exits=last_or_next_execution(zf,file_map,sessions,legs,trigger,expiry,exit_cache,use_open=True) if trigger is not None else None
-                    if exits is None:
-                        skips["trigger_unexecutable"]+=1; continue
+                    if trigger is None:
+                        # A rule that never triggers is still a valid trade.
+                        # It must fall back to the same expiry control rather than
+                        # disappearing from the denominator.
+                        exits=expiry_exit(zf,file_map,sessions,legs,expiry,exit_cache)
+                        if exits is None:
+                            skips["expiry_fallback_missing"]+=1; continue
+                        reason="expiry_fallback"
+                    else:
+                        exits=last_or_next_execution(zf,file_map,sessions,legs,trigger,expiry,exit_cache,use_open=True)
+                        if exits is None:
+                            # Trigger was observed, but the next executable quote
+                            # was unavailable. Use the next available expiry exit
+                            # rather than dropping the trade.
+                            exits=expiry_exit(zf,file_map,sessions,legs,expiry,exit_cache)
+                            if exits is None:
+                                skips["trigger_and_expiry_unexecutable"]+=1; continue
+                            reason="expiry_fallback_after_unexecutable_trigger"
                     exit_time=max(x[2] for x in exits)
                 for brokerage in BROKERAGES:
                     entry_brokerage=4*brokerage
