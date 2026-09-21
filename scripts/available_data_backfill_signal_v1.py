@@ -154,8 +154,7 @@ def main():
         base["legs"]=legs(st,t)
 
     out=Path(args.output_json); out.parent.mkdir(parents=True,exist_ok=True)
-    out.write_text(json.dumps(base,indent=2)+"
-",encoding="utf-8")
+    out.write_text(json.dumps(base,indent=2)+"\\n",encoding="utf-8")
     print(json.dumps(base,indent=2))
 
 if __name__=="__main__":
