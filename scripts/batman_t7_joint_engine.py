@@ -227,7 +227,7 @@ def evaluate_exit(day_frames, legs, marks, entry_cashflow, max_profit, es95, var
                             break
                 elif family == "trailing_stop":
                     peak = max(peak, p)
-                    if peak > 0 and p <= peak - p1 * max_profit:
+                    if peak > 0 and p <= peak - p2 * max_profit:
                         trigger = ts
                         mode = "trailing_stop"
                         break
