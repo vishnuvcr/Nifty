@@ -1,0 +1,52 @@
+name: BATMAN Tuning Data Recovery
+
+on:
+  push:
+    branches:
+      - research/batman-tuning-data-recovery-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore validated T1 source cache
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/batman_raw
+          key: batman-tuning-raw-v3-2026-09-21
+          fail-on-cache-miss: true
+
+      - name: Verify cached sources
+        run: |
+          set -euo pipefail
+          test -s .cache/batman_raw/ayush_nifty_banknifty_options_2020_2024.zip
+          test -s .cache/batman_raw/nifty_index_2008_2020.zip
+          test -s .cache/batman_raw/rahul_nifty_options_2025_2026.zip
+          sha256sum             .cache/batman_raw/ayush_nifty_banknifty_options_2020_2024.zip             .cache/batman_raw/nifty_index_2008_2020.zip             .cache/batman_raw/rahul_nifty_options_2025_2026.zip
+
+      - name: Upload source archive bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: batman-tuning-source-bundle-v1
+          path: |
+            .cache/batman_raw/ayush_nifty_banknifty_options_2020_2024.zip
+            .cache/batman_raw/nifty_index_2008_2020.zip
+            .cache/batman_raw/rahul_nifty_options_2025_2026.zip
+          retention-days: 30
+
+      - name: Upload T1 manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: batman-tuning-source-manifests-v1
+          path: |
+            .cache/batman_raw/source_manifest_v2.json
+            .cache/batman_raw/source_manifest.json
+          if-no-files-found: warn
