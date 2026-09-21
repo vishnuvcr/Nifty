@@ -419,12 +419,12 @@ def build_site(site_dir: Path, latest: dict[str, Any], candidates: pd.DataFrame,
 <div><small>Last completed workflow run</small><div class="kpi" id="wf-audit-time">Loading...</div></div>
 <div><small>Workflow status</small><div class="kpi" id="wf-audit-status">Loading...</div></div>
 </div>
-<p><small>Audit source: <a href="data/run_status_nifty_signal_generation.json">run_status_nifty_signal_generation.json</a></small></p>
+<p><small>Audit source: <a href="../data/run_status_nifty_signal_generation.json">run_status_nifty_signal_generation.json</a></small></p>
 </div>
 <script>
 (async()=>{
   const fmt=v=>v?new Date(v).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Kolkata'}):'Not recorded';
-  try{const d=await (await fetch('data/run_status_nifty_signal_generation.json?ts='+Date.now(),{cache:'no-store'})).json();
+  try{const d=await (await fetch('../data/run_status_nifty_signal_generation.json?ts='+Date.now(),{cache:'no-store'})).json();
   document.getElementById('wf-audit-time').textContent=fmt(d.finished_at_ist);
   document.getElementById('wf-audit-status').textContent=(d.status||'NOT_RECORDED').toUpperCase();}
   catch(e){document.getElementById('wf-audit-time').textContent='Audit unavailable';document.getElementById('wf-audit-status').textContent='ERROR';}
@@ -436,8 +436,8 @@ def build_site(site_dir: Path, latest: dict[str, Any], candidates: pd.DataFrame,
 <div class="grid">
 <div><small>Decision date</small><div class="kpi" id="bf-date">—</div></div>
 <div><small>Entry time</small><div class="kpi">09:40 IST</div></div>
-<div><small>Signal</small><div class="kpi" id="bf-signal">NO_TRADE</div></div>
-<div><small>Backfill status</small><div class="kpi" id="bf-status">BACKFILL_0940_NO_TRADE</div></div>
+<div><small>Signal</small><div class="kpi" id="bf-signal">NOT_EVALUATED</div></div>
+<div><small>Backfill status</small><div class="kpi" id="bf-status">BACKFILL_0940_NOT_EVALUATED</div></div>
 </div>
 <p id="bf-reason">Loading...</p>
 <p><small>Historical observation only. It is separate from the prospective ledger.</small></p>
