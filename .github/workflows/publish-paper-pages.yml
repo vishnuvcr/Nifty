@@ -140,6 +140,7 @@ jobs:
           python - <<'PY'
           import json
           from datetime import datetime
+          from zoneinfo import ZoneInfo
           from pathlib import Path
 
           base = Path("site/data")
@@ -173,7 +174,7 @@ jobs:
               return max(vals, key=ts)
 
           combined = {
-              "generated_at_ist": datetime.now().astimezone().isoformat(),
+              "generated_at_ist": datetime.now(ZoneInfo("Asia/Kolkata")).isoformat(),
               "nifty_batman": latest("batman", "nifty_generation"),
               "nifty_adaptive": latest("nifty_generation", "nifty_adaptive"),
               "sensex_batman": src["sensex"],
