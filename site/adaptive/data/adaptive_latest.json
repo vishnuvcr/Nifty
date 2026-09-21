@@ -35,7 +35,7 @@
   "eligible_candidate_count": 0,
   "signal_id": null,
   "notes": "Phase 10 infrastructure is validated. No prospective trading observation is recorded yet. The first new entry signal will be generated on the next NIFTY trading weekday at 09:30 IST; the 16:00 IST job is refresh-only.",
-  "last_refresh_timestamp_ist": "2026-09-21T14:24:16.030937+05:30",
+  "last_refresh_timestamp_ist": "2026-09-21T14:43:12.018801+05:30",
   "refresh_cutoff": "2026-09-21",
   "refresh_closures": [],
   "paper_ledger_summary": {

@@ -20,31 +20,6 @@ th,td{padding:8px;border-bottom:1px solid #293547;text-align:left;vertical-align
 .note{color:#aebdce;line-height:1.55}
 </style></head>
 <body><main>
-<div class="card" id="workflow-audit"><h2>Workflow audit</h2>
-<div class="grid">
-<div><small>Last completed workflow run</small><div class="kpi" id="wf-audit-time">Loading...</div></div>
-<div><small>Workflow status</small><div class="kpi" id="wf-audit-status">Loading...</div></div>
-<div><small>09:40 IST backfill</small><div class="kpi" id="wf-backfill-status">Checking...</div></div>
-</div>
-<p class="note" id="wf-backfill-note">The backfill is recorded separately from the prospective ledger.</p>
-</div>
-<script>
-(async()=>{
-  const fmt=v=>v?new Date(v).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Kolkata'}):'Not recorded';
-  const wf=document.getElementById('wf-audit-time'), st=document.getElementById('wf-audit-status');
-  const bf=document.getElementById('wf-backfill-status'), bn=document.getElementById('wf-backfill-note');
-  try{
-    const r=await fetch('../data/run_status_nifty_signal_generation.json?ts='+Date.now(),{cache:'no-store'}); const d=await r.json();
-    wf.textContent=fmt(d.finished_at_ist); st.textContent=(d.status||'NOT_RECORDED').toUpperCase();
-  }catch(e){wf.textContent='Audit unavailable';st.textContent='ERROR';}
-  try{
-    const r=await fetch('../data/backfill_0940_2026-09-21.json?ts='+Date.now(),{cache:'no-store'}); const d=await r.json();
-    bf.textContent=(d.status||'NOT_RECORDED').replaceAll('_',' ');
-    bn.textContent='Requested NIFTY ADAPTIVE: 2026-09-21 at 09:40 IST. No historical executable option snapshot was available, so no current quote was substituted and no future outcome was used.';
-  }catch(e){bf.textContent='Not recorded';bn.textContent='No 09:40 backfill observation has been published yet.';}
-})();
-</script>
-
 <p><a href="../">← Strategy selector</a> · <a href="../batman/">Batman</a></p>
 <div class="card">
 <span class="badge">ADAPTIVE PAPER TRADING v1</span>
