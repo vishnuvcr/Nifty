@@ -267,6 +267,7 @@ def main():
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--paths", type=int, default=5000)
     ap.add_argument("--seed-base", type=int, default=20260921)
+    ap.add_argument("--limit-expiries", type=int, default=0)
     args = ap.parse_args()
 
     raw_root = Path(args.raw_cache)
@@ -286,6 +287,8 @@ def main():
     sessions = pd.DatetimeIndex(daily.date.unique()).sort_values()
     expiry_dates = sorted(pd.to_datetime(cal.expiry).dropna().unique())
     expiry_dates = [pd.Timestamp(x).normalize() for x in expiry_dates if pd.Timestamp("2020-01-01") <= pd.Timestamp(x) <= pd.Timestamp("2024-10-31")]
+    if args.limit_expiries > 0:
+        expiry_dates = expiry_dates[:args.limit_expiries]
     file_map = dict(zip(fmap.trade_date.dt.normalize(), fmap.member))
 
     all_rows = []
