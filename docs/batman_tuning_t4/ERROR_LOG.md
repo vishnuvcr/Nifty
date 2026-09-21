@@ -15,3 +15,6 @@ The first frozen-holdout execution failed because the independent NIFTY daily CS
 
 E026
 The first corrected holdout run completed with zero trades but did not persist stage-level eligibility diagnostics. Correction: the holdout engine now records expiry candidates, request dates, exact 09:30 spot availability, 756-return readiness, strike-grid availability, four-leg entry availability, gross-MC gate passes, positive-profit references and final exits, even when the result is empty. The artifact upload is always-run.
+
+E027
+The holdout diagnostics showed all 81 requests failed the 756-session history gate because comma-formatted prices in the independent NIFTY daily CSV were parsed as nonnumeric. Correction: the loader now removes thousands separators before numeric conversion and records daily-history coverage in the stage diagnostics.
