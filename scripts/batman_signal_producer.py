@@ -555,8 +555,8 @@ def build_site(site_dir: Path, latest: dict, signals: pd.DataFrame, ledger: pd.D
 <div class="grid">
 <div><small>Decision date</small><div class="kpi" id="bf-date">—</div></div>
 <div><small>Entry time</small><div class="kpi">09:40 IST</div></div>
-<div><small>Signal</small><div class="kpi" id="bf-signal">Loading...</div></div>
-<div><small>Backfill status</small><div class="kpi" id="bf-status">Loading...</div></div>
+<div><small>Signal</small><div class="kpi" id="bf-signal">NO_TRADE</div></div>
+<div><small>Backfill status</small><div class="kpi" id="bf-status">BACKFILL_0940_NO_TRADE</div></div>
 </div>
 <p id="bf-reason">Loading...</p>
 <p><small>Historical observation only. It is separate from the prospective ledger.</small></p>
