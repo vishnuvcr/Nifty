@@ -25,3 +25,5 @@ E010: Deep raw-data probe run 35538086620 failed because the Zenodo option archi
 E013: T1 raw-source recovery workflow did not trigger on the workflow-definition-only commit. Correction: after enabling the push trigger, a non-workflow audit-log commit was added to force the intended Actions event without changing research logic.
 
 E014: The T1 acquire workflow's first recovery attempt omitted the long 2008-2020 NIFTY index archive and skipped raw-source publication after the schema audit failed. Correction: the workflow now acquires the long index and marks raw-source publication always-run; a non-workflow commit triggers the corrected workflow revision.
+
+E015: The full 1.57 GB T1 recovery artifact exceeded the connector's 512 MB download limit. Correction: split the large Ayush archive into three approximately 400 MB artifacts and publish Rahul/long-index archives separately; the source archive itself remains unchanged and checksum-validated.
