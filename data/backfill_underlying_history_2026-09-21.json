@@ -1,0 +1,188 @@
+{
+  "generated_at_ist": "2026-09-21T15:10:00+05:30",
+  "historical_source": {
+    "nifty": "Investing.com historical table, daily closes through 2026-09-18",
+    "sensex": "Investing.com historical table, daily closes through 2026-09-18",
+    "methodology": "Only completed sessions before the 09:40 backfill are included. 2026-09-21 end-of-day values are excluded."
+  },
+  "indices": {
+    "NIFTY": {
+      "daily_closes": [
+        {
+          "date": "2026-08-20",
+          "close": 24231.85
+        },
+        {
+          "date": "2026-08-21",
+          "close": 24252
+        },
+        {
+          "date": "2026-08-24",
+          "close": 24219.05
+        },
+        {
+          "date": "2026-08-25",
+          "close": 24334.55
+        },
+        {
+          "date": "2026-08-26",
+          "close": 24207.75
+        },
+        {
+          "date": "2026-08-27",
+          "close": 24090.85
+        },
+        {
+          "date": "2026-08-28",
+          "close": 24175.65
+        },
+        {
+          "date": "2026-08-31",
+          "close": 24080.4
+        },
+        {
+          "date": "2026-09-01",
+          "close": 24055.8
+        },
+        {
+          "date": "2026-09-02",
+          "close": 23914.45
+        },
+        {
+          "date": "2026-09-03",
+          "close": 23873.45
+        },
+        {
+          "date": "2026-09-04",
+          "close": 23897.7
+        },
+        {
+          "date": "2026-09-07",
+          "close": 23779.15
+        },
+        {
+          "date": "2026-09-08",
+          "close": 23635.1
+        },
+        {
+          "date": "2026-09-09",
+          "close": 23431.5
+        },
+        {
+          "date": "2026-09-10",
+          "close": 23477.8
+        },
+        {
+          "date": "2026-09-11",
+          "close": 23398.1
+        },
+        {
+          "date": "2026-09-15",
+          "close": 23118.6
+        },
+        {
+          "date": "2026-09-16",
+          "close": 23217.6
+        },
+        {
+          "date": "2026-09-17",
+          "close": 23270.6
+        },
+        {
+          "date": "2026-09-18",
+          "close": 23346.4
+        }
+      ],
+      "source_url": "https://www.investing.com/indices/s-p-cnx-nifty-historical-data"
+    },
+    "SENSEX": {
+      "daily_closes": [
+        {
+          "date": "2026-08-20",
+          "close": 77537.72
+        },
+        {
+          "date": "2026-08-21",
+          "close": 77540.83
+        },
+        {
+          "date": "2026-08-24",
+          "close": 77369.11
+        },
+        {
+          "date": "2026-08-25",
+          "close": 77656.09
+        },
+        {
+          "date": "2026-08-26",
+          "close": 77472.94
+        },
+        {
+          "date": "2026-08-27",
+          "close": 76933.59
+        },
+        {
+          "date": "2026-08-28",
+          "close": 77264.51
+        },
+        {
+          "date": "2026-08-31",
+          "close": 76957.27
+        },
+        {
+          "date": "2026-09-01",
+          "close": 76944.28
+        },
+        {
+          "date": "2026-09-02",
+          "close": 76570.35
+        },
+        {
+          "date": "2026-09-03",
+          "close": 76152.86
+        },
+        {
+          "date": "2026-09-04",
+          "close": 76515.43
+        },
+        {
+          "date": "2026-09-07",
+          "close": 76132.81
+        },
+        {
+          "date": "2026-09-08",
+          "close": 75577.58
+        },
+        {
+          "date": "2026-09-09",
+          "close": 74764.23
+        },
+        {
+          "date": "2026-09-10",
+          "close": 74902.59
+        },
+        {
+          "date": "2026-09-11",
+          "close": 74781.76
+        },
+        {
+          "date": "2026-09-15",
+          "close": 74003.82
+        },
+        {
+          "date": "2026-09-16",
+          "close": 74336.45
+        },
+        {
+          "date": "2026-09-17",
+          "close": 74314.59
+        },
+        {
+          "date": "2026-09-18",
+          "close": 74294.96
+        }
+      ],
+      "source_url": "https://www.investing.com/indices/sensex-historical-data"
+    }
+  }
+}
