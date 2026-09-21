@@ -2,6 +2,6 @@
   "mode": "backfill_0940",
   "decision_date": "2026-09-21",
   "entry_time_ist": "09:40",
-  "request_id": "2026-09-21-0940-all-strategies-final-orchestrated",
-  "reason": "Final controlled backfill verification after centralizing Pages publication and fixing per-strategy audit/backfill paths."
+  "request_id": "2026-09-21-0940-available-data-signal-final",
+  "reason": "Regenerate the 09:40 backfill using available underlying/history data when exact option premiums are unavailable; classify as DATA_LIMITED_CANDIDATE, never NO_TRADE."
 }
