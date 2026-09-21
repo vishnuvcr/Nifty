@@ -1,0 +1,16 @@
+{
+  "required_paths": [
+    "index.html",
+    "batman/index.html",
+    "adaptive/index.html",
+    "sensex/index.html",
+    "sensex/batman/index.html",
+    "sensex/adaptive/index.html",
+    "prospective-defined-risk/nifty/index.html",
+    "prospective-defined-risk/nifty/jade-lizard/index.html",
+    "prospective-defined-risk/nifty/put-ratio-spread/index.html",
+    "sensex/prospective-defined-risk/index.html",
+    "sensex/prospective-defined-risk/jade-lizard/index.html",
+    "sensex/prospective-defined-risk/put-ratio-spread/index.html"
+  ]
+}

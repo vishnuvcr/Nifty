@@ -1,0 +1,39 @@
+{
+  "generated_at_ist": "2026-09-21T08:51:44.853981+00:00",
+  "nifty_batman": {
+    "workflow": "site/data/run_status_batman.json",
+    "status": "NOT_RECORDED",
+    "finished_at_ist": null,
+    "note": "Run audit instrumentation was added after the historical run; no prior workflow timestamp was persisted."
+  },
+  "nifty_adaptive": {
+    "workflow": "site/data/run_status_nifty_signal_generation.json",
+    "status": "NOT_RECORDED",
+    "finished_at_ist": null,
+    "note": "Run audit instrumentation was added after the historical run; no prior workflow timestamp was persisted."
+  },
+  "sensex_batman": {
+    "workflow": "site/data/run_status_sensex.json",
+    "status": "NOT_RECORDED",
+    "finished_at_ist": null,
+    "note": "Run audit instrumentation was added after the historical run; no prior workflow timestamp was persisted."
+  },
+  "sensex_adaptive": {
+    "workflow": "site/data/run_status_sensex.json",
+    "status": "NOT_RECORDED",
+    "finished_at_ist": null,
+    "note": "Run audit instrumentation was added after the historical run; no prior workflow timestamp was persisted."
+  },
+  "nifty_defined_risk": {
+    "workflow": "site/data/run_status_defined_risk_nifty.json",
+    "status": "NOT_RECORDED",
+    "finished_at_ist": null,
+    "note": "Run audit instrumentation was added after the historical run; no prior workflow timestamp was persisted."
+  },
+  "sensex_defined_risk": {
+    "workflow": "site/data/run_status_defined_risk_sensex.json",
+    "status": "NOT_RECORDED",
+    "finished_at_ist": null,
+    "note": "Run audit instrumentation was added after the historical run; no prior workflow timestamp was persisted."
+  }
+}
