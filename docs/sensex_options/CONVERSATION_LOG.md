@@ -43,3 +43,16 @@ Research action:
 - Added a current-session timestamp gate to prevent stale BSE live SENSEX values on holidays/closures from becoming paper entries.
 - Added explicit NO_TRADE handling when the target weekday is not an actually listed SENSEX option expiry, avoiding false scanner-error records for normal no-entry days.
 - Added immediate combined Pages publication after SENSEX scanner/page-state pushes; 16:00 IST remains the scheduled settlement/publication backstop.
+
+
+### S7 decision-time signal correction — 2026-09-21
+User instruction: "Error. Don't stop midway. No backfill. I want today's signals."
+
+Research action:
+- Verified workflow run 35587080630 was SUCCESS; the displayed error was a Pages/audit presentation problem rather than a failed signal-production workflow.
+- Verified the available 09:30 IST SENSEX spot observation at 74,748.70.
+- Added scripts/sensex_available_data_signal_producer_v1.py so underlying/past-only data can publish DATA_LIMITED_CANDIDATE without inventing option premiums.
+- Published today's Batman and Adaptive decision-time observations. Batman retains the frozen P35/P20/P65/P80 target structure; Adaptive retains the frozen candidate universe but withholds primary selection because net MC-EV needs option prices.
+- Removed the production 09:40/backfill mode from the main SENSEX workflow and added automatic weekday 09:30 scanning with manual dispatch.
+- Replaced the page's client-side backfill error panel with committed static audit/signal state and updated the error log.
+- No executable paper trade was opened, no historical outcome was used, and DATA_LIMITED observations are excluded from performance metrics.
