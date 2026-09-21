@@ -11,3 +11,5 @@ The 2025-2026 Rahul dataset remains an untouched outer holdout. T3 results are s
 T3 workflow activation commit completed. A separate audit-log commit is used to ensure the push-triggered Actions run is instantiated after the workflow-definition update.
 
 The first T3 run was intentionally rejected before computation because unit tests caught an exit-brokerage omission. The corrected workflow will rerun the full grid with round-trip brokerage included.
+
+The first corrected T3 computation passed all unit tests but stopped before the grid because of a runner-only import-path defect. The next run uses the same data, same frozen parameters and corrected cost model with the import path fixed.
