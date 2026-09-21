@@ -217,3 +217,22 @@ The common Paper Trade Signals Producer now waits for all child workflows and pe
 Exact 09:30 option-chain data is not required for candidate generation. The backfill now emits `DATA_LIMITED_CANDIDATE` when underlying/past-only data are sufficient but option premiums or bid/ask are unavailable. Such signals are explicitly **NOT_EXECUTABLE** and are excluded from prospective execution results. `NO_TRADE` is reserved for a strategy actually evaluated against a valid quote snapshot.
 
 Final producer: `35587070935` (success). Final Pages publication: `35587158445` (success). NIFTY is marked `NOT_ENTRY_DAY` under the frozen 3-sessions-before-expiry rule; SENSEX is `PASS`. Adaptive regime selection remains unselected because the available cache is too short for the frozen volatility-rank lookback.
+
+
+## BATMAN T7 joint tuning - 2026-09-21
+
+Branch: research/batman-tuning-t7-joint-wfo-v1
+
+T7 is complete and the frozen candidate was NOT PROMOTED.
+
+Frozen development selection: D4, same-session 09:30, trailing target with 30 percent activation and 30 percent retracement.
+
+Corrected untouched 2025-2026 holdout, primary case (2-point adverse slippage, 20 INR brokerage/order):
+- Original D3 09:30 expiry: 148119.05 INR across 26 trades.
+- D4 09:30 expiry decomposition: 144552.29 INR across 28 trades.
+- Frozen T7 D4 09:30 trailing 30/30: 110624.93 INR across 29 trades.
+- Prior D3 09:30 trailing 20/10: 73002.40 INR across 28 trades.
+
+T7 remained profitable under the 4-point slippage and 30 INR/order stress, but it did not improve the same D4 entry versus expiry exit and did not replace the original BATMAN control.
+
+Final report: https://github.com/vishnuvcr/Nifty/blob/research/batman-tuning-t7-joint-wfo-v1/docs/batman_tuning_t7/T7_CORRECTED_HOLDOUT_REPORT.md
