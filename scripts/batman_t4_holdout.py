@@ -60,7 +60,7 @@ def load_daily(path):
     date_col = "date" if "date" in df.columns else ("datetime" if "datetime" in df.columns else "Date".lower())
     close_col = "close" if "close" in df.columns else ("price" if "price" in df.columns else "last")
     df["date"] = pd.to_datetime(df[date_col], errors="coerce").dt.tz_localize(None).dt.normalize()
-    df["close"] = pd.to_numeric(df[close_col], errors="coerce")
+    df["close"] = pd.to_numeric(df[close_col].astype(str).str.replace(",", "", regex=False), errors="coerce")
     return df.dropna(subset=["date", "close"]).sort_values("date").drop_duplicates("date")[["date", "close"]]
 
 
@@ -209,6 +209,10 @@ def main():
     rows = []
     skips = {}
     stages = {
+        "daily_rows_after_parse": int(len(daily)),
+        "daily_start": str(daily.date.min()) if len(daily) else "",
+        "daily_end": str(daily.date.max()) if len(daily) else "",
+        "daily_rows_before_first_holdout_decision": 0,
         "expiry_candidates": int(len(expiry_list)),
         "requests": int(len(requests)),
         "decision_dates_present": 0,
@@ -239,6 +243,8 @@ def main():
                 continue
             stages["exact_0930_spot"] += 1
             hist = daily.loc[daily.date <= (decision - pd.Timedelta(days=1)), "close"].astype(float)
+            if decision == requests[0][0]:
+                stages["daily_rows_before_first_holdout_decision"] = int(len(hist))
             returns = np.log(hist).diff().dropna().tail(756).to_numpy()
             if len(returns) < 756:
                 skips["insufficient_756_returns"] = skips.get("insufficient_756_returns", 0) + 1
