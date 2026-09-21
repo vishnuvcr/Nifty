@@ -160,10 +160,11 @@ def build_marks(path,c):
     return piv.reset_index(),[]
 
 def expiry_exits(path,c):
+    cut=(c["expiry"].tz_localize("Asia/Kolkata")+pd.Timedelta(hours=15,minutes=29)).tz_convert("UTC")
     out=[]
     for typ,strike,qty,label in c["legs"]:
         g=path[(path.local_date==c["expiry"])&(path.option_type==typ)&path.strike_price.eq(float(strike))&
-               (path.volume>0)&path.close.notna()].sort_values("timestamp")
+               (path.timestamp<=cut)&(path.volume>0)&path.close.notna()].sort_values("timestamp")
         if g.empty:return None
         r=g.iloc[-1];out.append((typ,strike,qty,label,float(r.close),pd.Timestamp(r.timestamp)))
     return out
@@ -199,14 +200,15 @@ def evaluate(path,c,rule):
     return (e,"expiry_fallback",trigger) if e else (None,"missing_expiry_fallback",trigger)
 
 def realize(c,exits,slippage):
-    rows=[];lot=lot_size(c["expiry"]);ent_stt=0.0;exit_stt=0.0;exit_cash=0.0
+    rows=[];lot=lot_size(c["expiry"]);ent_stt=0.0;exit_stt=0.0;entry_cash=0.0;exit_cash=0.0
     for typ,strike,qty,label,raw,ts in c["entries"]:
         px=adj(raw,qty,"entry",slippage)
+        entry_cash-=qty*px
         if qty<0:ent_stt+=abs(qty)*px*lot*stt_rate(ts)
     for typ,strike,qty,label,raw,ts in exits:
         px=adj(raw,qty,"exit",slippage);exit_cash+=qty*px
         if qty>0:exit_stt+=abs(qty)*px*lot*stt_rate(ts)
-    gross=(c["entry_cashflow"]+exit_cash)*lot
+    gross=(entry_cash+exit_cash)*lot
     for b in BROKERAGES:
         rows.append({"brokerage_per_order_inr":b,"lot_size":lot,"realized_gross_points":c["entry_cashflow"]+exit_cash,
                      "realized_net_inr":gross-8*b-ent_stt-exit_stt,"entry_stt_inr":ent_stt,"exit_stt_inr":exit_stt,
@@ -254,7 +256,8 @@ def main():
                 ch=normalize(ch);ch=ch[(ch.expiry_code==1)&(ch.local_date>=start)&(ch.local_date<=end)]
                 if ch.empty:continue
                 for i,c in enumerate(cands):
-                    active=ch[(ch.timestamp>=c["entry_complete"])&(ch.local_date<=c["expiry"])]
+                    cut=(c["expiry"].tz_localize("Asia/Kolkata")+pd.Timedelta(hours=15,minutes=29)).tz_convert("UTC")
+                    active=ch[(ch.timestamp>=c["entry_complete"])&(ch.local_date<=c["expiry"])&(ch.timestamp<=cut)]
                     if active.empty:continue
                     mask=pd.Series(False,index=active.index)
                     for typ,strike,qty,label in c["legs"]:
