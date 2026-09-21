@@ -164,5 +164,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: batman-tuning-t4-holdout-probe
-          path: reports/batman_t4/T4_HOLDOUT_SOURCE_AUDIT.json
+          path: |
+            reports/batman_t4/T4_HOLDOUT_SOURCE_AUDIT.json
+            reports/batman_t4/T4_HOLDOUT_EXPIRY_CODE_MAP.json
           retention-days: 30
