@@ -1,27 +1,49 @@
 {
-  "generated_at_ist": "2026-09-21T14:43:19.035538+05:30",
+  "generated_at_ist": "2026-09-21T14:44:16.519448+05:30",
   "nifty_batman": {
-    "workflow": "site/data/run_status_batman.json",
-    "status": "NOT_RECORDED",
-    "finished_at_ist": null,
-    "note": "Run audit instrumentation was added after the historical run; no prior workflow timestamp was persisted."
-  },
-  "nifty_adaptive": {
-    "workflow": "site/data/run_status_nifty_signal_generation.json",
-    "status": "NOT_RECORDED",
-    "finished_at_ist": null,
-    "note": "Run audit instrumentation was added after the historical run; no prior workflow timestamp was persisted."
-  },
-  "sensex_batman": {
-    "workflow": "SENSEX Paper Trading Signal Scanners",
-    "workflow_run_id": "35581947391",
-    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35581947391",
+    "workflow": "Generate NIFTY Paper Trading Signals",
+    "workflow_run_id": "35581947543",
+    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35581947543",
     "trigger": "workflow_dispatch",
     "mode": "backfill_0940",
     "decision_date": "2026-09-21",
     "entry_time_ist": "09:40",
     "scheduled_time_ist": "09:30 IST",
-    "finished_at_ist": "2026-09-21T14:42:32+05:30",
+    "finished_at_ist": "2026-09-21T14:43:34+05:30",
+    "status": "success",
+    "scope": [
+      "NIFTY BATMAN",
+      "NIFTY ADAPTIVE"
+    ],
+    "note": "Signal producer audit record. Pages deployment is centralized."
+  },
+  "nifty_adaptive": {
+    "workflow": "Generate NIFTY Paper Trading Signals",
+    "workflow_run_id": "35581947543",
+    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35581947543",
+    "trigger": "workflow_dispatch",
+    "mode": "backfill_0940",
+    "decision_date": "2026-09-21",
+    "entry_time_ist": "09:40",
+    "scheduled_time_ist": "09:30 IST",
+    "finished_at_ist": "2026-09-21T14:43:34+05:30",
+    "status": "success",
+    "scope": [
+      "NIFTY BATMAN",
+      "NIFTY ADAPTIVE"
+    ],
+    "note": "Signal producer audit record. Pages deployment is centralized."
+  },
+  "sensex_batman": {
+    "workflow": "SENSEX Paper Trading Signal Scanners",
+    "workflow_run_id": "35582069804",
+    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35582069804",
+    "trigger": "workflow_dispatch",
+    "mode": "backfill_0940",
+    "decision_date": "2026-09-21",
+    "entry_time_ist": "09:40",
+    "scheduled_time_ist": "09:30 IST",
+    "finished_at_ist": "2026-09-21T14:43:58+05:30",
     "status": "success",
     "scope": [
       "SENSEX BATMAN",
@@ -31,14 +53,14 @@
   },
   "sensex_adaptive": {
     "workflow": "SENSEX Paper Trading Signal Scanners",
-    "workflow_run_id": "35581947391",
-    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35581947391",
+    "workflow_run_id": "35582069804",
+    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35582069804",
     "trigger": "workflow_dispatch",
     "mode": "backfill_0940",
     "decision_date": "2026-09-21",
     "entry_time_ist": "09:40",
     "scheduled_time_ist": "09:30 IST",
-    "finished_at_ist": "2026-09-21T14:42:32+05:30",
+    "finished_at_ist": "2026-09-21T14:43:58+05:30",
     "status": "success",
     "scope": [
       "SENSEX BATMAN",
