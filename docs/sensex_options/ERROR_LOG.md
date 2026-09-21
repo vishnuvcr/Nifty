@@ -189,3 +189,18 @@ Type: market-session integrity
 Observation: BSE's live SENSEX endpoint can expose a retained prior-session value when the exchange is closed; a weekday-only scheduler is not sufficient to prove that the current date is a trading session.
 Resolution: the prospective scanner now requires a parseable live-quote timestamp dated the current decision date. Stale prior-session values become NO_TRADE and are logged.
 Prevention: never treat weekday scheduling as proof of an open BSE session; require current-session market-data provenance before generating an entry.
+
+
+### E027 — S7 decision-time output was incorrectly suppressed when option quotes were unavailable
+Type: scanner policy / observability
+Timestamp: 2026-09-21T16:35:00+05:30
+Observation: the user requested today's signal even though the 09:30 option premium/bid-ask surface was unavailable. The prior production path converted missing quotes to NO_TRADE, which hid the underlying/model information that was actually available at the decision boundary.
+Resolution: added scripts/sensex_available_data_signal_producer_v1.py. It publishes DATA_LIMITED_CANDIDATE for the decision-time state, retains the frozen Batman structure or Adaptive candidate universe where valid, sets execution_status=NOT_EXECUTABLE, and never fabricates premiums, LTPs, P&L, or MC-EV gates.
+Prevention: distinguish data-limited information from true runtime failure. Missing option quotes must not erase a decision-time model observation; they must also never be promoted to an executable trade.
+
+### E028 — S7 Pages showed a client-side backfill load error despite a successful workflow
+Type: Pages / static-publication
+Timestamp: 2026-09-21T16:35:00+05:30
+Observation: workflow 35587080630 completed successfully, but the page tried to fetch a branch-relative 09:40 file at runtime and displayed "09:40 backfill record could not be loaded".
+Resolution: replaced the client-side audit dependency with committed static audit state and today's latest_signal.json. Removed the production backfill mode from the main workflow and added the automatic 09:30 weekday schedule.
+Prevention: core audit state must be committed into the Pages artifact; browser-side fetch failures must never hide a successfully produced signal.
