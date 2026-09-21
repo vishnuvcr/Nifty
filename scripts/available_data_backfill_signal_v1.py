@@ -84,7 +84,7 @@ def model(spot: float, hist: pd.DataFrame, decision: pd.Timestamp, expiry: pd.Ti
     latest=logret[-LOOKBACK:]
     # Fixed frozen 3-session horizon used by the paper protocol.
     future_days=pd.bdate_range(decision+pd.Timedelta(days=1), periods=3)
-    horizon_sessions=len(future_days)
+    horizon_sessions=len(pd.bdate_range(decision+pd.Timedelta(days=1), expiry))
     rng=np.random.default_rng(seed)
     sampled=rng.choice(latest,size=MC_PATHS*horizon_sessions,replace=True).reshape(MC_PATHS,horizon_sessions)
     terminal=spot*np.exp(sampled.sum(axis=1))
@@ -126,8 +126,8 @@ def main():
     args=ap.parse_args()
 
     decision=pd.Timestamp(args.decision_date).normalize()
-    expiry=decision+pd.Timedelta(days=3)
     index="NIFTY" if args.strategy.startswith("NIFTY") else "SENSEX"
+    expiry=decision + pd.Timedelta(days=1 if index=="NIFTY" else 3)
     symbol="^NSEI" if index=="NIFTY" else "^BSESN"
     hist=history(index,decision-pd.Timedelta(days=365*5),decision)
     seed=20260921
