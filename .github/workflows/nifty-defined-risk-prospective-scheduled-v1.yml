@@ -1,9 +1,21 @@
 name: NIFTY Defined-Risk Prospective Validation
 on:
-  schedule:
-    - cron: "0 4 * * 1-5"
   workflow_dispatch:
     inputs:
+      mode:
+        description: "Run mode"
+        required: true
+        default: "scheduled"
+        type: choice
+        options: [scheduled, backfill_0940]
+      decision_date:
+        description: "Decision date YYYY-MM-DD for backfill"
+        required: false
+        default: ""
+      entry_time_ist:
+        description: "Entry time for backfill"
+        required: false
+        default: "09:30"
       strategy:
         description: "Candidate to scan"
         required: true
@@ -23,6 +35,10 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      MODE: ${{ github.event.inputs.mode || 'scheduled' }}
+      DECISION_DATE: ${{ github.event.inputs.decision_date || '' }}
+      ENTRY_TIME_IST: ${{ github.event.inputs.entry_time_ist || '09:30' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -37,9 +53,19 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install -e .
       - name: Scan frozen NIFTY candidates
+        if: env.MODE != 'backfill_0940'
         env:
           STRATEGY: ${{ github.event.inputs.strategy || 'all' }}
         run: python scripts/nifty_defined_risk_prospective_v1.py --mode scan --strategy "$STRATEGY"
+      - name: Record controlled 09:40 backfill observations
+        if: env.MODE == 'backfill_0940'
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:scripts/backfill_0940_no_trade.py > /tmp/backfill_0940_no_trade.py
+          python /tmp/backfill_0940_no_trade.py --strategy "NIFTY JADE LIZARD" --decision-date "$DECISION_DATE" --entry-time-ist "$ENTRY_TIME_IST" --output-json site/prospective-defined-risk/nifty/jade-lizard/data/backfill_0940_2026-09-21.json
+          python /tmp/backfill_0940_no_trade.py --strategy "NIFTY PUT RATIO SPREAD" --decision-date "$DECISION_DATE" --entry-time-ist "$ENTRY_TIME_IST" --output-json site/prospective-defined-risk/nifty/put-ratio-spread/data/backfill_0940_2026-09-21.json
+
       - name: Persist candidate state and run audit
         if: always()
         env:
@@ -53,6 +79,9 @@ jobs:
             "workflow_run_id": "${{ github.run_id }}",
             "workflow_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
             "trigger": "${{ github.event_name }}",
+            "mode": "${MODE}",
+            "decision_date": "${DECISION_DATE}",
+            "entry_time_ist": "${ENTRY_TIME_IST}",
             "scheduled_time_ist": "09:30 IST",
             "finished_at_ist": "${FINISHED_IST}",
             "status": "${JOB_STATUS}",
@@ -62,7 +91,9 @@ jobs:
           EOF
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add paper_trading/prospective_defined_risk/nifty site/prospective-defined-risk/nifty site/data/run_status_defined_risk_nifty.json
+          git add paper_trading/prospective_defined_risk/nifty site/prospective-defined-risk/nifty site/data/run_status_defined_risk_nifty.json \
+                  site/prospective-defined-risk/nifty/jade-lizard/data/backfill_0940_2026-09-21.json \
+                  site/prospective-defined-risk/nifty/put-ratio-spread/data/backfill_0940_2026-09-21.json
           if git diff --cached --quiet; then
             echo "No NIFTY defined-risk state changes."
           else
