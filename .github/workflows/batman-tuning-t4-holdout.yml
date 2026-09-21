@@ -68,6 +68,7 @@ jobs:
           python scripts/batman_t4_holdout.py             --options-zip .cache/batman_t4_holdout/rahul_nifty_options_2025_2026.zip             --daily-index .cache/batman_t4_holdout/nifty50_source.csv             --out-dir reports/batman_t4_holdout
 
       - name: Upload holdout results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: batman-tuning-t4-frozen-holdout
@@ -76,5 +77,7 @@ jobs:
             reports/batman_t4_holdout/T4_HOLDOUT_SUMMARY.csv
             reports/batman_t4_holdout/T4_HOLDOUT_YEARLY.csv
             reports/batman_t4_holdout/T4_HOLDOUT_SKIP_COUNTS.json
+            reports/batman_t4_holdout/T4_HOLDOUT_STAGE_COUNTS.json
             reports/batman_t4_holdout/T4_HOLDOUT_REPORT.json
+          if-no-files-found: warn
           retention-days: 30
