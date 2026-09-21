@@ -1,0 +1,19 @@
+{
+  "study": "BATMAN_TUNING_V1",
+  "entry": {
+    "offset": 3,
+    "timing": "same_session_0930",
+    "mc_paths": 5000,
+    "lookback_sessions": 756,
+    "gate": "gross_mc_ev_gt_0",
+    "legs": ["+1 P35 PE", "-2 P20 PE", "+1 C65 CE", "-2 C80 CE"]
+  },
+  "exit": {
+    "family": "trailing_target",
+    "activation_of_max_profit_reference": 0.20,
+    "retracement_of_max_profit_reference": 0.10
+  },
+  "development_period": "2020-01-01 through 2024-10-31",
+  "selection_run": 35603208829,
+  "status": "FROZEN_BEFORE_HOLDOUT"
+}
