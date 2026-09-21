@@ -111,6 +111,26 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
 
     daily = load_daily(args.daily_index)
+
+    option_dates = {}
+    with zipfile.ZipFile(args.options_zip) as zf:
+        member = [n for n in zf.namelist() if n.lower().endswith('.csv')][0]
+        with zf.open(member) as fh:
+            for chunk in pd.read_csv(fh, usecols=['timestamp','spot_price'], chunksize=500000):
+                chunk['timestamp'] = pd.to_datetime(chunk.timestamp, errors='coerce', utc=True)
+                chunk['local_date'] = chunk.timestamp.dt.tz_convert('Asia/Kolkata').dt.normalize().dt.tz_localize(None)
+                chunk['spot_price'] = pd.to_numeric(chunk.spot_price, errors='coerce')
+                chunk = chunk.dropna(subset=['timestamp','local_date','spot_price'])
+                if chunk.empty:
+                    continue
+                for d, g in chunk.groupby('local_date'):
+                    row = g.sort_values('timestamp').iloc[-1]
+                    option_dates[pd.Timestamp(d)] = (pd.Timestamp(row.timestamp), float(row.spot_price))
+
+    extension = pd.DataFrame([{'date': d, 'close': v[1]} for d, v in option_dates.items()])
+    extension = extension[extension['date'] >= pd.Timestamp('2025-01-01')]
+    daily = pd.concat([daily, extension], ignore_index=True).sort_values('date')
+    daily = daily.drop_duplicates('date', keep='last')
     sessions = pd.DatetimeIndex(daily.date.unique()).sort_values()
     expiry_list = expiry_candidates(sessions)
     expiry_list = expiry_list[(expiry_list >= pd.Timestamp("2025-01-02")) & (expiry_list <= pd.Timestamp("2026-07-21"))]
