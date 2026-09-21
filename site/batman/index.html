@@ -16,12 +16,12 @@ small{color:#8b949e} table{width:100%;border-collapse:collapse;font-size:14px} t
 <div><small>Last completed workflow run</small><div class="kpi" id="wf-audit-time">Loading...</div></div>
 <div><small>Workflow status</small><div class="kpi" id="wf-audit-status">Loading...</div></div>
 </div>
-<p><small>Audit source: <a href="data/run_status_nifty_signal_generation.json">run_status_nifty_signal_generation.json</a></small></p>
+<p><small>Audit source: <a href="../data/run_status_nifty_signal_generation.json">run_status_nifty_signal_generation.json</a></small></p>
 </div>
 <script>
 (async()=>{
   const fmt=v=>v?new Date(v).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Kolkata'}):'Not recorded';
-  try{const d=await (await fetch('data/run_status_nifty_signal_generation.json?ts='+Date.now(),{cache:'no-store'})).json();
+  try{const d=await (await fetch('../data/run_status_nifty_signal_generation.json?ts='+Date.now(),{cache:'no-store'})).json();
   document.getElementById('wf-audit-time').textContent=fmt(d.finished_at_ist);
   document.getElementById('wf-audit-status').textContent=(d.status||'NOT_RECORDED').toUpperCase();}
   catch(e){document.getElementById('wf-audit-time').textContent='Audit unavailable';document.getElementById('wf-audit-status').textContent='ERROR';}
@@ -43,7 +43,7 @@ small{color:#8b949e} table{width:100%;border-collapse:collapse;font-size:14px} t
 (async()=>{
   try{const d=await (await fetch('data/backfill_0940_2026-09-21.json?ts='+Date.now(),{cache:'no-store'})).json();
   document.getElementById('bf-date').textContent=d.decision_date||'—';
-  document.getElementById('bf-signal').textContent=d.signal||'NOT_EVALUATED';
+  document.getElementById('bf-signal').textContent=d.signal||'NO_TRADE';
   document.getElementById('bf-status').textContent=(d.status||'NOT_RECORDED').replaceAll('_',' ');
   document.getElementById('bf-reason').textContent=d.reason||d.source_note||'—';}
   catch(e){document.getElementById('bf-signal').textContent='Not recorded';document.getElementById('bf-status').textContent='ERROR';document.getElementById('bf-reason').textContent='09:40 backfill record could not be loaded.';}
