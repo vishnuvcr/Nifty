@@ -1,9 +1,33 @@
 name: BATMAN Tuning T6 Prospective Freeze
+
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - research/batman-tuning-t6-prospective-v1
+
+permissions:
+  contents: read
+
 jobs:
-  t6:
+  freeze_audit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "T6 requires completion of the robustness gate." && exit 1
+
+      - name: Validate frozen prospective candidate
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path("configs/batman_t6_prospective_candidate.json").read_text())
+          assert d["status"]=="FROZEN_RESEARCH_ONLY_NOT_PROMOTED"
+          assert d["entry"]["offset_d3"] is True
+          assert d["entry"]["signal_time"]=="09:30 Asia/Kolkata"
+          assert d["entry"]["gate"]=="gross_mc_ev_gt_0"
+          assert d["exit"]["family"]=="trailing_target"
+          assert d["exit"]["activation_max_profit_reference"]==0.20
+          assert d["exit"]["retracement_max_profit_reference"]==0.10
+          print("T6 prospective freeze validation PASS")
+          print(json.dumps(d,indent=2))
+          PY
