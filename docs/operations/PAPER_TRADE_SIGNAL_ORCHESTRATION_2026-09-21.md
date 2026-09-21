@@ -32,3 +32,11 @@ Every individual strategy page displays the last completed workflow run time in 
 
 ## Error prevention
 The prior Pages overwrite failure came from multiple signal workflows deploying partial site trees. The common orchestration plus centralized Pages publisher removes that race.
+
+## Execution log — 2026-09-21
+
+- First controlled backfill attempt: common orchestrator run **35581938338** completed, but NIFTY defined-risk child run **35581947565** failed during persistence because the workflow referenced the nonexistent path `paper_trading/prospective_defined_risk/nifty`. The 09:40 backfill records themselves were created successfully.
+- Correction applied: removed the nonexistent ledger path from the NIFTY defined-risk persistence step and corrected audit interpolation so `mode`, `decision_date`, and `entry_time_ist` are written as runtime values.
+- Retry common orchestrator: **35582059262**, success. All four strategy-family workflows were dispatched concurrently at 09:13:40Z.
+- Successful child runs: NIFTY Batman+Adaptive **35582069744**; SENSEX Batman+Adaptive **35582069804**; NIFTY defined-risk **35582069757**; SENSEX defined-risk **35582069753**.
+- Final combined Pages publication: **35582136269**, success. The full Pages tree, per-strategy audit panels, backfill records, and combined run-status feed passed validation and deployed successfully.
