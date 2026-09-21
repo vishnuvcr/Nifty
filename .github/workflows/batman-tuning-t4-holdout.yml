@@ -1,0 +1,80 @@
+name: BATMAN Tuning T4 Frozen Holdout
+
+on:
+  push:
+    branches:
+      - research/batman-tuning-t4-wfo-v1
+    paths:
+      - scripts/batman_t4_holdout.py
+      - configs/batman_t4_frozen_selection.json
+      - .github/workflows/batman-tuning-t4-holdout.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  holdout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore T4 holdout cache
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/batman_t4_holdout
+          key: batman-tuning-t4-holdout-v1-2026-09-21
+
+      - name: Prepare source cache
+        run: mkdir -p .cache/batman_t4_holdout
+
+      - name: Acquire holdout source if cache is unavailable
+        run: |
+          set -euo pipefail
+          if [ ! -s .cache/batman_t4_holdout/rahul_nifty_options_2025_2026.zip ]; then
+            curl -fL --retry 3 --retry-all-errors               "https://www.kaggle.com/api/v1/datasets/download/rahultr1/nifty-options-weekly-1min-2025-01-01-to-2026-07-25"               -o .cache/batman_t4_holdout/rahul_nifty_options_2025_2026.zip
+          fi
+          if [ ! -s .cache/batman_t4_holdout/nifty50_source.csv ]; then
+            curl -fL --retry 3 --retry-all-errors               "https://raw.githubusercontent.com/Hareeshkesavan/Stock-Market-Dataset/main/Nifty%2050%20Historical%20Data.csv"               -o .cache/batman_t4_holdout/nifty50_source.csv
+          fi
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas
+
+      - name: Validate frozen selection
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("configs/batman_t4_frozen_selection.json")
+          d=json.loads(p.read_text())
+          assert d["status"]=="FROZEN_BEFORE_HOLDOUT"
+          assert d["entry"]["offset"]==3
+          assert d["entry"]["timing"]=="same_session_0930"
+          assert d["entry"]["gate"]=="gross_mc_ev_gt_0"
+          assert d["exit"]["family"]=="trailing_target"
+          assert abs(d["exit"]["activation_of_max_profit_reference"]-0.20)<1e-12
+          assert abs(d["exit"]["retracement_of_max_profit_reference"]-0.10)<1e-12
+          print("FROZEN SELECTION VALID")
+          PY
+
+      - name: Run untouched 2025-2026 holdout
+        run: |
+          python scripts/batman_t4_holdout.py             --options-zip .cache/batman_t4_holdout/rahul_nifty_options_2025_2026.zip             --daily-index .cache/batman_t4_holdout/nifty50_source.csv             --out-dir reports/batman_t4_holdout
+
+      - name: Upload holdout results
+        uses: actions/upload-artifact@v4
+        with:
+          name: batman-tuning-t4-frozen-holdout
+          path: |
+            reports/batman_t4_holdout/T4_HOLDOUT_TRADE_LEVEL.csv
+            reports/batman_t4_holdout/T4_HOLDOUT_SUMMARY.csv
+            reports/batman_t4_holdout/T4_HOLDOUT_YEARLY.csv
+            reports/batman_t4_holdout/T4_HOLDOUT_SKIP_COUNTS.json
+            reports/batman_t4_holdout/T4_HOLDOUT_REPORT.json
+          retention-days: 30
