@@ -57,8 +57,7 @@ def fetch_nifty_history(start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
     return pd.DataFrame({"date":pd.to_datetime(df[dc],errors="coerce").dt.normalize(),"close":pd.to_numeric(df[cc],errors="coerce")}).dropna().drop_duplicates("date").sort_values("date").reset_index(drop=True)
 
 def fetch_sensex_history(start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
-    from scripts import _nonexistent
-    raise RuntimeError("direct SENSEX history disabled in portable helper")
+    raise RuntimeError("SENSEX historical cache unavailable for data-limited backfill")
 
 def history(index: str, start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
     cached=load_cached_history(index)
@@ -85,10 +84,10 @@ def model(spot: float, hist: pd.DataFrame, decision: pd.Timestamp, expiry: pd.Ti
     p10,p20,p35,p65,p80,p90=np.percentile(terminal,[10,20,35,65,80,90])
     rv20_series=pd.Series(logret).rolling(20).std(ddof=1)*np.sqrt(252)
     rv20_series=rv20_series.dropna()
-    latest_rv=float(rv20_series.iloc[-1])
+    latest_rv=float(rv20_series.iloc[-1]) if not rv20_series.empty else float("nan")
     rank_hist=rv20_series.iloc[:-1].tail(RANK_LOOKBACK)
-    rank=float(np.mean(rank_hist.to_numpy(float)<=latest_rv)) if len(rank_hist) else float("nan")
-    regime="low" if rank<=1/3 else ("medium" if rank<=2/3 else "high")
+    rank=float(np.mean(rank_hist.to_numpy(float)<=latest_rv)) if len(rank_hist)>=5 and np.isfinite(latest_rv) else float("nan")
+    regime="low" if np.isfinite(rank) and rank<=1/3 else ("medium" if np.isfinite(rank) and rank<=2/3 else ("high" if np.isfinite(rank) else "UNAVAILABLE"))
     return {
         "model_data_cutoff": cutoff.date().isoformat(),
         "lookback_sessions_used":used,
@@ -96,6 +95,7 @@ def model(spot: float, hist: pd.DataFrame, decision: pd.Timestamp, expiry: pd.Ti
         "horizon_sessions": horizon_sessions,
         "p10":float(p10),"p20":float(p20),"p35":float(p35),"p65":float(p65),"p80":float(p80),"p90":float(p90),
         "rv20":latest_rv,"rv20_rank":rank,"vol_regime":regime,
+        "regime_status":"VALID_PAST_ONLY_RANK" if np.isfinite(rank) else "DATA_LIMITED_REGIME_UNAVAILABLE",
     }
 
 def legs(strategy: str, t: dict) -> list[dict]:
@@ -160,11 +160,19 @@ def main():
         "rv20":t["rv20"],"rv20_rank":t["rv20_rank"],"vol_regime":t["vol_regime"],
         "terminal_quantiles":{k:t[k] for k in ["p10","p20","p35","p65","p80","p90"]},
         "reason":"OPTION_PREMIUM_BID_ASK_SNAPSHOT_UNAVAILABLE",
-        "note":"Candidate generated from verified underlying data available by 09:40 IST plus frozen past-only return history. Option premiums, bid/ask, slippage-adjusted entry cost, and MC-EV eligibility were not evaluated.",
+        "note":"Candidate generated from verified underlying data available by 09:40 IST plus available past-only return history. Exact option premiums/bid-ask were unavailable, so execution cost and MC-EV gates were not evaluated. When the frozen volatility-rank history is insufficient, the regime is explicitly UNAVAILABLE and Adaptive does not select a regime-specific primary.",
     }
 
     if "ADAPTIVE" in args.strategy:
-        base["candidate_set"]=[{"strategy":s,"cpcv_selection_frequency":f} for s,f in ADAPTIVE_BY_REGIME[t["vol_regime"]]]
+        if t["vol_regime"] in ADAPTIVE_BY_REGIME:
+            base["candidate_set"]=[{"strategy":s,"cpcv_selection_frequency":f} for s,f in ADAPTIVE_BY_REGIME[t["vol_regime"]]]
+        else:
+            base["candidate_set"]=[
+                {"strategy":s,"regime":reg,"cpcv_selection_frequency":f}
+                for reg, vals in ADAPTIVE_BY_REGIME.items()
+                for s,f in vals
+            ]
+            base["candidate_set_scope"]="ALL_FROZEN_REGIME_CANDIDATES"
         base["primary_strategy"]="UNSELECTED_PENDING_OPTION_QUOTES"
         base["legs"]=[]
     else:
