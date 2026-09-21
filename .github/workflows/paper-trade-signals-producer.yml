@@ -90,7 +90,7 @@ jobs:
           for WF in generate-paper-signals.yml sensex-paper-signal-producer-v1.yml nifty-defined-risk-prospective-scheduled-v1.yml sensex-defined-risk-prospective-scheduled-v1.yml; do
             ID=""
             for attempt in $(seq 1 30); do
-              ID="$(gh run list --repo "$REPO" --workflow "$WF" --limit 10 --json databaseId,event,createdAt --jq --arg start "$START_ISO" '.[] | select(.event=="workflow_dispatch" and .createdAt >= $start) | .databaseId' | head -1 || true)"
+              ID="$(gh run list --repo "$REPO" --workflow "$WF" --limit 10 --json databaseId,event,createdAt > /tmp/runs.json && START_ISO="$START_ISO" python -c 'import json,os; a=json.load(open("/tmp/runs.json")); s=os.environ["START_ISO"]; ids=[x["databaseId"] for x in a if x["event"]=="workflow_dispatch" and x["createdAt"]>=s]; print(ids[0] if ids else "")' || true)"
               if [ -n "$ID" ]; then break; fi
               sleep 4
             done
@@ -135,7 +135,7 @@ jobs:
           START_ISO="$(date -u -d '20 seconds ago' +%Y-%m-%dT%H:%M:%SZ)"
           ID=""
           for attempt in $(seq 1 30); do
-            ID="$(gh run list --repo "$REPO" --workflow publish-paper-pages.yml --limit 10 --json databaseId,event,createdAt --jq --arg start "$START_ISO" '.[] | select(.event=="workflow_dispatch" and .createdAt >= $start) | .databaseId' | head -1 || true)"
+            ID="$(gh run list --repo "$REPO" --workflow publish-paper-pages.yml --limit 10 --json databaseId,event,createdAt > /tmp/pages-runs.json && START_ISO="$START_ISO" python -c 'import json,os; a=json.load(open("/tmp/pages-runs.json")); s=os.environ["START_ISO"]; ids=[x["databaseId"] for x in a if x["event"]=="workflow_dispatch" and x["createdAt"]>=s]; print(ids[0] if ids else "")' || true)"
             [ -n "$ID" ] && break
             sleep 4
           done
