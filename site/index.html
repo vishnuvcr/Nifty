@@ -16,7 +16,7 @@ h1{margin:0 0 8px;font-size:32px}.sub{color:#9fb0c5;margin:0;line-height:1.5}
 .links{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.links a{display:inline-block;padding:9px 12px;border-radius:10px;background:#1b2739;color:#7fb0ff;font-weight:700}
 .prospect{margin-top:18px;padding-top:18px;border-top:1px solid #2b3648}.prospect p{margin:6px 0 0;font-size:14px}
 .notice{margin-top:20px;padding:15px 17px;border-radius:12px;background:#141b27;color:#aebdce;font-size:13px;line-height:1.6}
-footer{margin-top:28px;color:#738195;font-size:12px}
+.status{margin-top:20px;padding:18px;border:1px solid #2b3648;border-radius:14px;background:#101824}.status h2{margin:0 0 8px}.status-sub{color:#9fb0c5;font-size:13px;margin:0 0 14px}.status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.status-item{padding:12px;border-radius:10px;background:#151f30;border:1px solid #263244}.status-name{font-weight:800}.status-time{margin-top:5px;color:#c7d3e2;font-size:13px}.status-state{margin-top:6px;color:#8fb2ff;font-size:12px;font-weight:700}footer{margin-top:28px;color:#738195;font-size:12px}
 </style>
 </head>
 <body><main>
@@ -66,5 +66,36 @@ footer{margin-top:28px;color:#738195;font-size:12px}
 <div class="notice">
 NIFTY and SENSEX prospective entry scans run at 09:30 IST on trading weekdays; settlement/page refresh runs at 16:00 IST. The defined-risk systems are paper-only and do not place broker orders. Sell Put and Bull Put Spread are not in the active prospective scope.
 </div>
+<section class="status">
+<h2>Automation status</h2>
+<p class="status-sub">Last completed workflow run recorded for each published system. Historical runs before the audit instrumentation may show “Not recorded”.</p>
+<div class="status-grid" id="run-status-grid"></div>
+<p class="status-sub"><a href="data/run_status.json">Open run-audit JSON →</a></p>
+</section>
+<script>
+(async()=> {
+  const grid=document.getElementById('run-status-grid');
+  const labels={
+    nifty_batman:'NIFTY • BATMAN',
+    nifty_adaptive:'NIFTY • ADAPTIVE',
+    sensex_batman:'SENSEX • BATMAN',
+    sensex_adaptive:'SENSEX • ADAPTIVE',
+    nifty_defined_risk:'NIFTY • JADE LIZARD / PUT RATIO SPREAD',
+    sensex_defined_risk:'SENSEX • JADE LIZARD / PUT RATIO SPREAD'
+  };
+  const fmt=v=>v ? new Date(v).toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Kolkata'}) : 'Not recorded';
+  try {
+    const r=await fetch('data/run_status.json?ts='+Date.now(),{cache:'no-store'});
+    const d=await r.json();
+    grid.innerHTML=Object.entries(labels).map(([k,label])=>{
+      const x=d[k]||{};
+      const state=x.status||'NOT_RECORDED';
+      return '<div class="status-item"><div class="status-name">'+label+'</div><div class="status-time">'+fmt(x.finished_at_ist)+'</div><div class="status-state">'+state.toUpperCase()+'</div></div>';
+    }).join('');
+  } catch(e) {
+    grid.innerHTML='<div class="status-item"><div class="status-name">Run audit</div><div class="status-time">Not available</div><div class="status-state">AUDIT FEED ERROR</div></div>';
+  }
+})();
+</script>
 <footer>Published from the research repository. Strategy dashboards remain isolated by index and research phase.</footer>
 </main></body></html>
