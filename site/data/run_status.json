@@ -1,15 +1,15 @@
 {
-  "generated_at_ist": "2026-09-21T14:44:16.519448+05:30",
+  "generated_at_ist": "2026-09-21T14:45:04.141194+05:30",
   "nifty_batman": {
     "workflow": "Generate NIFTY Paper Trading Signals",
-    "workflow_run_id": "35581947543",
-    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35581947543",
+    "workflow_run_id": "35582069744",
+    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35582069744",
     "trigger": "workflow_dispatch",
     "mode": "backfill_0940",
     "decision_date": "2026-09-21",
     "entry_time_ist": "09:40",
     "scheduled_time_ist": "09:30 IST",
-    "finished_at_ist": "2026-09-21T14:43:34+05:30",
+    "finished_at_ist": "2026-09-21T14:44:21+05:30",
     "status": "success",
     "scope": [
       "NIFTY BATMAN",
@@ -19,14 +19,14 @@
   },
   "nifty_adaptive": {
     "workflow": "Generate NIFTY Paper Trading Signals",
-    "workflow_run_id": "35581947543",
-    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35581947543",
+    "workflow_run_id": "35582069744",
+    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35582069744",
     "trigger": "workflow_dispatch",
     "mode": "backfill_0940",
     "decision_date": "2026-09-21",
     "entry_time_ist": "09:40",
     "scheduled_time_ist": "09:30 IST",
-    "finished_at_ist": "2026-09-21T14:43:34+05:30",
+    "finished_at_ist": "2026-09-21T14:44:21+05:30",
     "status": "success",
     "scope": [
       "NIFTY BATMAN",
@@ -69,15 +69,37 @@
     "note": "SENSEX scanner audit record. Missing/broken quote data remains a hard NO_TRADE."
   },
   "nifty_defined_risk": {
-    "workflow": "site/data/run_status_defined_risk_nifty.json",
-    "status": "NOT_RECORDED",
-    "finished_at_ist": null,
-    "note": "Run audit instrumentation was added after the historical run; no prior workflow timestamp was persisted."
+    "workflow": "NIFTY Defined-Risk Prospective Validation",
+    "workflow_run_id": "35582069757",
+    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35582069757",
+    "trigger": "workflow_dispatch",
+    "mode": "backfill_0940",
+    "decision_date": "2026-09-21",
+    "entry_time_ist": "09:40",
+    "scheduled_time_ist": "09:30 IST",
+    "finished_at_ist": "2026-09-21T14:44:15+05:30",
+    "status": "success",
+    "scope": [
+      "NIFTY JADE LIZARD",
+      "NIFTY PUT RATIO SPREAD"
+    ],
+    "note": "Frozen prospective candidates. No retrospective ranking or retuning."
   },
   "sensex_defined_risk": {
-    "workflow": "site/data/run_status_defined_risk_sensex.json",
-    "status": "NOT_RECORDED",
-    "finished_at_ist": null,
-    "note": "Run audit instrumentation was added after the historical run; no prior workflow timestamp was persisted."
+    "workflow": "SENSEX Defined-Risk Prospective Validation",
+    "workflow_run_id": "35582069753",
+    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35582069753",
+    "trigger": "workflow_dispatch",
+    "mode": "backfill_0940",
+    "decision_date": "2026-09-21",
+    "entry_time_ist": "09:40",
+    "scheduled_time_ist": "09:30 IST",
+    "finished_at_ist": "2026-09-21T14:44:16+05:30",
+    "status": "success",
+    "scope": [
+      "SENSEX JADE LIZARD",
+      "SENSEX PUT RATIO SPREAD"
+    ],
+    "note": "Frozen prospective candidates. No retrospective ranking or retuning."
   }
 }

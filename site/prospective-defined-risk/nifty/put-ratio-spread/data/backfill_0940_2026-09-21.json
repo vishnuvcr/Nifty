@@ -1,0 +1,16 @@
+{
+  "producer": "Paper Trade Signals Producer  controlled 09:40 IST backfill",
+  "strategy": "NIFTY PUT RATIO SPREAD",
+  "status": "BACKFILL_0940_NO_TRADE",
+  "signal": "NO_TRADE",
+  "decision_date": "2026-09-21",
+  "entry_time_ist": "09:40",
+  "workflow_finished_at_ist": "2026-09-21T14:44:15.294560+05:30",
+  "historical_snapshot_available": false,
+  "quote_snapshot_used": false,
+  "future_outcome_used": false,
+  "lookahead_safe": true,
+  "backfill_only": true,
+  "reason": "HISTORICAL_0940_EXECUTABLE_OPTION_SNAPSHOT_UNAVAILABLE",
+  "source_note": "No trustworthy cached historical 09:40 IST executable option-chain snapshot was available. Current premiums/quotes were not substituted."
+}
