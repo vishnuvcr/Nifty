@@ -118,6 +118,41 @@ jobs:
           print(json.dumps(report,indent=2))
           PY
 
+      - name: Derive Rahul expiry-code map
+        run: |
+          python - <<'PY'
+          import csv, io, json, zipfile
+          from collections import defaultdict
+          from pathlib import Path
+          import pandas as pd
+          root=Path(".cache/batman_t4_holdout")
+          out=Path("reports/batman_t4"); out.mkdir(parents=True,exist_ok=True)
+          result=defaultdict(lambda: {"rows":0,"from_dates":set(),"to_dates":set(),"min_ts":None,"max_ts":None})
+          with zipfile.ZipFile(root/"rahul_nifty_options_2025_2026.zip") as z:
+              name=[n for n in z.namelist() if n.lower().endswith(".csv")][0]
+              with z.open(name) as fh:
+                  for chunk in pd.read_csv(
+                      fh, usecols=["timestamp","expiry_code","from_date","to_date"],
+                      chunksize=500000
+                  ):
+                      chunk["timestamp"]=pd.to_datetime(chunk.timestamp,errors="coerce",utc=True)
+                      chunk["expiry_code"]=pd.to_numeric(chunk.expiry_code,errors="coerce")
+                      for code,g in chunk.dropna(subset=["expiry_code"]).groupby("expiry_code"):
+                          k=str(int(code))
+                          r=result[k]
+                          r["rows"] += int(len(g))
+                          r["from_dates"].update(g["from_date"].dropna().astype(str).unique().tolist())
+                          r["to_dates"].update(g["to_date"].dropna().astype(str).unique().tolist())
+                          mn=g.timestamp.min(); mx=g.timestamp.max()
+                          r["min_ts"]=str(mn) if r["min_ts"] is None or str(mn)<r["min_ts"] else r["min_ts"]
+                          r["max_ts"]=str(mx) if r["max_ts"] is None or str(mx)>r["max_ts"] else r["max_ts"]
+          for r in result.values():
+              r["from_dates"]=sorted(list(r["from_dates"]))[:50]
+              r["to_dates"]=sorted(list(r["to_dates"]))[:50]
+          (out/"T4_HOLDOUT_EXPIRY_CODE_MAP.json").write_text(json.dumps(result,indent=2)+"\n")
+          print(json.dumps(result,indent=2))
+          PY
+
       - name: Save T4 holdout source cache
         if: always()
         uses: actions/cache/save@v4
