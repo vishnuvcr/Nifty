@@ -27,7 +27,7 @@
   "timing_gate": "PASS",
   "rv20": 0.07496333273876712,
   "rv20_rank": NaN,
-  "vol_regime": "high",
+  "vol_regime": "UNAVAILABLE",
   "terminal_quantiles": {
     "p10": 73489.7955624195,
     "p20": 73786.53148323954,
@@ -37,7 +37,7 @@
     "p90": 75042.5919337851
   },
   "reason": "OPTION_PREMIUM_BID_ASK_SNAPSHOT_UNAVAILABLE",
-  "note": "Candidate generated from verified underlying data available by 09:40 IST plus frozen past-only return history. Option premiums, bid/ask, slippage-adjusted entry cost, and MC-EV eligibility were not evaluated.",
+  "note": "Candidate generated from verified underlying data available by 09:40 IST plus available past-only return history. Exact option premiums/bid-ask were unavailable, so execution cost and MC-EV gates were not evaluated. When the frozen volatility-rank history is insufficient, the regime is explicitly UNAVAILABLE and Adaptive does not select a regime-specific primary.",
   "primary_strategy": "Jade Lizard",
   "legs": [
     {

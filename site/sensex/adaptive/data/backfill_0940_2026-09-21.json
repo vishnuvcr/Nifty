@@ -27,7 +27,7 @@
   "timing_gate": "PASS",
   "rv20": 0.07496333273876712,
   "rv20_rank": NaN,
-  "vol_regime": "high",
+  "vol_regime": "UNAVAILABLE",
   "terminal_quantiles": {
     "p10": 73489.7955624195,
     "p20": 73786.53148323954,
@@ -37,25 +37,70 @@
     "p90": 75042.5919337851
   },
   "reason": "OPTION_PREMIUM_BID_ASK_SNAPSHOT_UNAVAILABLE",
-  "note": "Candidate generated from verified underlying data available by 09:40 IST plus frozen past-only return history. Option premiums, bid/ask, slippage-adjusted entry cost, and MC-EV eligibility were not evaluated.",
+  "note": "Candidate generated from verified underlying data available by 09:40 IST plus available past-only return history. Exact option premiums/bid-ask were unavailable, so execution cost and MC-EV gates were not evaluated. When the frozen volatility-rank history is insufficient, the regime is explicitly UNAVAILABLE and Adaptive does not select a regime-specific primary.",
   "candidate_set": [
     {
+      "strategy": "Risk Reversal",
+      "regime": "low",
+      "cpcv_selection_frequency": 9
+    },
+    {
+      "strategy": "Long Synthetic Future",
+      "regime": "low",
+      "cpcv_selection_frequency": 4
+    },
+    {
+      "strategy": "Buy Call",
+      "regime": "low",
+      "cpcv_selection_frequency": 2
+    },
+    {
+      "strategy": "Short Straddle",
+      "regime": "medium",
+      "cpcv_selection_frequency": 4
+    },
+    {
+      "strategy": "Put Ratio Spread",
+      "regime": "medium",
+      "cpcv_selection_frequency": 4
+    },
+    {
+      "strategy": "Short Strangle",
+      "regime": "medium",
+      "cpcv_selection_frequency": 3
+    },
+    {
+      "strategy": "Strip",
+      "regime": "medium",
+      "cpcv_selection_frequency": 3
+    },
+    {
+      "strategy": "Buy Put",
+      "regime": "medium",
+      "cpcv_selection_frequency": 1
+    },
+    {
       "strategy": "Sell Put",
+      "regime": "high",
       "cpcv_selection_frequency": 5
     },
     {
       "strategy": "Risk Reversal",
+      "regime": "high",
       "cpcv_selection_frequency": 5
     },
     {
       "strategy": "Long Synthetic Future",
+      "regime": "high",
       "cpcv_selection_frequency": 3
     },
     {
       "strategy": "Batman",
+      "regime": "high",
       "cpcv_selection_frequency": 2
     }
   ],
+  "candidate_set_scope": "ALL_FROZEN_REGIME_CANDIDATES",
   "primary_strategy": "UNSELECTED_PENDING_OPTION_QUOTES",
   "legs": []
 }\n
