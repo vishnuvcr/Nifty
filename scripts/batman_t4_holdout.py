@@ -282,6 +282,7 @@ def main():
 
             if not valid or entry_complete == pd.Timestamp.min:
                 continue
+            stages["all_four_entry_legs_ready"] += 1
 
             mc_pnl = np.zeros(len(terminals))
             for typ, strike, qty, _ in legs:
@@ -292,6 +293,7 @@ def main():
             if mc_ev <= 0:
                 skips["gross_mc_gate_failed"] = skips.get("gross_mc_gate_failed", 0) + 1
                 continue
+            stages["gross_mc_gate_pass"] += 1
 
             q05 = float(np.quantile(mc_pnl, 0.05))
             es95 = float(max(0.0, -np.mean(mc_pnl[mc_pnl <= q05]))) if np.any(mc_pnl <= q05) else 0.0
@@ -299,6 +301,8 @@ def main():
             if max_profit <= 0:
                 skips["nonpositive_max_profit_reference"] = skips.get("nonpositive_max_profit_reference", 0) + 1
                 continue
+            stages["positive_max_profit_reference"] += 1
+            stages["final_entry_candidates"] += 1
 
             candidates.append(
                 {
