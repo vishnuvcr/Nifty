@@ -1,16 +1,16 @@
 {
-  "generated_at_ist": "2026-09-21T22:01:25.068711+05:30",
+  "generated_at_ist": "2026-09-22T14:31:10.816528+05:30",
   "nifty_batman": {
     "workflow": "Generate NIFTY Paper Trading Signals",
-    "workflow_run_id": "35587080693",
-    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35587080693",
+    "workflow_run_id": "35707709024",
+    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35707709024",
     "trigger": "workflow_dispatch",
-    "mode": "backfill_0940",
-    "decision_date": "2026-09-21",
-    "entry_time_ist": "09:40",
+    "mode": "scheduled",
+    "decision_date": "",
+    "entry_time_ist": "09:30",
     "scheduled_time_ist": "09:30 IST",
-    "finished_at_ist": "2026-09-21T15:38:31+05:30",
-    "status": "success",
+    "finished_at_ist": "2026-09-22T14:29:04+05:30",
+    "status": "failure",
     "scope": [
       "NIFTY BATMAN",
       "NIFTY ADAPTIVE"
@@ -18,67 +18,63 @@
     "note": "Signal producer audit record. Pages deployment is centralized."
   },
   "nifty_adaptive": {
-    "workflow": "Generate NIFTY Paper Trading Signals",
-    "workflow_run_id": "35587080693",
-    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35587080693",
-    "trigger": "workflow_dispatch",
-    "mode": "backfill_0940",
-    "decision_date": "2026-09-21",
-    "entry_time_ist": "09:40",
+    "workflow": "Adaptive Paper Signal Producer v1",
+    "workflow_run_id": "35707834174",
+    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35707834174",
+    "trigger": "schedule",
     "scheduled_time_ist": "09:30 IST",
-    "finished_at_ist": "2026-09-21T15:38:31+05:30",
-    "status": "success",
+    "finished_at_ist": "2026-09-22T14:30:05+05:30",
+    "status": "failure",
     "scope": [
-      "NIFTY BATMAN",
       "NIFTY ADAPTIVE"
     ],
-    "note": "Signal producer audit record. Pages deployment is centralized."
+    "note": "Standalone Adaptive producer audit record. Pages deployment is centralized."
   },
   "sensex_batman": {
     "workflow": "SENSEX Paper Trading Signal Scanners",
-    "workflow_run_id": "35587080630",
-    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35587080630",
-    "trigger": "workflow_dispatch",
-    "mode": "available_data_decision_observation",
-    "decision_date": "2026-09-21",
+    "workflow_run_id": "35707351858",
+    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35707351858",
+    "trigger": "schedule",
+    "mode": "decision_time_signal",
+    "decision_date": "2026-09-22",
     "entry_time_ist": "09:30",
     "scheduled_time_ist": "09:30 IST",
-    "finished_at_ist": "2026-09-21T15:38:14+05:30",
-    "status": "success",
+    "finished_at_ist": "2026-09-22T14:24:32+05:30",
+    "status": "failure",
     "scope": [
       "SENSEX BATMAN",
       "SENSEX ADAPTIVE"
     ],
-    "note": "The 2026-09-21 09:30 decision-time observation is published as DATA_LIMITED_CANDIDATE because underlying/model data were available but live option premiums/bid-ask were unavailable. No backfilled executable trade is recorded; DATA_LIMITED observations are excluded from performance metrics."
+    "note": "Underlying/model availability is allowed to produce a DATA_LIMITED_CANDIDATE. Missing option premiums/bid-ask never become an executable trade or LTP fallback."
   },
   "sensex_adaptive": {
     "workflow": "SENSEX Paper Trading Signal Scanners",
-    "workflow_run_id": "35587080630",
-    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35587080630",
-    "trigger": "workflow_dispatch",
-    "mode": "available_data_decision_observation",
-    "decision_date": "2026-09-21",
+    "workflow_run_id": "35707351858",
+    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35707351858",
+    "trigger": "schedule",
+    "mode": "decision_time_signal",
+    "decision_date": "2026-09-22",
     "entry_time_ist": "09:30",
     "scheduled_time_ist": "09:30 IST",
-    "finished_at_ist": "2026-09-21T15:38:14+05:30",
-    "status": "success",
+    "finished_at_ist": "2026-09-22T14:24:32+05:30",
+    "status": "failure",
     "scope": [
       "SENSEX BATMAN",
       "SENSEX ADAPTIVE"
     ],
-    "note": "The 2026-09-21 09:30 decision-time observation is published as DATA_LIMITED_CANDIDATE because underlying/model data were available but live option premiums/bid-ask were unavailable. No backfilled executable trade is recorded; DATA_LIMITED observations are excluded from performance metrics."
+    "note": "Underlying/model availability is allowed to produce a DATA_LIMITED_CANDIDATE. Missing option premiums/bid-ask never become an executable trade or LTP fallback."
   },
   "nifty_defined_risk": {
     "workflow": "NIFTY Defined-Risk Prospective Validation",
-    "workflow_run_id": "35587080623",
-    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35587080623",
+    "workflow_run_id": "35707709130",
+    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35707709130",
     "trigger": "workflow_dispatch",
-    "mode": "backfill_0940",
-    "decision_date": "2026-09-21",
-    "entry_time_ist": "09:40",
+    "mode": "scheduled",
+    "decision_date": "",
+    "entry_time_ist": "09:30",
     "scheduled_time_ist": "09:30 IST",
-    "finished_at_ist": "2026-09-21T15:38:33+05:30",
-    "status": "success",
+    "finished_at_ist": "2026-09-22T14:28:45+05:30",
+    "status": "failure",
     "scope": [
       "NIFTY JADE LIZARD",
       "NIFTY PUT RATIO SPREAD"
@@ -87,15 +83,15 @@
   },
   "sensex_defined_risk": {
     "workflow": "SENSEX Defined-Risk Prospective Validation",
-    "workflow_run_id": "35587080628",
-    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35587080628",
+    "workflow_run_id": "35707709105",
+    "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/35707709105",
     "trigger": "workflow_dispatch",
-    "mode": "backfill_0940",
-    "decision_date": "2026-09-21",
-    "entry_time_ist": "09:40",
+    "mode": "scheduled",
+    "decision_date": "",
+    "entry_time_ist": "09:30",
     "scheduled_time_ist": "09:30 IST",
-    "finished_at_ist": "2026-09-21T15:38:35+05:30",
-    "status": "success",
+    "finished_at_ist": "2026-09-22T14:28:44+05:30",
+    "status": "failure",
     "scope": [
       "SENSEX JADE LIZARD",
       "SENSEX PUT RATIO SPREAD"
