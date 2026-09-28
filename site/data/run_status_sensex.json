@@ -1,13 +1,13 @@
 {
   "workflow": "SENSEX Paper Trading Signal Scanners",
-  "workflow_run_id": "36117183248",
-  "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/36117183248",
+  "workflow_run_id": "36409001154",
+  "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/36409001154",
   "trigger": "schedule",
   "mode": "decision_time_signal",
-  "decision_date": "2026-09-25",
+  "decision_date": "2026-09-28",
   "entry_time_ist": "09:30",
   "scheduled_time_ist": "09:30 IST",
-  "finished_at_ist": "2026-09-25T14:43:15+05:30",
+  "finished_at_ist": "2026-09-28T15:49:25+05:30",
   "status": "failure",
   "scope": ["SENSEX BATMAN", "SENSEX ADAPTIVE"],
   "note": "Underlying/model availability is allowed to produce a DATA_LIMITED_CANDIDATE. Missing option premiums/bid-ask never become an executable trade or LTP fallback."
