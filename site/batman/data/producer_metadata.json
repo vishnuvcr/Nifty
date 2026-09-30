@@ -1,8 +1,8 @@
 {
-  "run_timestamp_ist": "2026-09-29T15:51:50.702128+05:30",
+  "run_timestamp_ist": "2026-09-30T15:44:58.612352+05:30",
   "entry_time_ist": "09:30",
   "entry_timestamp_ist": "",
-  "model_data_cutoff": "2026-09-28",
+  "model_data_cutoff": "2026-09-29",
   "quote_retrieved_at_ist": "",
   "nse_option_chain_endpoint": "",
   "capital": 100000.0,
