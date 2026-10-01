@@ -1,13 +1,13 @@
 {
   "workflow": "SENSEX Defined-Risk Prospective Validation",
-  "workflow_run_id": "36701190763",
-  "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/36701190763",
+  "workflow_run_id": "36850596917",
+  "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/36850596917",
   "trigger": "workflow_dispatch",
   "mode": "scheduled",
   "decision_date": "",
   "entry_time_ist": "09:30",
   "scheduled_time_ist": "09:30 IST",
-  "finished_at_ist": "2026-09-30T15:45:02+05:30",
+  "finished_at_ist": "2026-10-01T16:10:56+05:30",
   "status": "failure",
   "scope": ["SENSEX JADE LIZARD", "SENSEX PUT RATIO SPREAD"],
   "note": "Frozen prospective candidates. No retrospective ranking or retuning."
