@@ -1,14 +1,14 @@
 {
   "workflow": "Generate NIFTY Paper Trading Signals",
-  "workflow_run_id": "36850596587",
-  "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/36850596587",
+  "workflow_run_id": "36994484223",
+  "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/36994484223",
   "trigger": "workflow_dispatch",
   "mode": "scheduled",
   "decision_date": "",
   "entry_time_ist": "09:30",
   "scheduled_time_ist": "09:30 IST",
-  "finished_at_ist": "2026-10-01T16:11:14+05:30",
-  "status": "failure",
+  "finished_at_ist": "2026-10-02T15:46:09+05:30",
+  "status": "success",
   "scope": ["NIFTY BATMAN", "NIFTY ADAPTIVE"],
   "note": "Signal producer audit record. Pages deployment is centralized."
 }
