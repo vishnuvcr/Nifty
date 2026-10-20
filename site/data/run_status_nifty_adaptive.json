@@ -1,11 +1,11 @@
 {
   "workflow": "Adaptive Paper Signal Producer v1",
-  "workflow_run_id": "39231024882",
-  "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/39231024882",
+  "workflow_run_id": "39398198717",
+  "workflow_url": "https://github.com/vishnuvcr/Nifty/actions/runs/39398198717",
   "trigger": "schedule",
   "scheduled_time_ist": "09:30 IST",
-  "finished_at_ist": "2026-10-19T15:04:41+05:30",
-  "status": "failure",
+  "finished_at_ist": "2026-10-20T14:36:34+05:30",
+  "status": "success",
   "scope": ["NIFTY ADAPTIVE"],
   "note": "Standalone Adaptive producer audit record. Pages deployment is centralized."
 }
