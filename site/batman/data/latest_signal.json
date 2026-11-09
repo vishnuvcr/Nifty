@@ -18,7 +18,7 @@
   "closures": [],
   "legs": [],
   "notes": "NSE option-chain unavailable: NSE option-chain response contained no CE/PE rows for 09-Nov-2026.",
-  "last_refresh_timestamp_ist": "2026-11-09T18:00:22.738708+05:30",
+  "last_refresh_timestamp_ist": "2026-11-09T18:01:18.888288+05:30",
   "refresh_cutoff": "2026-11-09",
   "refresh_closures": []
 }
