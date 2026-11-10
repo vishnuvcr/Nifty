@@ -1,13 +1,13 @@
 {
   "producer": "Adaptive Paper Signal Producer v1",
-  "run_timestamp_ist": "2026-10-20T14:36:31.981382+05:30",
-  "decision_date": "2026-10-20",
-  "model_data_cutoff": "2026-10-19",
-  "spot": 22888.94921875,
+  "run_timestamp_ist": "2026-11-10T17:32:19.553838+05:30",
+  "decision_date": "2026-11-10",
+  "model_data_cutoff": "2026-11-09",
+  "spot": 25044.650390625,
   "spot_source": "NIFTY prior completed session close",
   "vol_regime": "high",
-  "rv20": 0.1647678792056554,
-  "rv20_rank": 0.8611111111111112,
+  "rv20": 0.1611743541807623,
+  "rv20_rank": 0.8333333333333334,
   "status": "NOT_TRADING_DAY",
   "signal": "NO_TRADE",
   "target_expiry": "",
@@ -36,7 +36,7 @@
   "eligible_candidate_count": 0,
   "mc_terminal_quantiles": {},
   "notes": "Decision date is not a NIFTY trading session; no option-chain request was made.",
-  "signal_id": "2026-10-20||AdaptiveV1",
+  "signal_id": "2026-11-10||AdaptiveV1",
   "closures": [],
   "paper_ledger_summary": {
     "closed": 0,
@@ -44,8 +44,5 @@
     "profit_factor": 0.0,
     "total": 0.0,
     "max_dd": 0.0
-  },
-  "last_refresh_timestamp_ist": "2026-11-10T02:22:46.821821+05:30",
-  "refresh_cutoff": "2026-11-10",
-  "refresh_closures": []
+  }
 }
