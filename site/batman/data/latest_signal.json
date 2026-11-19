@@ -1,15 +1,15 @@
 {
   "producer": "Batman Signal Producer",
   "strategy": "Batman",
-  "run_timestamp_ist": "2026-11-18T18:05:35.713386+05:30",
+  "run_timestamp_ist": "2026-11-19T17:56:23.923092+05:30",
   "entry_timestamp_ist": "",
-  "decision_date": "2026-11-18",
-  "model_data_cutoff": "2026-11-17",
+  "decision_date": "2026-11-19",
+  "model_data_cutoff": "2026-11-18",
   "quote_retrieved_at_ist": "",
   "target_expiry": "",
   "status": "DATA_UNAVAILABLE",
   "signal": "NO_TRADE",
-  "spot": 25387.400390625,
+  "spot": 25227.94921875,
   "spot_source": "Yahoo Finance fallback_PREVIOUS_SESSION_CLOSE",
   "mc_paths": 5000,
   "lookback_sessions": 756,
@@ -17,8 +17,5 @@
   "source": "NSE option-chain endpoints; index history=Yahoo Finance fallback",
   "closures": [],
   "legs": [],
-  "notes": "NSE option-chain unavailable: NSE option-chain response contained no CE/PE rows for 23-Nov-2026.",
-  "last_refresh_timestamp_ist": "2026-11-19T00:25:18.843681+05:30",
-  "refresh_cutoff": "2026-11-19",
-  "refresh_closures": []
+  "notes": "NSE option-chain unavailable: NSE option-chain response contained no CE/PE rows for 23-Nov-2026."
 }
